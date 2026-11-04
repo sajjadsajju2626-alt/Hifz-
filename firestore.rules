@@ -1,0 +1,346 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net (Default-Deny Catch-All)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Global Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerified() && request.auth.token.email == 'sajjadsajju2626@gmail.com';
+    }
+
+    function isAdmin() {
+      return isVerified() && (
+        isBootstrappedAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidOwner(ownerId) {
+      return ownerId is string &&
+        ownerId.size() >= 1 &&
+        ownerId.size() <= 128 &&
+        ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        ((isVerified() && ownerId == request.auth.uid) || ownerId in ['portal-session', 'local-seed']);
+    }
+
+    function canAccessOwner(ownerId) {
+      return (isVerified() && (ownerId == request.auth.uid || isAdmin())) ||
+        ownerId in ['portal-session', 'local-seed'];
+    }
+
+    // 2. Validation Blueprints
+    function isValidStudent(data) {
+      return data.keys().hasAll([
+        'studentId', 'name', 'batch', 'ustadhName', 'juzCompleted',
+        'currentJuz', 'currentSurah', 'guardianName', 'guardianPhone',
+        'pin', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'studentId', 'name', 'batch', 'ustadhName', 'juzCompleted',
+        'currentJuz', 'currentSurah', 'guardianName', 'guardianPhone',
+        'pin', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.studentId is string && data.studentId.size() >= 2 && data.studentId.size() <= 32 && data.studentId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
+      data.batch is string && data.batch.size() >= 1 && data.batch.size() <= 60 &&
+      data.ustadhName is string && data.ustadhName.size() >= 2 && data.ustadhName.size() <= 80 &&
+      data.juzCompleted is number && data.juzCompleted >= 0 && data.juzCompleted <= 30 &&
+      data.currentJuz is number && data.currentJuz >= 1 && data.currentJuz <= 30 &&
+      data.currentSurah is string && data.currentSurah.size() >= 1 && data.currentSurah.size() <= 80 &&
+      data.guardianName is string && data.guardianName.size() >= 1 && data.guardianName.size() <= 100 &&
+      data.guardianPhone is string && data.guardianPhone.size() >= 3 && data.guardianPhone.size() <= 30 &&
+      data.pin is string && data.pin.size() >= 4 && data.pin.size() <= 16 &&
+      isValidOwner(data.ownerId) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidHifzLog(data) {
+      return data.keys().hasAll([
+        'studentId', 'studentName', 'dateStr', 'isoDate', 'attendance',
+        'sabaqTarget', 'sabaqGrade', 'sabqiTarget', 'sabqiGrade',
+        'manzilTarget', 'manzilGrade', 'akhlaqScoreDelta', 'akhlaqTags',
+        'note', 'verifiedBy', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'studentId', 'studentName', 'dateStr', 'isoDate', 'attendance',
+        'sabaqTarget', 'sabaqGrade', 'sabqiTarget', 'sabqiGrade',
+        'manzilTarget', 'manzilGrade', 'akhlaqScoreDelta', 'akhlaqTags',
+        'note', 'verifiedBy', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.studentId is string && data.studentId.size() >= 2 && data.studentId.size() <= 32 && data.studentId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.studentName is string && data.studentName.size() >= 2 && data.studentName.size() <= 100 &&
+      data.dateStr is string && data.dateStr.size() >= 6 && data.dateStr.size() <= 20 &&
+      data.isoDate is string && data.isoDate.size() >= 8 && data.isoDate.size() <= 16 &&
+      data.attendance is string && data.attendance in ['Present', 'Absent'] &&
+      data.sabaqTarget is string && data.sabaqTarget.size() >= 1 && data.sabaqTarget.size() <= 120 &&
+      data.sabaqGrade is string && data.sabaqGrade.size() >= 1 && data.sabaqGrade.size() <= 60 &&
+      data.sabqiTarget is string && data.sabqiTarget.size() >= 1 && data.sabqiTarget.size() <= 120 &&
+      data.sabqiGrade is string && data.sabqiGrade.size() >= 1 && data.sabqiGrade.size() <= 60 &&
+      data.manzilTarget is string && data.manzilTarget.size() >= 1 && data.manzilTarget.size() <= 120 &&
+      data.manzilGrade is string && data.manzilGrade.size() >= 1 && data.manzilGrade.size() <= 60 &&
+      data.akhlaqScoreDelta is number && data.akhlaqScoreDelta >= -30 && data.akhlaqScoreDelta <= 30 &&
+      data.akhlaqTags is list && data.akhlaqTags.size() <= 10 &&
+      (data.akhlaqTags.size() == 0 || (data.akhlaqTags[0] is string && data.akhlaqTags[0].size() <= 60)) &&
+      data.note is string && data.note.size() <= 400 &&
+      data.verifiedBy is string && data.verifiedBy.size() >= 2 && data.verifiedBy.size() <= 80 &&
+      isValidOwner(data.ownerId) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidSchedule(data) {
+      return data.keys().hasAll([
+        'studentId', 'studentName', 'targetJuz', 'targetSurahRange',
+        'dailySabaqQuota', 'sabqiWindow', 'manzilCycle', 'startDate',
+        'targetDate', 'progressPercent', 'status', 'assignedBy',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'studentId', 'studentName', 'targetJuz', 'targetSurahRange',
+        'dailySabaqQuota', 'sabqiWindow', 'manzilCycle', 'startDate',
+        'targetDate', 'progressPercent', 'status', 'assignedBy',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.studentId is string && data.studentId.size() >= 2 && data.studentId.size() <= 32 && data.studentId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.studentName is string && data.studentName.size() >= 2 && data.studentName.size() <= 100 &&
+      data.targetJuz is number && data.targetJuz >= 1 && data.targetJuz <= 30 &&
+      data.targetSurahRange is string && data.targetSurahRange.size() >= 2 && data.targetSurahRange.size() <= 120 &&
+      data.dailySabaqQuota is string && data.dailySabaqQuota.size() >= 2 && data.dailySabaqQuota.size() <= 60 &&
+      data.sabqiWindow is string && data.sabqiWindow.size() >= 2 && data.sabqiWindow.size() <= 60 &&
+      data.manzilCycle is string && data.manzilCycle.size() >= 2 && data.manzilCycle.size() <= 80 &&
+      data.startDate is string && data.startDate.size() >= 8 && data.startDate.size() <= 16 &&
+      data.targetDate is string && data.targetDate.size() >= 8 && data.targetDate.size() <= 16 &&
+      data.progressPercent is number && data.progressPercent >= 0 && data.progressPercent <= 100 &&
+      data.status is string && data.status in ['active', 'completed', 'archived'] &&
+      data.assignedBy is string && data.assignedBy.size() >= 2 && data.assignedBy.size() <= 80 &&
+      isValidOwner(data.ownerId) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidAlert(data) {
+      return data.keys().hasAll([
+        'studentId', 'studentName', 'severity', 'category', 'title',
+        'message', 'recommendedAction', 'status', 'teacherResponse',
+        'dateStr', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'studentId', 'studentName', 'severity', 'category', 'title',
+        'message', 'recommendedAction', 'status', 'teacherResponse',
+        'dateStr', 'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.studentId is string && data.studentId.size() >= 2 && data.studentId.size() <= 32 && data.studentId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.studentName is string && data.studentName.size() >= 2 && data.studentName.size() <= 100 &&
+      data.severity is string && data.severity in ['critical', 'warning', 'positive'] &&
+      data.category is string && data.category in ['sabaq_stall', 'manzil_weakness', 'akhlaq_drop', 'attendance_risk', 'milestone_excellence'] &&
+      data.title is string && data.title.size() >= 3 && data.title.size() <= 140 &&
+      data.message is string && data.message.size() >= 5 && data.message.size() <= 500 &&
+      data.recommendedAction is string && data.recommendedAction.size() >= 5 && data.recommendedAction.size() <= 300 &&
+      data.status is string && data.status in ['open', 'acknowledged', 'resolved'] &&
+      data.teacherResponse is string && data.teacherResponse.size() <= 300 &&
+      data.dateStr is string && data.dateStr.size() >= 6 && data.dateStr.size() <= 20 &&
+      isValidOwner(data.ownerId) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidNotice(data) {
+      return data.keys().hasAll([
+        'title', 'content', 'audience', 'dateStr', 'authorName',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'title', 'content', 'audience', 'dateStr', 'authorName',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.title is string && data.title.size() >= 2 && data.title.size() <= 140 &&
+      data.content is string && data.content.size() >= 2 && data.content.size() <= 1000 &&
+      data.audience is string && data.audience in ['all', 'parents', 'teachers'] &&
+      data.dateStr is string && data.dateStr.size() >= 6 && data.dateStr.size() <= 20 &&
+      data.authorName is string && data.authorName.size() >= 2 && data.authorName.size() <= 80 &&
+      isValidOwner(data.ownerId) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidSettings(data) {
+      return data.keys().hasAll([
+        'mode', 'name', 'sub', 'academicTerm', 'akhlaqAlertThreshold',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'mode', 'name', 'sub', 'academicTerm', 'akhlaqAlertThreshold',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.mode is string && data.mode in ['residential', 'day'] &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
+      data.sub is string && data.sub.size() >= 2 && data.sub.size() <= 100 &&
+      data.academicTerm is string && data.academicTerm.size() >= 2 && data.academicTerm.size() <= 60 &&
+      data.akhlaqAlertThreshold is number && data.akhlaqAlertThreshold >= 50 && data.akhlaqAlertThreshold <= 90 &&
+      isValidOwner(data.ownerId) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
+      data.keys().hasOnly(['uid', 'email', 'createdAt']) &&
+      data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 120 &&
+      data.createdAt is timestamp;
+    }
+
+    // 3. Collection Rules
+    match /students/{studentId} {
+      allow get: if isValidId(studentId) && canAccessOwner(existing().ownerId);
+      allow list: if canAccessOwner(resource.data.ownerId);
+      allow create: if isValidId(studentId) && isValidStudent(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(studentId) && isValidStudent(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (canAccessOwner(existing().ownerId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'batch', 'ustadhName', 'juzCompleted', 'currentJuz',
+              'currentSurah', 'guardianName', 'guardianPhone', 'pin', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(studentId) && canAccessOwner(existing().ownerId);
+    }
+
+    match /hifz_logs/{logId} {
+      allow get: if isValidId(logId) && canAccessOwner(existing().ownerId);
+      allow list: if canAccessOwner(resource.data.ownerId);
+      allow create: if isValidId(logId) && isValidHifzLog(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(logId) && isValidHifzLog(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().studentId == existing().studentId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (canAccessOwner(existing().ownerId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'attendance', 'sabaqTarget', 'sabaqGrade', 'sabqiTarget', 'sabqiGrade',
+              'manzilTarget', 'manzilGrade', 'akhlaqScoreDelta', 'akhlaqTags', 'note', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(logId) && canAccessOwner(existing().ownerId);
+    }
+
+    match /schedules/{scheduleId} {
+      allow get: if isValidId(scheduleId) && canAccessOwner(existing().ownerId);
+      allow list: if canAccessOwner(resource.data.ownerId);
+      allow create: if isValidId(scheduleId) && isValidSchedule(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(scheduleId) && isValidSchedule(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().studentId == existing().studentId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (existing().status != 'archived' || isAdmin()) && (
+          isAdmin() ||
+          (canAccessOwner(existing().ownerId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'targetJuz', 'targetSurahRange', 'dailySabaqQuota', 'sabqiWindow',
+              'manzilCycle', 'targetDate', 'progressPercent', 'status', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(scheduleId) && canAccessOwner(existing().ownerId);
+    }
+
+    match /alerts/{alertId} {
+      allow get: if isValidId(alertId) && canAccessOwner(existing().ownerId);
+      allow list: if canAccessOwner(resource.data.ownerId);
+      allow create: if isValidId(alertId) && isValidAlert(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(alertId) && isValidAlert(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().studentId == existing().studentId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (existing().status != 'resolved' || isAdmin()) && (
+          isAdmin() ||
+          (canAccessOwner(existing().ownerId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'teacherResponse', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(alertId) && canAccessOwner(existing().ownerId);
+    }
+
+    match /notices/{noticeId} {
+      allow get: if isValidId(noticeId) && canAccessOwner(existing().ownerId);
+      allow list: if canAccessOwner(resource.data.ownerId);
+      allow create: if isValidId(noticeId) && isValidNotice(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(noticeId) && isValidNotice(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (canAccessOwner(existing().ownerId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'content', 'audience', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(noticeId) && canAccessOwner(existing().ownerId);
+    }
+
+    match /settings/{settingId} {
+      allow get: if isValidId(settingId) && canAccessOwner(existing().ownerId);
+      allow list: if canAccessOwner(resource.data.ownerId);
+      allow create: if isValidId(settingId) && isValidSettings(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(settingId) && isValidSettings(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (canAccessOwner(existing().ownerId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'mode', 'name', 'sub', 'academicTerm', 'akhlaqAlertThreshold', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(settingId) && isAdmin();
+    }
+
+    match /admins/{adminUid} {
+      allow get: if isVerified() && isValidId(adminUid) && (request.auth.uid == adminUid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isBootstrappedAdmin() && isValidId(adminUid) && isValidAdmin(incoming()) &&
+        incoming().uid == adminUid && incoming().createdAt == request.time;
+      allow update: if isBootstrappedAdmin() && isValidId(adminUid) && isValidAdmin(incoming()) &&
+        incoming().uid == existing().uid && incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['email']);
+      allow delete: if isBootstrappedAdmin() && isValidId(adminUid);
+    }
+  }
+}

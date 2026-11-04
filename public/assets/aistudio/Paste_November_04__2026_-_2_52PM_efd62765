@@ -1,0 +1,1025 @@
+ഇതാ ഓട്ടോമാറ്റിക് അഖ്‌ലാഖ് റേറ്റിംഗ് സിസ്റ്റം (Automatic Monthly Akhlaq Grading) പൂർണ്ണമായി ഉൾപ്പെടുത്തിയ പുതിയ index.html കോഡ്.
+ഇതിൽ ഉൾപ്പെടുത്തിയിരിക്കുന്ന മാറ്റങ്ങൾ:
+ * ഉസ്താദ് ഡെസ്കിൽ ക്വിക്ക് അഖ്‌ലാഖ് ചിപ്പുകൾ:
+   * പോസിറ്റീവ് ചിപ്പുകൾ (+2 pts): + അദബ്/മര്യാദ, + വൃത്തി, + ഏകാഗ്രത, + സഹായമനസ്സ്
+   * നെഗറ്റീവ് ചിപ്പുകൾ (-3 pts): - ശ്രദ്ധക്കുറവ്, - തർക്കം/വഴക്ക്, - അലസത, - അനാവശ്യ സംസാരം
+   * ഉസ്താദ് ചിപ്പിൽ ക്ലിക്ക് ചെയ്യുമ്പോൾ അത് നോട്ട് ബോക്സിൽ തനിയെ ആഡ് ആവുകയും സ്കോർ ഡാറ്റാബേസിൽ രേഖപ്പെടുത്തുകയും ചെയ്യും.
+ * ഓട്ടോമാറ്റിക് മന്ത്‌ലി അഖ്‌ലാഖ് റേറ്റിംഗ്:
+   * മാസത്തിലെ പോസിറ്റീവ്, നെഗറ്റീവ് പോയിന്റുകൾ വിശകലനം ചെയ്ത് പ്രിൻസിപ്പൽ ഡാഷ്‌ബോർഡിലും പ്രിന്റ് റിപ്പോർട്ടിലും കുട്ടിക്ക് സ്വയം ഗ്രേഡ് കണക്കാക്കുന്നു:
+     * 90-100%: A+ (Mumtaz - ممتاز / മാതൃകാ സ്വഭാവം)
+     * 75-89%: A (Jayyid Jiddan - جيد جداً / നല്ല അച്ചടക്കം)
+     * 60-74%: B (Jayyid - جيد / തൃപ്തികരം)
+     * <60%: C (Needs Focus / പ്രത്യേക ശ്രദ്ധ ആവശ്യമാണ്)
+ * റിപ്പോർട്ട് കാർഡിൽ ഓട്ടോ-റീസൺസ്: കുട്ടിയുടെ ഗ്രേഡ് എന്തുകൊണ്ട് കുറഞ്ഞു (ഉദാഹരണത്തിന്: ശ്രദ്ധക്കുറവ്, അനാവശ്യ സംസാരം) എന്നതിൻ്റെ കൃത്യമായ വിശകലനം റിപ്പോർട്ടിൽ തനിയെ ഉൾപ്പെടുത്തും.
+ഈ ഫയൽ പൂർണ്ണമായി കോപ്പി ചെയ്ത് ഗിറ്റ്ഹബ്ബ് റിപ്പോസിറ്ററിയിലെ (sajjadsajju2626-alt/Hifz-tracker-) index.html ഫയലിൽ പേസ്റ്റ് ചെയ്തു സേവ് ചെയ്യുക:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Al-Furqan Hifz Tracker</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#064e3b">
+
+  <!-- Manifest -->
+  <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Al-Furqan%20Hifz%20Tracker%22%2C%22short_name%22%3A%22HifzTracker%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f8fafc%22%2C%22theme_color%22%3A%22%23064e3b%22%7D">
+
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase Modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      initializeFirestore,
+      collection, 
+      doc,
+      setDoc,
+      addDoc, 
+      getDocs,
+      query, 
+      where, 
+      onSnapshot, 
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDNvTkmPgXSSpnk_avQkBybMXu87fwxfMY",
+      authDomain: "hifz-tracker-d4213.firebaseapp.com",
+      projectId: "hifz-tracker-d4213",
+      storageBucket: "hifz-tracker-d4213.firebasestorage.app",
+      messagingSenderId: "674143180843",
+      appId: "1:674143180843:web:db59e50107cd588c1b726e",
+      measurementId: "G-QKFMM1EHD7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = initializeFirestore(app, {
+      experimentalAutoDetectLongPolling: true
+    });
+
+    window.fDb = db;
+    window.fDoc = doc;
+    window.fSetDoc = setDoc;
+    window.fCollection = collection;
+    window.fAddDoc = addDoc;
+    window.fGetDocs = getDocs;
+    window.fQuery = query;
+    window.fWhere = where;
+    window.fOnSnapshot = onSnapshot;
+    window.fTimestamp = serverTimestamp;
+
+    window.dispatchEvent(new Event('firebase-ready'));
+  </script>
+
+  <style>
+    :root {
+      --primary: #064e3b;
+      --primary-light: #047857;
+      --accent: #d97706;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 50px; }
+
+    header {
+      background: linear-gradient(135deg, #064e3b, #022c22);
+      color: #fff;
+      padding: 1.25rem 1rem;
+      box-shadow: 0 4px 15px rgba(6, 78, 59, 0.15);
+    }
+    .header-inner {
+      max-width: 950px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand h1 { font-family: 'Amiri', serif; font-size: 1.5rem; }
+    .brand p { font-size: 0.8rem; color: #a7f3d0; }
+    .badge-campus {
+      font-size: 0.72rem;
+      background: #f59e0b;
+      color: #78350f;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 700;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .user-tag {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-logout {
+      background: #ef4444;
+      border: none;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    main { max-width: 950px; margin: 1.25rem auto; padding: 0 1rem; }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      margin-bottom: 1.25rem;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary);
+    }
+
+    .form-group { margin-bottom: 1.1rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary-light); }
+
+    /* Chips container */
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+    .portion-chip {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    .portion-chip:hover {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #10b981;
+    }
+
+    /* Akhlaq Chips */
+    .chip-pos {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .chip-pos:hover { background: #dcfce7; border-color: #86efac; }
+    .chip-neg {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .chip-neg:hover { background: #fee2e2; border-color: #fca5a5; }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--primary-light); }
+
+    .sub-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .sub-tab-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .sub-tab-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .att-box { display: flex; gap: 10px; }
+    .att-btn {
+      flex: 1;
+      padding: 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      background: #f8fafc;
+    }
+    .att-btn.present.active { background: #dcfce7; color: #15803d; border-color: #86efac; }
+    .att-btn.absent.active { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
+    .tag-mumtaz { background: #dcfce7; color: #15803d; }
+    .tag-present { background: #dcfce7; color: #166534; }
+    .tag-absent { background: #fee2e2; color: #991b1b; }
+    .tag-akhlaq-a { background: #dcfce7; color: #15803d; font-weight: 700; }
+    .tag-akhlaq-b { background: #fef3c7; color: #b45309; font-weight: 700; }
+    .tag-akhlaq-c { background: #fee2e2; color: #b91c1c; font-weight: 700; }
+
+    .student-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .student-card-header {
+      padding: 14px;
+      background: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .student-body { padding: 14px; border-top: 1px solid var(--border); display: none; }
+    .student-body.active { display: block; }
+
+    .juz-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 8px; }
+    .juz-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #e2e8f0; border-radius: 4px; font-size: 0.7rem; font-weight: 600; color: #64748b; }
+    .juz-cell.completed { background: #10b981; color: white; }
+
+    .feed-item { padding: 12px; border-bottom: 1px solid var(--border); }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-header { display: flex; justify-content: space-between; font-size: 0.85rem; }
+
+    /* Print Report Styling */
+    @media print {
+      body * { visibility: hidden; }
+      #printable-report-card, #printable-report-card * { visibility: visible; }
+      #printable-report-card { position: absolute; left: 0; top: 0; width: 100%; display: block !important; padding: 20px; }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <h1 id="college-name-display">Asry academy</h1>
+        <p id="college-sub-display">Bendichal</p>
+        <span class="badge-campus" id="campus-badge">Residential Campus</span>
+      </div>
+      <div id="auth-status-bar" class="hidden">
+        <div class="user-tag">
+          <span id="logged-user-label">Logged In</span>
+          <button class="btn-logout" onclick="handleLogout()">Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- LOGIN SCREEN -->
+    <section id="view-login">
+      <div class="card" style="max-width: 420px; margin: 2rem auto;">
+        <div class="card-title"><i data-lucide="lock"></i> Portal Sign In</div>
+        
+        <div class="form-group">
+          <label>Select Role</label>
+          <select id="login-role" onchange="toggleLoginFields()">
+            <option value="parent">Parent (രക്ഷിതാവ്)</option>
+            <option value="teacher">Ustadh / Teacher (അധ്യാപകൻ)</option>
+            <option value="principal">Principal / Admin (പ്രിൻസിപ്പൽ)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label id="login-id-label">Student ID (അഡ്മിഷൻ നമ്പർ)</label>
+          <input type="text" id="login-username" placeholder="e.g. STD-101" required>
+        </div>
+
+        <div class="form-group">
+          <label>Password / PIN</label>
+          <input type="password" id="login-password" placeholder="Enter password" required>
+        </div>
+
+        <button class="btn-primary" onclick="performLogin()">
+          <i data-lucide="log-in"></i> Sign In
+        </button>
+      </div>
+    </section>
+
+    <!-- 1. PRINCIPAL VIEW -->
+    <section id="view-principal" class="hidden">
+      <div class="sub-tabs">
+        <button class="sub-tab-btn active" onclick="switchPrincipalTab('portfolios')">Student Portfolios</button>
+        <button class="sub-tab-btn" onclick="switchPrincipalTab('notices')">Notice Desk</button>
+        <button class="sub-tab-btn" onclick="switchPrincipalTab('settings')">Settings</button>
+      </div>
+
+      <div id="p-tab-portfolios">
+        <div class="card">
+          <div class="card-title"><i data-lucide="users"></i> Student Portfolios & Auto-Akhlaq Analysis</div>
+          <div id="principal-students-list">Loading student profiles...</div>
+        </div>
+      </div>
+
+      <div id="p-tab-notices" class="hidden">
+        <div class="card">
+          <div class="card-title"><i data-lucide="megaphone"></i> Post Circular / Notice</div>
+          <form onsubmit="handlePublishNotice(event)">
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="notice-title" placeholder="Notice Heading" required>
+            </div>
+            <div class="form-group">
+              <label>Message</label>
+              <textarea id="notice-content" rows="3" placeholder="Notice details..." required></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Post Notice</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="p-tab-settings" class="hidden">
+        <div class="card">
+          <div class="card-title"><i data-lucide="settings"></i> Campus Settings</div>
+          <form onsubmit="handleSaveSettings(event)">
+            <div class="form-group">
+              <label>Campus Mode</label>
+              <select id="cfg-campus-mode">
+                <option value="residential">Residential Campus</option>
+                <option value="day">Day College</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>College Name</label>
+              <input type="text" id="cfg-college-name" required>
+            </div>
+            <div class="form-group">
+              <label>Location / Sub Title</label>
+              <input type="text" id="cfg-college-sub" required>
+            </div>
+            <button type="submit" class="btn-primary">Save Settings</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. TEACHER VIEW (USTADH DESK) -->
+    <section id="view-teacher" class="hidden">
+      <div class="card">
+        <div class="card-title"><i data-lucide="book-open"></i> Daily Hifz & Akhlaq Verification Desk</div>
+        
+        <form onsubmit="handleLogSubmit(event)">
+          <div class="form-group">
+            <label>Select Student</label>
+            <select id="t-student-select"></select>
+          </div>
+
+          <!-- Attendance -->
+          <div class="form-group">
+            <label>Attendance Status</label>
+            <div class="att-box">
+              <button type="button" class="att-btn present active" id="btn-att-present" onclick="setAttendance('Present')">✓ Present</button>
+              <button type="button" class="att-btn absent" id="btn-att-absent" onclick="setAttendance('Absent')">✗ Absent</button>
+            </div>
+          </div>
+
+          <!-- 1. Sabaq with Quick Chips -->
+          <div class="form-group" id="sec-sabaq">
+            <label>1. Sabaq (New Lesson)</label>
+            <input type="text" id="sabaq-target" placeholder="Surah & Ayahs (e.g. Al-Baqarah 1-10)">
+            <div class="chips-container">
+              <span class="portion-chip" onclick="setPortion('sabaq-target', '1/4 Page')">+ 1/4 Page</span>
+              <span class="portion-chip" onclick="setPortion('sabaq-target', '1/2 Page')">+ 1/2 Page</span>
+              <span class="portion-chip" onclick="setPortion('sabaq-target', '1 Full Page')">+ 1 Page</span>
+              <span class="portion-chip" onclick="setPortion('sabaq-target', '2 Pages')">+ 2 Pages</span>
+            </div>
+            <select id="sabaq-grade">
+              <option value="Mumtaz (ممتاز - Excellent)">Mumtaz (ممتاز - Excellent)</option>
+              <option value="Jayyid Jiddan (جيد جداً - Very Good)">Jayyid Jiddan (جيد جداً - Very Good)</option>
+              <option value="Jayyid (جيد - Good)">Jayyid (جيد - Good)</option>
+              <option value="Needs Repeat (ഇനിയും ഓതണം)">Needs Repeat (ഇനിയും ഓതണം)</option>
+              <option value="Not Recited">Not Recited (കേൾപ്പിച്ചില്ല)</option>
+            </select>
+          </div>
+
+          <!-- 2. Sabqi with Quick Chips -->
+          <div class="form-group" id="sec-sabqi">
+            <label>2. Sabqi (Recent)</label>
+            <input type="text" id="sabqi-target" placeholder="Portion (e.g. Last 5 pages)">
+            <div class="chips-container">
+              <span class="portion-chip" onclick="setPortion('sabqi-target', '1/4 Juz')">+ 1/4 Juz</span>
+              <span class="portion-chip" onclick="setPortion('sabqi-target', '1/2 Juz')">+ 1/2 Juz</span>
+              <span class="portion-chip" onclick="setPortion('sabqi-target', '1 Full Juz')">+ 1 Juz</span>
+              <span class="portion-chip" onclick="setPortion('sabqi-target', '5 Pages')">+ 5 Pages</span>
+            </div>
+            <select id="sabqi-grade">
+              <option value="Mumtaz (ممتاز - Excellent)">Mumtaz (ممتاز - Excellent)</option>
+              <option value="Jayyid Jiddan (جيد جداً - Very Good)">Jayyid Jiddan (جيد جداً - Very Good)</option>
+              <option value="Jayyid (جيد - Good)">Jayyid (جيد - Good)</option>
+              <option value="Weak / Needs Repeat (ശ്രദ്ധ കുറവുണ്ട്)">Weak / Needs Repeat (ശ്രദ്ധ കുറവുണ്ട്)</option>
+              <option value="Not Recited">Not Recited (കേൾപ്പിച്ചില്ല)</option>
+            </select>
+          </div>
+
+          <!-- 3. Manzil with Quick Chips -->
+          <div class="form-group" id="sec-manzil">
+            <label>3. Manzil (Revision)</label>
+            <input type="text" id="manzil-target" placeholder="Juz / Portion (e.g. Juz 3)">
+            <div class="chips-container">
+              <span class="portion-chip" onclick="setPortion('manzil-target', '1/2 Juz')">+ 1/2 Juz</span>
+              <span class="portion-chip" onclick="setPortion('manzil-target', '1 Full Juz')">+ 1 Juz</span>
+              <span class="portion-chip" onclick="setPortion('manzil-target', '2 Juz')">+ 2 Juz</span>
+              <span class="portion-chip" onclick="setPortion('manzil-target', '3 Juz')">+ 3 Juz</span>
+            </div>
+            <select id="manzil-grade">
+              <option value="Mumtaz (Solid / ممتاز - Excellent)">Mumtaz (Solid / ممتاز - Excellent)</option>
+              <option value="Jayyid Jiddan (جيد جداً - Very Good)">Jayyid Jiddan (جيد جداً - Very Good)</option>
+              <option value="Acceptable (جيد - Satisfactory)">Acceptable (جيد - Satisfactory)</option>
+              <option value="Needs Revision (വീണ്ടും ഓതണം)">Needs Revision (വീണ്ടും ഓതണം)</option>
+              <option value="Not Recited">Not Recited (കേൾപ്പിച്ചില്ല)</option>
+            </select>
+          </div>
+
+          <!-- Akhlaq Quick Chips & Score -->
+          <div class="form-group">
+            <label>Akhlaq & Conduct Assessment (സ്വഭാവം & അച്ചടക്കം)</label>
+            
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">നല്ല സ്വഭാവങ്ങൾ (+2 pts):</div>
+            <div class="chips-container">
+              <span class="chip-pos" onclick="addAkhlaqTag('അദബ് / മര്യാദ', 2)">+ അദബ്/മര്യാദ</span>
+              <span class="chip-pos" onclick="addAkhlaqTag('വൃത്തി', 2)">+ വൃത്തി</span>
+              <span class="chip-pos" onclick="addAkhlaqTag('ഏകാഗ്രത', 2)">+ ഏകാഗ്രത</span>
+              <span class="chip-pos" onclick="addAkhlaqTag('സഹായമനസ്സ്', 2)">+ സഹായമനസ്സ്</span>
+            </div>
+
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:6px; margin-bottom:4px;">ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ (-3 pts):</div>
+            <div class="chips-container">
+              <span class="chip-neg" onclick="addAkhlaqTag('ശ്രദ്ധക്കുറവ്', -3)">- ശ്രദ്ധക്കുറവ്</span>
+              <span class="chip-neg" onclick="addAkhlaqTag('തർക്കം/വഴക്ക്', -3)">- തർക്കം/വഴക്ക്</span>
+              <span class="chip-neg" onclick="addAkhlaqTag('അലസത', -3)">- അലസത</span>
+              <span class="chip-neg" onclick="addAkhlaqTag('സംസാരിക്കുന്നു', -3)">- അനാവശ്യ സംസാരം</span>
+            </div>
+
+            <!-- Notes & Logged Tags -->
+            <input type="text" id="teacher-note" placeholder="Selected remarks will appear here or type custom notes..." style="margin-top:6px;">
+          </div>
+
+          <button type="submit" class="btn-primary" id="btn-save-log">
+            <i data-lucide="check-circle-2"></i> Submit & Sync
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. PARENT VIEW -->
+    <section id="view-parent" class="hidden">
+      <div class="card">
+        <div class="card-title"><i data-lucide="award"></i> Child Progress: <span id="p-child-name">Student</span></div>
+        <div class="juz-grid" id="parent-juz-grid"></div>
+        <small style="color:var(--text-muted); display:block; margin-top:8px;">Completed Juz are highlighted in green.</small>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i data-lucide="calendar"></i> Daily Verification Feed</div>
+        <div id="parent-feed">Listening for updates...</div>
+      </div>
+    </section>
+
+    <!-- Hidden Print Container -->
+    <div id="printable-report-card" class="hidden"></div>
+  </main>
+
+  <script>
+    let currentUser = null;
+    let unsubscribeFeed = null;
+    let currentAttendance = 'Present';
+    let globalStudents = [];
+    let globalLogs = [];
+    let dailyAkhlaqDelta = 0;
+    let dailyAkhlaqTags = [];
+
+    // Quick fill portion button handler
+    window.setPortion = function(inputId, portionText) {
+      const el = document.getElementById(inputId);
+      if (el) {
+        if (!el.value.trim()) {
+          el.value = portionText;
+        } else {
+          el.value = `${el.value} (${portionText})`;
+        }
+      }
+    };
+
+    // Add Akhlaq tags and score delta
+    window.addAkhlaqTag = function(tag, points) {
+      dailyAkhlaqDelta += points;
+      dailyAkhlaqTags.push(tag);
+      const noteInput = document.getElementById('teacher-note');
+      if (noteInput) {
+        noteInput.value = noteInput.value ? `${noteInput.value}, ${tag}` : tag;
+      }
+    };
+
+    window.toggleLoginFields = function() {
+      const role = document.getElementById('login-role').value;
+      const label = document.getElementById('login-id-label');
+      const input = document.getElementById('login-username');
+
+      if (role === 'parent') {
+        label.innerText = 'Student ID (അഡ്മിഷൻ നമ്പർ)';
+        input.placeholder = 'STD-101';
+      } else if (role === 'teacher') {
+        label.innerText = 'Ustadh Username';
+        input.placeholder = 'ustadh1';
+      } else {
+        label.innerText = 'Principal Username';
+        input.placeholder = 'admin';
+      }
+    };
+
+    window.setAttendance = function(status) {
+      currentAttendance = status;
+      document.getElementById('btn-att-present').classList.toggle('active', status === 'Present');
+      document.getElementById('btn-att-absent').classList.toggle('active', status === 'Absent');
+
+      const sabaqSec = document.getElementById('sec-sabaq');
+      const sabqiSec = document.getElementById('sec-sabqi');
+      const manzilSec = document.getElementById('sec-manzil');
+
+      if (status === 'Absent') {
+        sabaqSec.classList.add('hidden');
+        sabqiSec.classList.add('hidden');
+        manzilSec.classList.add('hidden');
+      } else {
+        sabaqSec.classList.remove('hidden');
+        sabqiSec.classList.remove('hidden');
+        manzilSec.classList.remove('hidden');
+      }
+    };
+
+    window.performLogin = async function() {
+      const role = document.getElementById('login-role').value;
+      const u = document.getElementById('login-username').value.trim();
+      const p = document.getElementById('login-password').value.trim();
+
+      if (!u || !p) { alert('Please enter ID and password'); return; }
+
+      if (role === 'principal') {
+        if (u === 'admin' && p === 'admin123') {
+          currentUser = { role: 'principal', name: 'Principal Admin' };
+          showUserInterface();
+        } else {
+          alert('Invalid Principal credentials!');
+        }
+        return;
+      }
+
+      if (role === 'teacher') {
+        if (u === 'ustadh1' && p === '1234') {
+          currentUser = { role: 'teacher', username: 'ustadh1', name: 'Ustadh Ahmad' };
+          showUserInterface();
+          return;
+        }
+        try {
+          const q = window.fQuery(window.fCollection(window.fDb, 'teachers'), window.fWhere('username', '==', u));
+          const snap = await window.fGetDocs(q);
+          if (!snap.empty && snap.docs[0].data().password === p) {
+            currentUser = { role: 'teacher', ...snap.docs[0].data() };
+            showUserInterface();
+          } else {
+            alert('Invalid Teacher username or password!');
+          }
+        } catch (e) { alert('Connection error: ' + e.message); }
+        return;
+      }
+
+      if (role === 'parent') {
+        if (u === 'STD-101' && p === '1234') {
+          currentUser = { role: 'parent', studentId: 'STD-101', name: 'Zaid Mansoor', juz: 15 };
+          showUserInterface();
+          return;
+        }
+        try {
+          const q = window.fQuery(window.fCollection(window.fDb, 'students'), window.fWhere('studentId', '==', u));
+          const snap = await window.fGetDocs(q);
+          if (!snap.empty && snap.docs[0].data().password === p) {
+            currentUser = { role: 'parent', ...snap.docs[0].data() };
+            showUserInterface();
+          } else {
+            alert('Invalid Student ID or PIN!');
+          }
+        } catch (e) { alert('Connection error: ' + e.message); }
+      }
+    };
+
+    function showUserInterface() {
+      document.getElementById('view-login').classList.add('hidden');
+      document.getElementById('auth-status-bar').classList.remove('hidden');
+      document.getElementById('logged-user-label').innerText = `${currentUser.name} (${currentUser.role.toUpperCase()})`;
+
+      document.getElementById('view-principal').classList.toggle('hidden', currentUser.role !== 'principal');
+      document.getElementById('view-teacher').classList.toggle('hidden', currentUser.role !== 'teacher');
+      document.getElementById('view-parent').classList.toggle('hidden', currentUser.role !== 'parent');
+
+      if (currentUser.role === 'principal') setupPrincipalPortal();
+      if (currentUser.role === 'teacher') setupTeacherPortal();
+      if (currentUser.role === 'parent') setupParentPortal();
+
+      lucide.createIcons();
+    }
+
+    window.handleLogout = function() {
+      currentUser = null;
+      if (unsubscribeFeed) unsubscribeFeed();
+      document.getElementById('auth-status-bar').classList.add('hidden');
+      document.getElementById('view-principal').classList.add('hidden');
+      document.getElementById('view-teacher').classList.add('hidden');
+      document.getElementById('view-parent').classList.add('hidden');
+      document.getElementById('view-login').classList.remove('hidden');
+    };
+
+    window.switchPrincipalTab = function(tab) {
+      ['portfolios', 'notices', 'settings'].forEach(t => {
+        const el = document.getElementById(`p-tab-${t}`);
+        if (el) el.classList.toggle('hidden', t !== tab);
+      });
+      document.querySelectorAll('#view-principal .sub-tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      lucide.createIcons();
+    };
+
+    window.handlePublishNotice = async function(e) {
+      e.preventDefault();
+      try {
+        await window.fAddDoc(window.fCollection(window.fDb, 'notices'), {
+          title: document.getElementById('notice-title').value.trim(),
+          content: document.getElementById('notice-content').value.trim(),
+          dateStr: new Date().toLocaleDateString('en-GB')
+        });
+        alert('Notice published!');
+        e.target.reset();
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+
+    window.handleSaveSettings = async function(e) {
+      e.preventDefault();
+      try {
+        await window.fSetDoc(window.fDoc(window.fDb, 'settings', 'general'), {
+          mode: document.getElementById('cfg-campus-mode').value,
+          name: document.getElementById('cfg-college-name').value,
+          sub: document.getElementById('cfg-college-sub').value
+        });
+        alert('Settings saved!');
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+
+    async function setupTeacherPortal() {
+      const sel = document.getElementById('t-student-select');
+      sel.innerHTML = '<option value="STD-101">Zaid Mansoor</option>';
+      try {
+        const snap = await window.fGetDocs(window.fCollection(window.fDb, 'students'));
+        snap.forEach(d => {
+          if (d.data().studentId !== 'STD-101') {
+            const opt = document.createElement('option');
+            opt.value = d.data().studentId;
+            opt.innerText = d.data().name;
+            sel.appendChild(opt);
+          }
+        });
+      } catch (e) { console.log(e); }
+    }
+
+    // Handle Log Submission with Akhlaq metrics
+    window.handleLogSubmit = async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-log');
+      btn.disabled = true;
+
+      const sel = document.getElementById('t-student-select');
+      const studentId = sel.value;
+      const studentName = sel.options[sel.selectedIndex]?.text || 'Student';
+      const isAbsent = currentAttendance === 'Absent';
+
+      const sabaqGrade = document.getElementById('sabaq-grade').value;
+      const sabqiGrade = document.getElementById('sabqi-grade').value;
+      const manzilGrade = document.getElementById('manzil-grade').value;
+
+      const logPayload = {
+        studentId,
+        studentName,
+        attendance: currentAttendance,
+        akhlaqScoreDelta: dailyAkhlaqDelta,
+        akhlaqTags: dailyAkhlaqTags,
+        verifiedBy: currentUser.name,
+        createdAt: window.fTimestamp(),
+        dateStr: new Date().toLocaleDateString('en-GB'),
+        note: document.getElementById('teacher-note').value || (isAbsent ? "Marked Absent" : "")
+      };
+
+      if (!isAbsent) {
+        logPayload.sabaq = { 
+          target: sabaqGrade === 'Not Recited' ? 'Not Recited' : (document.getElementById('sabaq-target').value || 'Unspecified'), 
+          grade: sabaqGrade 
+        };
+        logPayload.sabqi = { 
+          target: sabqiGrade === 'Not Recited' ? 'Not Recited' : (document.getElementById('sabqi-target').value || 'Unspecified'), 
+          grade: sabqiGrade 
+        };
+        logPayload.manzil = { 
+          target: manzilGrade === 'Not Recited' ? 'Not Recited' : (document.getElementById('manzil-target').value || 'Unspecified'), 
+          grade: manzilGrade 
+        };
+      }
+
+      try {
+        await window.fAddDoc(window.fCollection(window.fDb, 'hifz_logs'), logPayload);
+        alert(isAbsent ? 'Student marked Absent!' : 'Verified & Synced!');
+        e.target.reset();
+        dailyAkhlaqDelta = 0;
+        dailyAkhlaqTags = [];
+        setAttendance('Present');
+      } catch (err) {
+        alert('Sync failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        lucide.createIcons();
+      }
+    };
+
+    // Calculate Automatic Monthly Akhlaq Grade
+    function calculateAkhlaqMetric(studentLogs) {
+      let score = 100;
+      const reasonsMap = {};
+
+      studentLogs.forEach(l => {
+        if (l.akhlaqScoreDelta) score += l.akhlaqScoreDelta;
+        if (l.akhlaqTags && Array.isArray(l.akhlaqTags)) {
+          l.akhlaqTags.forEach(t => {
+            reasonsMap[t] = (reasonsMap[t] || 0) + 1;
+          });
+        }
+      });
+
+      // Clamp between 0 and 100
+      score = Math.max(0, Math.min(100, score));
+
+      let grade = 'A+ (Mumtaz - ممتاز)';
+      let tagClass = 'tag-akhlaq-a';
+      if (score < 60) {
+        grade = 'C (Needs Focus / ശ്രദ്ധ വേണം)';
+        tagClass = 'tag-akhlaq-c';
+      } else if (score < 75) {
+        grade = 'B (Jayyid - جيد)';
+        tagClass = 'tag-akhlaq-b';
+      } else if (score < 90) {
+        grade = 'A (Jayyid Jiddan - جيد جداً)';
+        tagClass = 'tag-akhlaq-a';
+      }
+
+      const topTags = Object.keys(reasonsMap).map(k => `${k} (${reasonsMap[k]})`).join(', ');
+
+      return { score, grade, tagClass, topTags };
+    }
+
+    // Print Monthly Report with Auto Akhlaq
+    window.printMonthlyReport = function(studentId) {
+      const std = globalStudents.find(s => s.studentId === studentId);
+      const stdLogs = globalLogs.filter(l => l.studentId === studentId);
+      const printContainer = document.getElementById('printable-report-card');
+
+      const total = stdLogs.length;
+      const present = stdLogs.filter(l => l.attendance !== 'Absent').length;
+      const attRate = total > 0 ? Math.round((present / total) * 100) : 100;
+      const akhlaq = calculateAkhlaqMetric(stdLogs);
+
+      printContainer.innerHTML = `
+        <div style="text-align:center; border-bottom:2px solid #064e3b; padding-bottom:12px; margin-bottom:16px;">
+          <h2 style="font-family:'Amiri', serif; color:#064e3b; margin:0;">${document.getElementById('college-name-display').innerText}</h2>
+          <p style="margin:2px 0; color:#64748b; font-size:0.9rem;">Official Monthly Hifz & Akhlaq Progress Report</p>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:0.9rem;">
+          <div><strong>Student:</strong> ${std ? std.name : studentId} (${studentId})</div>
+          <div><strong>Hifz:</strong> ${std?.juz || 0} / 30 Juz</div>
+          <div><strong>Attendance:</strong> ${attRate}%</div>
+          <div><strong>Monthly Akhlaq:</strong> ${akhlaq.grade} (${akhlaq.score}%)</div>
+        </div>
+        ${akhlaq.topTags ? `<div style="font-size:0.8rem; background:#f8fafc; padding:6px; border-radius:4px; margin-bottom:10px;"><strong>Recorded Behavior Points:</strong> ${akhlaq.topTags}</div>` : ''}
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px;">
+          <thead>
+            <tr style="background:#f1f5f9; text-align:left;">
+              <th style="padding:8px; border:1px solid #cbd5e1;">Date</th>
+              <th style="padding:8px; border:1px solid #cbd5e1;">Sabaq</th>
+              <th style="padding:8px; border:1px solid #cbd5e1;">Sabqi</th>
+              <th style="padding:8px; border:1px solid #cbd5e1;">Manzil</th>
+              <th style="padding:8px; border:1px solid #cbd5e1;">Ustadh Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${stdLogs.map(l => `
+              <tr>
+                <td style="padding:6px 8px; border:1px solid #cbd5e1;">${l.dateStr}</td>
+                <td style="padding:6px 8px; border:1px solid #cbd5e1;">${l.sabaq?.target || '—'}</td>
+                <td style="padding:6px 8px; border:1px solid #cbd5e1;">${l.sabqi?.target || '—'}</td>
+                <td style="padding:6px 8px; border:1px solid #cbd5e1;">${l.manzil?.target || '—'}</td>
+                <td style="padding:6px 8px; border:1px solid #cbd5e1;">${l.note || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:0.85rem;">
+          <div>Ustadh Signature: __________________</div>
+          <div>Principal Signature: __________________</div>
+        </div>
+      `;
+
+      window.print();
+    };
+
+    function setupParentPortal() {
+      document.getElementById('p-child-name').innerText = currentUser.name || currentUser.studentId;
+      const grid = document.getElementById('parent-juz-grid');
+      grid.innerHTML = '';
+      const totalJuz = currentUser.juz || 15;
+      for (let i = 1; i <= 30; i++) {
+        const c = document.createElement('div');
+        c.className = 'juz-cell ' + (i <= totalJuz ? 'completed' : '');
+        c.innerText = i;
+        grid.appendChild(c);
+      }
+
+      const q = window.fQuery(window.fCollection(window.fDb, 'hifz_logs'), window.fWhere('studentId', '==', currentUser.studentId));
+      window.fOnSnapshot(q, (snap) => {
+        const list = [];
+        snap.forEach(d => list.push(d.data()));
+        list.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        renderList('parent-feed', list);
+      });
+    }
+
+    async function setupPrincipalPortal() {
+      globalStudents = [{ studentId: 'STD-101', name: 'Zaid Mansoor', juz: 15 }];
+      try {
+        const snap = await window.fGetDocs(window.fCollection(window.fDb, 'students'));
+        snap.forEach(d => {
+          if (d.data().studentId !== 'STD-101') globalStudents.push(d.data());
+        });
+      } catch (e) { console.log(e); }
+
+      window.fOnSnapshot(window.fCollection(window.fDb, 'hifz_logs'), (snap) => {
+        globalLogs = [];
+        snap.forEach(d => globalLogs.push(d.data()));
+        renderPortfolios();
+      });
+    }
+
+    function renderPortfolios() {
+      const container = document.getElementById('principal-students-list');
+      if (!container) return;
+
+      container.innerHTML = globalStudents.map(std => {
+        const logs = globalLogs.filter(l => l.studentId === std.studentId);
+        const present = logs.filter(l => l.attendance !== 'Absent').length;
+        const rate = logs.length > 0 ? Math.round((present / logs.length) * 100) : 100;
+        const akhlaq = calculateAkhlaqMetric(logs);
+
+        return `
+          <div class="student-card">
+            <div class="student-card-header" onclick="document.getElementById('b-${std.studentId}').classList.toggle('active')">
+              <div>
+                <strong>${std.name}</strong> (${std.studentId})
+                <div style="font-size:0.75rem; color:#047857; margin-top:2px;">Juz: ${std.juz || 0} / 30</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="tag ${akhlaq.tagClass}">Akhlaq: ${akhlaq.grade.split(' ')[0]} (${akhlaq.score}%)</span>
+                <button class="sub-tab-btn" style="background:#064e3b; color:white; padding:4px 10px;" onclick="event.stopPropagation(); printMonthlyReport('${std.studentId}')">
+                  Print Report
+                </button>
+              </div>
+            </div>
+            <div class="student-body" id="b-${std.studentId}">
+              <div style="font-size:0.85rem; margin-bottom:8px;">
+                <strong>Monthly Akhlaq Breakdown:</strong> ${akhlaq.grade} (${akhlaq.score}%)
+                ${akhlaq.topTags ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">Observed tags: ${akhlaq.topTags}</div>` : ''}
+              </div>
+              <div style="font-size:0.85rem; color:var(--text-muted);">
+                Total Sessions: ${logs.length} | Present: ${present} (${rate}% Attendance)
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderList(elemId, items) {
+      const el = document.getElementById(elemId);
+      if (!el) return;
+      if (items.length === 0) {
+        el.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No verified logs recorded yet.</p>';
+        return;
+      }
+      el.innerHTML = items.map(r => `
+        <div class="feed-item">
+          <div class="feed-header"><strong>${r.studentName}</strong> <span>${r.dateStr || ''}</span></div>
+          <div style="font-size:0.82rem; margin-top:2px;">
+            <div><strong>Sabaq:</strong> ${r.sabaq?.target} <span class="tag tag-mumtaz">${r.sabaq?.grade}</span></div>
+            <div><strong>Sabqi:</strong> ${r.sabqi?.target}</div>
+            <div><strong>Manzil:</strong> ${r.manzil?.target}</div>
+          </div>
+          ${r.note ? `<small style="color:var(--text-muted); font-style:italic;">"${r.note}"</small>` : ''}
+        </div>
+      `).join('');
+    }
+
+    window.addEventListener('firebase-ready', () => {
+      window.fOnSnapshot(window.fDoc(window.fDb, 'settings', 'general'), (snap) => {
+        if (snap.exists()) {
+          const d = snap.data();
+          if (d.mode) {
+            document.getElementById('campus-badge').innerText = d.mode === 'residential' ? 'Residential Campus' : 'Day College';
+            document.getElementById('cfg-campus-mode').value = d.mode;
+          }
+          if (d.name) {
+            document.getElementById('college-name-display').innerText = d.name;
+            document.getElementById('cfg-college-name').value = d.name;
+          }
+          if (d.sub) {
+            document.getElementById('college-sub-display').innerText = d.sub;
+            document.getElementById('cfg-college-sub').value = d.sub;
+          }
+        }
+      });
+    });
+
+    window.addEventListener('DOMContentLoaded', () => lucide.createIcons());
+  </script>
+</body>
+</html>
+

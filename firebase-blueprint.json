@@ -1,0 +1,572 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "A Hifz college student profile with memorization progress and credentials.",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "Admission ID (e.g., STD-101)",
+          "minLength": 2,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the student",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "batch": {
+          "type": "string",
+          "description": "Batch or Halqa name",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "ustadhName": {
+          "type": "string",
+          "description": "Assigned Ustadh / Teacher name",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "juzCompleted": {
+          "type": "number",
+          "description": "Number of Juz completed (0 to 30)"
+        },
+        "currentJuz": {
+          "type": "number",
+          "description": "Currently active Juz number (1 to 30)"
+        },
+        "currentSurah": {
+          "type": "string",
+          "description": "Current Surah being memorized",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "guardianName": {
+          "type": "string",
+          "description": "Parent or guardian name",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "guardianPhone": {
+          "type": "string",
+          "description": "Guardian contact phone",
+          "minLength": 3,
+          "maxLength": 30
+        },
+        "pin": {
+          "type": "string",
+          "description": "Parent portal access PIN",
+          "minLength": 4,
+          "maxLength": 16
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the authenticated user who created the record",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "studentId",
+        "name",
+        "batch",
+        "ustadhName",
+        "juzCompleted",
+        "currentJuz",
+        "currentSurah",
+        "guardianName",
+        "guardianPhone",
+        "pin",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HifzLog": {
+      "title": "HifzLog",
+      "description": "Daily Hifz verification log recording Sabaq, Sabqi, Manzil, Attendance, and Akhlaq points.",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student ID",
+          "minLength": 2,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Student display name",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "dateStr": {
+          "type": "string",
+          "description": "Formatted date string (DD/MM/YYYY)",
+          "minLength": 6,
+          "maxLength": 20
+        },
+        "isoDate": {
+          "type": "string",
+          "description": "ISO date YYYY-MM-DD",
+          "minLength": 8,
+          "maxLength": 16
+        },
+        "attendance": {
+          "type": "string",
+          "enum": ["Present", "Absent"],
+          "description": "Attendance status"
+        },
+        "sabaqTarget": {
+          "type": "string",
+          "description": "New lesson portion recited",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "sabaqGrade": {
+          "type": "string",
+          "description": "Grade for Sabaq",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "sabqiTarget": {
+          "type": "string",
+          "description": "Recent lesson revision portion",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "sabqiGrade": {
+          "type": "string",
+          "description": "Grade for Sabqi",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "manzilTarget": {
+          "type": "string",
+          "description": "Old Juz revision portion",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "manzilGrade": {
+          "type": "string",
+          "description": "Grade for Manzil",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "akhlaqScoreDelta": {
+          "type": "number",
+          "description": "Net Akhlaq points change for the day (-30 to +30)"
+        },
+        "akhlaqTags": {
+          "type": "array",
+          "description": "List of behavioral tags recorded during the session (max 10)"
+        },
+        "note": {
+          "type": "string",
+          "description": "Ustadh remarks and conduct notes",
+          "minLength": 0,
+          "maxLength": 400
+        },
+        "verifiedBy": {
+          "type": "string",
+          "description": "Name of Ustadh who verified",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the authenticated user",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "studentId",
+        "studentName",
+        "dateStr",
+        "isoDate",
+        "attendance",
+        "sabaqTarget",
+        "sabaqGrade",
+        "sabqiTarget",
+        "sabqiGrade",
+        "manzilTarget",
+        "manzilGrade",
+        "akhlaqScoreDelta",
+        "akhlaqTags",
+        "note",
+        "verifiedBy",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "MemorizationSchedule": {
+      "title": "MemorizationSchedule",
+      "description": "Structured memorization schedule and revision plan for a student.",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "studentName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "targetJuz": {
+          "type": "number",
+          "description": "Target Juz number (1-30)"
+        },
+        "targetSurahRange": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 120
+        },
+        "dailySabaqQuota": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "sabqiWindow": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "manzilCycle": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "startDate": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 16
+        },
+        "targetDate": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 16
+        },
+        "progressPercent": {
+          "type": "number",
+          "description": "Completion percentage (0-100)"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "completed", "archived"]
+        },
+        "assignedBy": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "studentId",
+        "studentName",
+        "targetJuz",
+        "targetSurahRange",
+        "dailySabaqQuota",
+        "sabqiWindow",
+        "manzilCycle",
+        "startDate",
+        "targetDate",
+        "progressPercent",
+        "status",
+        "assignedBy",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FeedbackAlert": {
+      "title": "FeedbackAlert",
+      "description": "Automated teacher feedback and early-intervention alert triggered by performance or Akhlaq rules.",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 32,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "studentName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "warning", "positive"]
+        },
+        "category": {
+          "type": "string",
+          "enum": ["sabaq_stall", "manzil_weakness", "akhlaq_drop", "attendance_risk", "milestone_excellence"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 140
+        },
+        "message": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 500
+        },
+        "recommendedAction": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 300
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "acknowledged", "resolved"]
+        },
+        "teacherResponse": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 300
+        },
+        "dateStr": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 20
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "studentId",
+        "studentName",
+        "severity",
+        "category",
+        "title",
+        "message",
+        "recommendedAction",
+        "status",
+        "teacherResponse",
+        "dateStr",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CampusNotice": {
+      "title": "CampusNotice",
+      "description": "Official campus announcement or circular published by the Principal.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 140
+        },
+        "content": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 1000
+        },
+        "audience": {
+          "type": "string",
+          "enum": ["all", "parents", "teachers"]
+        },
+        "dateStr": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 20
+        },
+        "authorName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "title",
+        "content",
+        "audience",
+        "dateStr",
+        "authorName",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CampusSettings": {
+      "title": "CampusSettings",
+      "description": "Global campus configuration for the Hifz academy.",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["residential", "day"]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "sub": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "academicTerm": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "akhlaqAlertThreshold": {
+          "type": "number",
+          "description": "Score threshold below which an automated Akhlaq alert triggers (50-90)"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "mode",
+        "name",
+        "sub",
+        "academicTerm",
+        "akhlaqAlertThreshold",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminRole": {
+      "title": "AdminRole",
+      "description": "Trusted administrator lookup document.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "Hifz college student profiles and Juz progress"
+    },
+    "/hifz_logs/{logId}": {
+      "schema": { "$ref": "#/entities/HifzLog" },
+      "description": "Daily Sabaq, Sabqi, Manzil, Attendance, and Akhlaq verification records"
+    },
+    "/schedules/{scheduleId}": {
+      "schema": { "$ref": "#/entities/MemorizationSchedule" },
+      "description": "Student memorization schedules and revision cycles"
+    },
+    "/alerts/{alertId}": {
+      "schema": { "$ref": "#/entities/FeedbackAlert" },
+      "description": "Automated teacher feedback and intervention alerts"
+    },
+    "/notices/{noticeId}": {
+      "schema": { "$ref": "#/entities/CampusNotice" },
+      "description": "Campus-wide notices and circulars"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/CampusSettings" },
+      "description": "Campus configuration documents"
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminRole" },
+      "description": "Trusted admin lookup documents"
+    }
+  }
+}

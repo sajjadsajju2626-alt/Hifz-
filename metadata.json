@@ -1,0 +1,6 @@
+{
+  "name": "Al-Furqan & Asry Academy Hifz Tracker",
+  "description": "Comprehensive Hifz college management system with daily Sabaq/Sabqi/Manzil verification, automatic monthly Akhlaq grading, memorization schedules, student analytics dashboards, and automated teacher feedback alerts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
