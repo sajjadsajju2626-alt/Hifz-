@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Al-Furqan &amp; Asry Academy Hifz Tracker</title>
-  <meta name="description" content="Hifz college memorization tracker, daily Sabaq/Sabqi/Manzil verification desk, memorization schedule manager, student performance analytics, and Automatic Monthly Akhlaq grading system." />
+  <meta name="description" content="Hifz college and Day Madrasa memorization tracker with Sabaq/Sabqi/Manzil verification, transit &amp; pickup tracking, School Exam Mode, Parent Home-Revision digital sign-off, and Automatic Monthly Akhlaq grading." />
   <meta property="og:title" content="Al-Furqan &amp; Asry Academy Hifz Tracker" />
-  <meta property="og:description" content="Hifz college memorization tracker, daily Sabaq/Sabqi/Manzil verification desk, memorization schedule manager, student performance analytics, and Automatic Monthly Akhlaq grading system." />
+  <meta property="og:description" content="Hifz college and Day Madrasa memorization tracker with Sabaq/Sabqi/Manzil verification, transit &amp; pickup tracking, School Exam Mode, Parent Home-Revision digital sign-off, and Automatic Monthly Akhlaq grading." />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -30,9 +30,11 @@
       collection,
       doc,
       setDoc,
+      updateDoc,
       addDoc,
       deleteDoc,
       getDocs,
+      getDocFromServer,
       query,
       where,
       onSnapshot,
@@ -56,9 +58,21 @@
       firebaseConfig.firestoreDatabaseId
     );
 
+    async function testConnection() {
+      try {
+        await getDocFromServer(doc(db, "test", "connection"));
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("the client is offline")) {
+          console.error("Please check your Firebase configuration.");
+        }
+      }
+    }
+    testConnection();
+
     window.fDb = db;
     window.fDoc = doc;
     window.fSetDoc = setDoc;
+    window.fUpdateDoc = updateDoc;
     window.fAddDoc = addDoc;
     window.fDeleteDoc = deleteDoc;
     window.fCollection = collection;
@@ -227,13 +241,21 @@
     }
 
     .badge-campus {
-      background: #ecfdf5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-      padding: 2px 8px;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      padding: 3px 10px;
       border-radius: 6px;
       font-weight: 700;
-      font-size: 0.72rem;
+      font-size: 0.73rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .badge-campus.residential {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
     }
 
     /* Main Container */
@@ -332,6 +354,14 @@
       margin-bottom: 1rem;
     }
 
+    .day-madrasa-panel {
+      background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1.1rem;
+    }
+
     label {
       display: block;
       font-size: 0.84rem;
@@ -340,7 +370,10 @@
       color: var(--text);
     }
 
-    input,
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="password"],
     select,
     textarea {
       width: 100%;
@@ -427,38 +460,85 @@
       border-color: #f87171;
     }
 
-    /* Attendance Toggle */
-    .att-box {
-      display: flex;
-      gap: 10px;
+    /* 4-Option Day Attendance Grid */
+    .att-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    @media (min-width: 640px) {
+      .att-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
 
     .att-btn {
-      flex: 1;
-      padding: 11px;
+      padding: 10px 8px;
       border-radius: 8px;
       border: 1px solid #cbd5e1;
       font-family: inherit;
       font-weight: 700;
-      font-size: 0.88rem;
+      font-size: 0.8rem;
       cursor: pointer;
       background: #f8fafc;
       color: var(--text-secondary);
       transition: all 0.15s ease;
+      text-align: center;
     }
 
     .att-btn.present.active {
       background: #ecfdf5;
       color: #065f46;
       border-color: #10b981;
-      box-shadow: 0 1px 2px rgba(16, 185, 129, 0.12);
+      box-shadow: 0 1px 2px rgba(16, 185, 129, 0.14);
+    }
+
+    .att-btn.late.active {
+      background: #fffbeb;
+      color: #b45309;
+      border-color: #f59e0b;
+      box-shadow: 0 1px 2px rgba(245, 158, 11, 0.14);
+    }
+
+    .att-btn.early.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #60a5fa;
+      box-shadow: 0 1px 2px rgba(59, 130, 246, 0.14);
     }
 
     .att-btn.absent.active {
       background: #fef2f2;
       color: #991b1b;
       border-color: #f87171;
-      box-shadow: 0 1px 2px rgba(239, 68, 68, 0.12);
+      box-shadow: 0 1px 2px rgba(239, 68, 68, 0.14);
+    }
+
+    /* Shift Buttons */
+    .shift-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .shift-btn {
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .shift-btn.active {
+      background: #064e3b;
+      color: #ffffff;
+      border-color: #064e3b;
     }
 
     /* Primary & Secondary Buttons */
@@ -510,6 +590,27 @@
       border-color: var(--primary);
     }
 
+    .btn-departure {
+      background: #d97706;
+      color: #ffffff;
+      border: none;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+    }
+
+    .btn-departure:hover {
+      background: #b45309;
+    }
+
     /* Sub-tabs */
     .sub-tabs {
       display: flex;
@@ -558,6 +659,16 @@
       color: #166534;
     }
 
+    .tag-late {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .tag-early {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
     .tag-absent {
       background: #fee2e2;
       color: #991b1b;
@@ -579,6 +690,20 @@
       background: #fee2e2;
       color: #b91c1c;
       border: 1px solid #fecaca;
+    }
+
+    .tag-home-verified {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+      font-weight: 700;
+    }
+
+    .tag-exam-mode {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      font-weight: 700;
     }
 
     /* Student Dossier Cards */
@@ -674,6 +799,7 @@
       font-size: 0.84rem;
       margin-bottom: 6px;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .status-banner {
@@ -821,7 +947,15 @@
       <div class="context-pills">
         <strong style="color: var(--text);" id="college-sub-display">Bendichal · Al-Furqan Hifz Campus</strong>
         <span>·</span>
-        <span class="badge-campus" id="campus-badge">Residential Campus</span>
+        <button
+          type="button"
+          class="badge-campus"
+          id="campus-badge"
+          onclick="toggleCampusModeQuick()"
+          title="Click to switch between Day College and Residential Campus mode"
+        >
+          Day College / Day Madrasa (Switch Mode)
+        </button>
         <span>·</span>
         <span id="academic-term-display">1448 AH · Rabi Al-Thani Term</span>
       </div>
@@ -842,11 +976,16 @@
           <div class="card-header-row">
             <div>
               <h2 class="card-title">Daily Hifz &amp; Akhlaq Verification Desk</h2>
-              <p class="card-subtitle">Record Sabaq, Sabqi, Manzil &amp; Automatic Monthly Akhlaq conduct points</p>
+              <p class="card-subtitle">Record Sabaq, Sabqi, Manzil, Day Madrasa Transit/Pickup &amp; Automatic Monthly Akhlaq points</p>
             </div>
-            <span style="font-family: var(--font-mono); font-size: 0.75rem; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px;" id="verifier-badge">
-              Verifier: Ustadh Ahmad
-            </span>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+              <span style="font-family: var(--font-mono); font-size: 0.75rem; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px;" id="verifier-badge">
+                Verifier: Ustadh Ahmad
+              </span>
+              <span id="ustadh-home-verified-pill" class="tag tag-home-verified hidden">
+                ✓ Parent Verified Home Revision (വീട്ടിൽ വെച്ച് കേട്ടു)
+              </span>
+            </div>
           </div>
 
           <div id="sync-status-banner" class="status-banner hidden" role="status">
@@ -861,14 +1000,126 @@
               <select id="t-student-select" onchange="handleStudentSelectChange()"></select>
             </div>
 
-            <!-- Attendance Status -->
+            <!-- Day College / Day Madrasa Shift, Transit & Exam Balance Panel -->
+            <div id="day-college-controls" class="day-madrasa-panel">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                <span style="font-size:0.82rem; font-weight:700; color:#92400e;">
+                  Day College / Day Madrasa Session &amp; Transit Controls
+                </span>
+                <span style="font-size:0.72rem; color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-weight:700;">
+                  Day Mode Active
+                </span>
+              </div>
+
+              <!-- 1. Shift / Session Logging -->
+              <div class="form-group" style="margin-bottom:0.85rem;">
+                <label>Session Shift (ഷിഫ്റ്റ് തിരഞ്ഞെടുക്കുക)</label>
+                <div class="shift-box">
+                  <button
+                    type="button"
+                    class="shift-btn active"
+                    id="btn-shift-morning"
+                    onclick="setShift('Morning Shift (Before School)')"
+                  >
+                    🌅 Morning Shift (Before School)
+                  </button>
+                  <button
+                    type="button"
+                    class="shift-btn"
+                    id="btn-shift-evening"
+                    onclick="setShift('Evening Shift (After School)')"
+                  >
+                    🌇 Evening Shift (After School)
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Transit & Pickup Tracking -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; align-items:end; margin-bottom:0.85rem;">
+                <div>
+                  <label for="commute-mode">Commute / Pickup Mode (യാത്രാ രീതി)</label>
+                  <select id="commute-mode">
+                    <option value="Parent Pickup">Parent Pickup (രക്ഷിതാവ് നേരിട്ട്)</option>
+                    <option value="Self / Walking">Self / Walking (നടന്ന് / സൈക്കിൾ)</option>
+                    <option value="Shared Auto / Van">Shared Auto / Van (ഓട്ടോ / വാൻ)</option>
+                    <option value="Public Transport">Public Transport (ബസ്)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="departure-time-input">Campus Departure Timestamp</label>
+                  <input
+                    type="text"
+                    id="departure-time-input"
+                    placeholder="e.g. 9:35 AM (Not departed yet)"
+                  />
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:0.85rem;">
+                <span style="font-size:0.75rem; color:#92400e;">
+                  1-Tap Campus Handover logs real-time departure status to the Parent Portal:
+                </span>
+                <button
+                  type="button"
+                  class="btn-departure"
+                  id="btn-mark-departed"
+                  onclick="handleOneTapDeparture()"
+                  title="Stamp current departure time and sync to Parent Portal"
+                >
+                  Mark Departed / Handed Over to Parent
+                </button>
+              </div>
+
+              <!-- 3. School & Exam Balance Mode -->
+              <div style="background:#ffffff; border:1px solid #fde68a; border-radius:8px; padding:9px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <label for="school-exam-mode" style="margin:0; display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.82rem; color:#78350f;">
+                  <input
+                    type="checkbox"
+                    id="school-exam-mode"
+                    onchange="handleSchoolExamModeToggle()"
+                    style="width:16px; height:16px; accent-color:#d97706;"
+                  />
+                  <span>
+                    <strong>School Exam Mode (സ്കൂൾ പരീക്ഷാ സമയം)</strong> — Mark Sabaq optional &amp; assign lighter home revision target
+                  </span>
+                </label>
+                <span id="exam-mode-active-pill" class="tag tag-exam-mode hidden">Sabaq Optional</span>
+              </div>
+            </div>
+
+            <!-- 5. Expanded Day Attendance Nuances -->
             <div class="form-group">
-              <label>Attendance Status</label>
-              <div class="att-box">
-                <button type="button" class="att-btn present active" id="btn-att-present" onclick="setAttendance('Present')">
+              <label>Daily Attendance Status (ഹാജർ നില)</label>
+              <div class="att-grid">
+                <button
+                  type="button"
+                  class="att-btn present active"
+                  id="btn-att-present"
+                  onclick="setAttendance('Present')"
+                >
                   ✓ Present
                 </button>
-                <button type="button" class="att-btn absent" id="btn-att-absent" onclick="setAttendance('Absent')">
+                <button
+                  type="button"
+                  class="att-btn late"
+                  id="btn-att-late"
+                  onclick="setAttendance('Late Arrival (വൈകി എത്തി)')"
+                >
+                  ⏰ Late Arrival (വൈകി എത്തി)
+                </button>
+                <button
+                  type="button"
+                  class="att-btn early"
+                  id="btn-att-early"
+                  onclick="setAttendance('Early Permission (നേരത്തെ പോയി)')"
+                >
+                  🚪 Early Permission (നേരത്തെ പോയി)
+                </button>
+                <button
+                  type="button"
+                  class="att-btn absent"
+                  id="btn-att-absent"
+                  onclick="setAttendance('Absent')"
+                >
                   ✗ Absent
                 </button>
               </div>
@@ -876,7 +1127,10 @@
 
             <!-- 1. Sabaq with Quick Portion Chips -->
             <div class="lesson-box" id="sec-sabaq">
-              <label for="sabaq-target">1. Sabaq (New Lesson · പുതിയ പാഠം)</label>
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+                <label for="sabaq-target" style="margin:0;">1. Sabaq (New Lesson · പുതിയ പാഠം)</label>
+                <span id="sabaq-optional-badge" class="tag tag-exam-mode hidden">Optional — School Exam Mode</span>
+              </div>
               <input type="text" id="sabaq-target" placeholder="Surah &amp; Ayahs (e.g. Surah Al-Kahf 75-110)" />
               <div class="chips-container">
                 <button type="button" class="portion-chip" onclick="setPortion('sabaq-target', '1/4 Page')">+ 1/4 Page</button>
@@ -934,6 +1188,27 @@
               </select>
             </div>
 
+            <!-- 4. Home Revision Target Assignment (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം) -->
+            <div class="lesson-box" id="sec-home-revision">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:6px;">
+                <label for="home-revision-target" style="margin:0;">
+                  4. Home Revision Target (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം · For Parent Sign-Off)
+                </label>
+                <span style="font-size:0.73rem; color:var(--primary); font-weight:600;">Parent Digital Sign-Off Enabled</span>
+              </div>
+              <input
+                type="text"
+                id="home-revision-target"
+                placeholder="Assign portion for parent to listen at home (e.g. Surah Al-Kahf 75-98 + Juz 15 First Half)"
+              />
+              <div class="chips-container" style="margin-bottom:0;">
+                <button type="button" class="portion-chip" onclick="setPortion('home-revision-target', 'Last 3 Pages Sabqi')">+ Last 3 Pages Sabqi</button>
+                <button type="button" class="portion-chip" onclick="setPortion('home-revision-target', 'Current Sabaq Repeat 5x')">+ Current Sabaq 5x</button>
+                <button type="button" class="portion-chip" onclick="setPortion('home-revision-target', '1/2 Juz Manzil to Parent')">+ 1/2 Juz Manzil</button>
+                <button type="button" class="portion-chip" onclick="setPortion('home-revision-target', 'Light 1/4 Juz (Exam Balance)')">+ Light 1/4 Juz (Exam Mode)</button>
+              </div>
+            </div>
+
             <!-- Akhlaq Quick Chips & Score -->
             <div class="lesson-box">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
@@ -981,9 +1256,9 @@
               <select id="feed-filter-student" onchange="renderVerificationFeed()" style="width:auto; padding:6px 10px; font-size:0.78rem;"></select>
             </div>
             <div class="form-group" style="margin-bottom:0.85rem;">
-              <input type="text" id="feed-search-input" oninput="renderVerificationFeed()" placeholder="Search student, surah, or conduct remark..." />
+              <input type="text" id="feed-search-input" oninput="renderVerificationFeed()" placeholder="Search student, shift, commute, surah, or remark..." />
             </div>
-            <div id="teacher-verification-feed" style="max-height:540px; overflow-y:auto;"></div>
+            <div id="teacher-verification-feed" style="max-height:560px; overflow-y:auto;"></div>
           </div>
         </div>
       </div>
@@ -1227,8 +1502,8 @@
             <div class="form-group">
               <label for="cfg-campus-mode">Campus Mode</label>
               <select id="cfg-campus-mode">
+                <option value="day" selected>Day College / Day Madrasa</option>
                 <option value="residential">Residential Campus</option>
-                <option value="day">Day College</option>
               </select>
             </div>
             <div class="form-group">
@@ -1264,6 +1539,9 @@
             </button>
           </div>
         </div>
+
+        <!-- Real-Time Campus Transit & Departure Status + Parent Home Revision Sign-Off -->
+        <div id="parent-day-college-cards" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px, 1fr)); gap:12px; margin-bottom:1.25rem;"></div>
 
         <div id="parent-summary-strip" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:1.25rem;"></div>
 
@@ -1364,7 +1642,7 @@
 
   <footer class="no-print">
     <div class="footer-inner">
-      <div>Asry Academy · Bendichal · Al-Furqan Hifz Campus · Automatic Monthly Akhlaq Grading &amp; Hifz Verification System</div>
+      <div>Asry Academy · Bendichal · Al-Furqan Hifz Campus · Day Madrasa Transit, Parent Home Sign-Off &amp; Auto-Akhlaq System</div>
       <div style="display:flex; gap:12px;">
         <button type="button" onclick="switchWorkspace('teacher')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Ustadh Desk</button>
         <button type="button" onclick="switchWorkspace('principal')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Principal Portal</button>
@@ -1375,7 +1653,7 @@
 
   <!-- APPLICATION LOGIC -->
   <script>
-    // Initial Seed Data for Instant Offline/Online Readiness
+    // Initial Seed Data
     const INITIAL_STUDENTS = [
       {
         studentId: "STD-101",
@@ -1447,6 +1725,13 @@
         dateStr: "04/11/2026",
         isoDate: "2026-11-04",
         attendance: "Present",
+        attendanceStatus: "Present",
+        shift: "Morning Shift (Before School)",
+        commuteMode: "Parent Pickup",
+        departureTime: "9:35 AM",
+        schoolExamMode: false,
+        homeRevisionTarget: "Surah Al-Kahf 75-98 + Juz 15 First Half",
+        parentHomeVerified: true,
         sabaqTarget: "Al-Kahf 75-98 (1 Full Page)",
         sabaqGrade: "Mumtaz (ممتاز - Excellent)",
         sabqiTarget: "Juz 16 First Half (1/2 Juz)",
@@ -1464,7 +1749,14 @@
         studentName: "Zaid Mansoor",
         dateStr: "03/11/2026",
         isoDate: "2026-11-03",
-        attendance: "Present",
+        attendance: "Late Arrival (വൈകി എത്തി)",
+        attendanceStatus: "Late Arrival (വൈകി എത്തി)",
+        shift: "Evening Shift (After School)",
+        commuteMode: "Shared Auto / Van",
+        departureTime: "6:15 PM",
+        schoolExamMode: false,
+        homeRevisionTarget: "Al-Kahf 54-74 (Repeat 5x to Parent)",
+        parentHomeVerified: true,
         sabaqTarget: "Al-Kahf 54-74 (1 Full Page)",
         sabaqGrade: "Jayyid Jiddan (جيد جداً - Very Good)",
         sabqiTarget: "Al-Kahf 1-53 (5 Pages)",
@@ -1483,6 +1775,13 @@
         dateStr: "04/11/2026",
         isoDate: "2026-11-04",
         attendance: "Present",
+        attendanceStatus: "Present",
+        shift: "Morning Shift (Before School)",
+        commuteMode: "Self / Walking",
+        departureTime: "9:30 AM",
+        schoolExamMode: true,
+        homeRevisionTarget: "Light 1/4 Juz (Exam Balance)",
+        parentHomeVerified: false,
         sabaqTarget: "Ya-Sin 41-83 (2 Pages)",
         sabaqGrade: "Mumtaz (ممتاز - Excellent)",
         sabqiTarget: "Juz 22 (1 Full Juz)",
@@ -1500,7 +1799,14 @@
         studentName: "Ahmad Fadhil",
         dateStr: "04/11/2026",
         isoDate: "2026-11-04",
-        attendance: "Present",
+        attendance: "Early Permission (നേരത്തെ പോയി)",
+        attendanceStatus: "Early Permission (നേരത്തെ പോയി)",
+        shift: "Morning Shift (Before School)",
+        commuteMode: "Parent Pickup",
+        departureTime: "8:50 AM",
+        schoolExamMode: false,
+        homeRevisionTarget: "Al-Araf 88-95 + Juz 6 First Half",
+        parentHomeVerified: false,
         sabaqTarget: "Al-Araf 88-95 (1/2 Page)",
         sabaqGrade: "Needs Repeat (ഇനിയും ഓതണം)",
         sabqiTarget: "Juz 9 (1/4 Juz)",
@@ -1519,6 +1825,13 @@
         dateStr: "02/11/2026",
         isoDate: "2026-11-02",
         attendance: "Present",
+        attendanceStatus: "Present",
+        shift: "Evening Shift (After School)",
+        commuteMode: "Shared Auto / Van",
+        departureTime: "6:20 PM",
+        schoolExamMode: false,
+        homeRevisionTarget: "Al-Araf 75-87 Repeat 5x",
+        parentHomeVerified: true,
         sabaqTarget: "Al-Araf 75-87 (1/2 Page)",
         sabaqGrade: "Needs Repeat (ഇനിയും ഓതണം)",
         sabqiTarget: "Juz 9 (1/4 Juz)",
@@ -1537,6 +1850,13 @@
         dateStr: "04/11/2026",
         isoDate: "2026-11-04",
         attendance: "Present",
+        attendanceStatus: "Present",
+        shift: "Morning Shift (Before School)",
+        commuteMode: "Public Transport",
+        departureTime: "9:40 AM",
+        schoolExamMode: false,
+        homeRevisionTarget: "Juz 27 Full Sabqi",
+        parentHomeVerified: true,
         sabaqTarget: "Al-Mujadila 1-11 (1 Full Page)",
         sabaqGrade: "Mumtaz (ممتاز - Excellent)",
         sabqiTarget: "Juz 27 (1 Full Juz)",
@@ -1545,7 +1865,7 @@
         manzilGrade: "Mumtaz (Solid / ممتاز - Excellent)",
         akhlaqScoreDelta: 2,
         akhlaqTags: ["വൃത്തി"],
-        note: "വൃത്തി — Exemplary Mus-haf care and residential dormitory neatness.",
+        note: "വൃത്തി — Exemplary Mus-haf care and neatness.",
         verifiedBy: "Ustadh Ahmad"
       },
       {
@@ -1555,6 +1875,13 @@
         dateStr: "04/11/2026",
         isoDate: "2026-11-04",
         attendance: "Present",
+        attendanceStatus: "Present",
+        shift: "Evening Shift (After School)",
+        commuteMode: "Parent Pickup",
+        departureTime: "6:10 PM",
+        schoolExamMode: false,
+        homeRevisionTarget: "Surah Yusuf 1-52 + Juz 10",
+        parentHomeVerified: false,
         sabaqTarget: "Yusuf 53-68 (1 Full Page)",
         sabaqGrade: "Jayyid (جيد - Good)",
         sabqiTarget: "Yusuf 1-52 (1/2 Juz)",
@@ -1619,8 +1946,8 @@
     const INITIAL_NOTICES = [
       {
         id: "NOT-101",
-        title: "Monthly Full-Manzil Verification & Parent Dossier Release",
-        content: "All residential and day-scholar students will undergo their monthly Manzil verification on Friday after Jumu'ah. Parents can download and print the signed Monthly Hifz & Akhlaq Report Card directly from the portal.",
+        title: "Day Madrasa Transit & Parent Home-Revision Digital Sign-Off",
+        content: "Parents of Day Madrasa students can now view live campus departure timestamps ('Left campus at 9:35 AM') and tap 'Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)' after listening to their child's daily Home Revision target.",
         audience: "all",
         dateStr: "04/11/2026",
         authorName: "Principal Admin"
@@ -1637,6 +1964,8 @@
 
     // Global State
     let currentUser = { role: "teacher", username: "ustadh1", name: "Ustadh Ahmad" };
+    let campusMode = "day"; // Default to 'day' so Day College / Day Madrasa features are immediately active
+    let currentShift = "Morning Shift (Before School)";
     let currentAttendance = "Present";
     let dailyAkhlaqDelta = 0;
     let dailyAkhlaqTags = [];
@@ -1646,7 +1975,7 @@
     let globalNotices = [...INITIAL_NOTICES];
     let currentParentStudentId = "STD-101";
 
-    // Helper: Normalize log fields (supports both flat and nested sabaq/sabqi/manzil objects)
+    // Helper: Normalize log fields (supports both flat and nested sabaq/sabqi/manzil objects + Day Madrasa fields)
     function normalizeLog(raw, docId) {
       const sabaqTarget = raw.sabaqTarget || (raw.sabaq && raw.sabaq.target) || "—";
       const sabaqGrade = raw.sabaqGrade || (raw.sabaq && raw.sabaq.grade) || "Not Recited";
@@ -1654,6 +1983,7 @@
       const sabqiGrade = raw.sabqiGrade || (raw.sabqi && raw.sabqi.grade) || "Not Recited";
       const manzilTarget = raw.manzilTarget || (raw.manzil && raw.manzil.target) || "—";
       const manzilGrade = raw.manzilGrade || (raw.manzil && raw.manzil.grade) || "Not Recited";
+      const attStatus = raw.attendanceStatus || raw.attendance || "Present";
 
       return {
         id: docId || raw.id || "LOG-" + Date.now(),
@@ -1661,7 +1991,14 @@
         studentName: raw.studentName || "Zaid Mansoor",
         dateStr: raw.dateStr || new Date().toLocaleDateString("en-GB"),
         isoDate: raw.isoDate || new Date().toISOString().slice(0, 10),
-        attendance: raw.attendance === "Absent" ? "Absent" : "Present",
+        attendance: attStatus,
+        attendanceStatus: attStatus,
+        shift: raw.shift || "Morning Shift (Before School)",
+        commuteMode: raw.commuteMode || "Parent Pickup",
+        departureTime: typeof raw.departureTime === "string" ? raw.departureTime : "",
+        schoolExamMode: Boolean(raw.schoolExamMode),
+        homeRevisionTarget: typeof raw.homeRevisionTarget === "string" ? raw.homeRevisionTarget : "",
+        parentHomeVerified: Boolean(raw.parentHomeVerified),
         sabaqTarget,
         sabaqGrade,
         sabqiTarget,
@@ -1671,7 +2008,219 @@
         akhlaqScoreDelta: typeof raw.akhlaqScoreDelta === "number" ? raw.akhlaqScoreDelta : 0,
         akhlaqTags: Array.isArray(raw.akhlaqTags) ? raw.akhlaqTags : [],
         note: typeof raw.note === "string" ? raw.note : "",
-        verifiedBy: raw.verifiedBy || "Ustadh Ahmad"
+        verifiedBy: raw.verifiedBy || "Ustadh Ahmad",
+        ownerId: raw.ownerId || "portal-session",
+        createdAt: raw.createdAt || null
+      };
+    }
+
+    // Apply Campus Mode ("day" vs "residential")
+    function applyCampusModeUI() {
+      const badge = document.getElementById("campus-badge");
+      const dayControls = document.getElementById("day-college-controls");
+      const cfgMode = document.getElementById("cfg-campus-mode");
+
+      if (badge) {
+        badge.innerText =
+          campusMode === "day"
+            ? "Day College / Day Madrasa (Switch Mode)"
+            : "Residential Campus (Switch Mode)";
+        badge.classList.toggle("residential", campusMode === "residential");
+      }
+      if (dayControls) {
+        dayControls.classList.toggle("hidden", campusMode !== "day");
+      }
+      if (cfgMode) {
+        cfgMode.value = campusMode;
+      }
+      renderAllViews();
+    }
+
+    window.toggleCampusModeQuick = function() {
+      campusMode = campusMode === "day" ? "residential" : "day";
+      applyCampusModeUI();
+    };
+
+    // Shift Selection ("Morning Shift (Before School)" vs "Evening Shift (After School)")
+    window.setShift = function(shiftValue) {
+      currentShift = shiftValue;
+      const mBtn = document.getElementById("btn-shift-morning");
+      const eBtn = document.getElementById("btn-shift-evening");
+      if (mBtn) mBtn.classList.toggle("active", shiftValue.includes("Morning"));
+      if (eBtn) eBtn.classList.toggle("active", shiftValue.includes("Evening"));
+    };
+
+    // School Exam Mode Toggle
+    window.handleSchoolExamModeToggle = function() {
+      const cb = document.getElementById("school-exam-mode");
+      const isExam = Boolean(cb && cb.checked);
+      const pill = document.getElementById("exam-mode-active-pill");
+      const sabaqOpt = document.getElementById("sabaq-optional-badge");
+      const homeInput = document.getElementById("home-revision-target");
+      const sabaqInput = document.getElementById("sabaq-target");
+
+      if (pill) pill.classList.toggle("hidden", !isExam);
+      if (sabaqOpt) sabaqOpt.classList.toggle("hidden", !isExam);
+
+      if (isExam) {
+        if (sabaqInput) {
+          sabaqInput.placeholder = "Optional during School Exams (leave blank to mark Exam Exempted)";
+        }
+        if (homeInput && !homeInput.value.trim()) {
+          homeInput.value = "Light 1/4 Juz Revision (School Exam Balance Mode)";
+        }
+      } else {
+        if (sabaqInput) {
+          sabaqInput.placeholder = "Surah & Ayahs (e.g. Surah Al-Kahf 75-110)";
+        }
+      }
+    };
+
+    const localLogOverrides = {};
+
+    // 1-Tap Departure Handler ("Mark Departed / Handed Over to Parent")
+    window.handleOneTapDeparture = async function(specificLogId) {
+      const nowTime = new Date().toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      });
+      const commuteEl = document.getElementById("commute-mode");
+      const selectedCommute = commuteEl ? commuteEl.value : "Parent Pickup";
+
+      const depInput = document.getElementById("departure-time-input");
+      if (depInput && !specificLogId) {
+        depInput.value = nowTime;
+      }
+
+      const sel = document.getElementById("t-student-select");
+      const activeStudentId = sel ? sel.value : "STD-101";
+
+      // Find target log to stamp departureTime on
+      const targetLog = specificLogId
+        ? globalLogs.find((l) => l.id === specificLogId)
+        : globalLogs.find((l) => l.studentId === activeStudentId);
+
+      if (targetLog) {
+        targetLog.departureTime = nowTime;
+        if (!specificLogId && selectedCommute) {
+          targetLog.commuteMode = selectedCommute;
+        }
+        localLogOverrides[targetLog.id] = {
+          ...(localLogOverrides[targetLog.id] || {}),
+          departureTime: targetLog.departureTime,
+          commuteMode: targetLog.commuteMode
+        };
+        renderAllViews();
+
+        try {
+          if (window.fDb && window.fUpdateDoc && window.fDoc) {
+            await window.fUpdateDoc(
+              window.fDoc(window.fDb, "hifz_logs", targetLog.id),
+              {
+                departureTime: String(targetLog.departureTime || "").slice(0, 60),
+                commuteMode: String(targetLog.commuteMode || "Parent Pickup").slice(0, 60),
+                updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+              }
+            );
+          }
+        } catch (e) {
+          if (e && e.code === "not-found" && window.fDb && window.fSetDoc && window.fDoc) {
+            try {
+              await window.fSetDoc(
+                window.fDoc(window.fDb, "hifz_logs", targetLog.id),
+                buildFirestorePayloadFromLog(targetLog)
+              );
+            } catch (innerErr) {
+              console.warn("Departure create fallback notice:", innerErr);
+            }
+          } else {
+            console.warn("Departure sync notice:", e);
+          }
+        }
+
+        showSyncBanner(
+          "success",
+          `Marked ${targetLog.studentName} departed campus at ${nowTime} (${targetLog.commuteMode}). Live on Parent Portal.`
+        );
+      } else {
+        showSyncBanner(
+          "success",
+          `Departure time (${nowTime}) stamped for current session.`
+        );
+      }
+    };
+
+    // 1-Tap Parent Home-Revision Digital Sign-Off ("Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)")
+    window.handleParentVerifyHomeRevision = async function(logId) {
+      const targetLog = logId
+        ? globalLogs.find((l) => l.id === logId)
+        : globalLogs.find((l) => l.studentId === currentParentStudentId);
+
+      if (!targetLog) return;
+
+      targetLog.parentHomeVerified = true;
+      localLogOverrides[targetLog.id] = {
+        ...(localLogOverrides[targetLog.id] || {}),
+        parentHomeVerified: true
+      };
+      renderAllViews();
+
+      try {
+        if (window.fDb && window.fUpdateDoc && window.fDoc) {
+          await window.fUpdateDoc(
+            window.fDoc(window.fDb, "hifz_logs", targetLog.id),
+            {
+              parentHomeVerified: true,
+              updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+            }
+          );
+        }
+      } catch (e) {
+        if (e && e.code === "not-found" && window.fDb && window.fSetDoc && window.fDoc) {
+          try {
+            await window.fSetDoc(
+              window.fDoc(window.fDb, "hifz_logs", targetLog.id),
+              buildFirestorePayloadFromLog(targetLog)
+            );
+          } catch (innerErr) {
+            console.warn("Parent verification create fallback notice:", innerErr);
+          }
+        } else {
+          console.warn("Parent verification sync notice:", e);
+        }
+      }
+
+      window.alert("Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു) — Digital sign-off sent to Ustadh Desk!");
+    };
+
+    function buildFirestorePayloadFromLog(log) {
+      return {
+        studentId: String(log.studentId || "STD-101").slice(0, 32),
+        studentName: String(log.studentName || "Zaid Mansoor").slice(0, 100),
+        dateStr: String(log.dateStr || new Date().toLocaleDateString("en-GB")).slice(0, 20),
+        isoDate: String(log.isoDate || new Date().toISOString().slice(0, 10)).slice(0, 16),
+        attendance: log.attendance || "Present",
+        attendanceStatus: log.attendanceStatus || log.attendance || "Present",
+        shift: String(log.shift || "Morning Shift (Before School)").slice(0, 60),
+        commuteMode: String(log.commuteMode || "Parent Pickup").slice(0, 60),
+        departureTime: String(log.departureTime || "").slice(0, 60),
+        schoolExamMode: Boolean(log.schoolExamMode),
+        homeRevisionTarget: String(log.homeRevisionTarget || "").slice(0, 200),
+        parentHomeVerified: Boolean(log.parentHomeVerified),
+        sabaqTarget: String(log.sabaqTarget || "—").slice(0, 120),
+        sabaqGrade: String(log.sabaqGrade || "Not Recited").slice(0, 60),
+        sabqiTarget: String(log.sabqiTarget || "—").slice(0, 120),
+        sabqiGrade: String(log.sabqiGrade || "Not Recited").slice(0, 60),
+        manzilTarget: String(log.manzilTarget || "—").slice(0, 120),
+        manzilGrade: String(log.manzilGrade || "Not Recited").slice(0, 60),
+        akhlaqScoreDelta: typeof log.akhlaqScoreDelta === "number" ? log.akhlaqScoreDelta : 0,
+        akhlaqTags: Array.isArray(log.akhlaqTags) ? log.akhlaqTags.slice(0, 10) : [],
+        note: String(log.note || "").slice(0, 400),
+        verifiedBy: String(log.verifiedBy || "Ustadh Ahmad").slice(0, 80),
+        ownerId: "portal-session",
+        createdAt: window.fTimestamp ? window.fTimestamp() : new Date(),
+        updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
       };
     }
 
@@ -1714,17 +2263,33 @@
       badge.style.color = dailyAkhlaqDelta > 0 ? "#047857" : dailyAkhlaqDelta < 0 ? "#b91c1c" : "#475569";
     }
 
-    // Attendance Toggle
+    // 4-Option Day Attendance Toggle
     window.setAttendance = function(status) {
-      currentAttendance = status === "Absent" ? "Absent" : "Present";
-      document.getElementById("btn-att-present").classList.toggle("active", currentAttendance === "Present");
-      document.getElementById("btn-att-absent").classList.toggle("active", currentAttendance === "Absent");
+      const validStatuses = [
+        "Present",
+        "Late Arrival (വൈകി എത്തി)",
+        "Early Permission (നേരത്തെ പോയി)",
+        "Absent"
+      ];
+      currentAttendance = validStatuses.includes(status) ? status : "Present";
+
+      document.getElementById("btn-att-present")?.classList.toggle("active", currentAttendance === "Present");
+      document.getElementById("btn-att-late")?.classList.toggle("active", currentAttendance === "Late Arrival (വൈകി എത്തി)");
+      document.getElementById("btn-att-early")?.classList.toggle("active", currentAttendance === "Early Permission (നേരത്തെ പോയി)");
+      document.getElementById("btn-att-absent")?.classList.toggle("active", currentAttendance === "Absent");
 
       ["sec-sabaq", "sec-sabqi", "sec-manzil"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle("hidden", currentAttendance === "Absent");
       });
     };
+
+    function getAttendanceTagClass(att) {
+      if (att === "Absent") return "tag-absent";
+      if (att && att.includes("Late")) return "tag-late";
+      if (att && att.includes("Early")) return "tag-early";
+      return "tag-present";
+    }
 
     // Automatic Monthly Akhlaq Grading Engine
     function calculateAkhlaqMetric(studentLogs) {
@@ -1825,16 +2390,24 @@
         const stdObj = globalStudents.find((s) => s.studentId === safeStudentId);
         const safeStudentName = (stdObj && stdObj.name ? stdObj.name : "Zaid Mansoor").trim();
         const isAbsent = currentAttendance === "Absent";
+        const isExamMode = Boolean(document.getElementById("school-exam-mode")?.checked);
 
         const rawSabaq = (document.getElementById("sabaq-target")?.value || "").trim();
         const rawSabqi = (document.getElementById("sabqi-target")?.value || "").trim();
         const rawManzil = (document.getElementById("manzil-target")?.value || "").trim();
+        const rawHomeRev = (document.getElementById("home-revision-target")?.value || "").trim();
+        const rawDepTime = (document.getElementById("departure-time-input")?.value || "").trim();
+        const rawCommute = (document.getElementById("commute-mode")?.value || "Parent Pickup").trim();
 
         const sabaqGrade = document.getElementById("sabaq-grade")?.value || "Mumtaz (ممتاز - Excellent)";
         const sabqiGrade = document.getElementById("sabqi-grade")?.value || "Mumtaz (ممتاز - Excellent)";
         const manzilGrade = document.getElementById("manzil-grade")?.value || "Mumtaz (Solid / ممتاز - Excellent)";
 
-        const defaultSabaq = stdObj && stdObj.currentSurah ? stdObj.currentSurah : "1 Full Page";
+        const defaultSabaq = isExamMode
+          ? "Optional — School Exam Mode"
+          : stdObj && stdObj.currentSurah
+          ? stdObj.currentSurah
+          : "1 Full Page";
         const defaultSabqi = stdObj ? "Juz " + stdObj.currentJuz + " (1/2 Juz)" : "1/2 Juz";
         const defaultManzil = stdObj ? "Juz " + Math.max(1, stdObj.juzCompleted) + " (1 Full Juz)" : "1 Full Juz";
 
@@ -1856,7 +2429,17 @@
           ? "Not Recited"
           : rawManzil || defaultManzil;
 
-        const safeNote = (document.getElementById("teacher-note")?.value || "").trim() || (isAbsent ? "Marked Absent" : "");
+        const homeRevisionTarget =
+          rawHomeRev ||
+          (isExamMode
+            ? "Light 1/4 Juz Revision (School Exam Balance Mode)"
+            : !isAbsent
+            ? sabaqTarget + " + " + sabqiTarget
+            : "");
+
+        const safeNote =
+          (document.getElementById("teacher-note")?.value || "").trim() ||
+          (isAbsent ? "Marked Absent" : isExamMode ? "School Exam Mode — lighter home target assigned" : "");
         const safeVerifier = (currentUser && currentUser.name ? currentUser.name : "Ustadh Ahmad").trim() || "Ustadh Ahmad";
         const now = new Date();
         const dateStr = now.toLocaleDateString("en-GB");
@@ -1866,19 +2449,30 @@
         const safeTags = Array.isArray(dailyAkhlaqTags)
           ? dailyAkhlaqTags.filter((t) => typeof t === "string" && t.trim().length > 0).slice(0, 10)
           : [];
-        const safeDelta = typeof dailyAkhlaqDelta === "number" && !Number.isNaN(dailyAkhlaqDelta)
-          ? Math.max(-30, Math.min(30, dailyAkhlaqDelta))
-          : 0;
+        const safeDelta =
+          typeof dailyAkhlaqDelta === "number" && !Number.isNaN(dailyAkhlaqDelta)
+            ? Math.max(-30, Math.min(30, dailyAkhlaqDelta))
+            : 0;
 
-        // Schema-validated Firestore payload
+        const shiftToSave = campusMode === "day" ? currentShift : "Full Day / Residential";
+        const commuteToSave = campusMode === "day" ? rawCommute || "Parent Pickup" : "Residential Hostel";
+
+        // Schema-validated Firestore payload including all 7 Day College attributes
         const firestorePayload = {
           studentId: safeStudentId,
           studentName: safeStudentName,
           dateStr: dateStr,
           isoDate: isoDate,
-          attendance: isAbsent ? "Absent" : "Present",
+          attendance: currentAttendance,
+          attendanceStatus: currentAttendance,
+          shift: shiftToSave.slice(0, 60),
+          commuteMode: commuteToSave.slice(0, 60),
+          departureTime: rawDepTime.slice(0, 60),
+          schoolExamMode: isExamMode,
+          homeRevisionTarget: homeRevisionTarget.slice(0, 200),
+          parentHomeVerified: false,
           sabaqTarget: sabaqTarget.slice(0, 120),
-          sabaqGrade: (isAbsent ? "Not Recited" : sabaqGrade).slice(0, 60),
+          sabaqGrade: (isAbsent ? "Not Recited" : isExamMode && !rawSabaq ? "Exempted (School Exam Mode)" : sabaqGrade).slice(0, 60),
           sabqiTarget: sabqiTarget.slice(0, 120),
           sabqiGrade: (isAbsent ? "Not Recited" : sabqiGrade).slice(0, 60),
           manzilTarget: manzilTarget.slice(0, 120),
@@ -1908,7 +2502,13 @@
         document.getElementById("sabaq-target").value = "";
         document.getElementById("sabqi-target").value = "";
         document.getElementById("manzil-target").value = "";
+        document.getElementById("home-revision-target").value = "";
+        document.getElementById("departure-time-input").value = "";
         document.getElementById("teacher-note").value = "";
+        const examCb = document.getElementById("school-exam-mode");
+        if (examCb) examCb.checked = false;
+        handleSchoolExamModeToggle();
+
         dailyAkhlaqDelta = 0;
         dailyAkhlaqTags = [];
         updateAkhlaqDeltaUI();
@@ -1916,9 +2516,7 @@
 
         showSyncBanner(
           "success",
-          isAbsent
-            ? "Synced successfully! Marked " + safeStudentName + " Absent (" + dateStr + ")."
-            : "Synced successfully! Verified " + safeStudentName + " (" + dateStr + ")."
+          `Synced successfully! Logged ${safeStudentName} (${currentAttendance} · ${shiftToSave}).`
         );
         window.alert("Synced successfully!");
       } catch (error) {
@@ -2086,15 +2684,16 @@
       const sub = document.getElementById("cfg-college-sub").value.trim();
       const academicTerm = document.getElementById("cfg-academic-term").value.trim();
 
-      document.getElementById("campus-badge").innerText = mode === "residential" ? "Residential Campus" : "Day College";
+      campusMode = mode === "residential" ? "residential" : "day";
       document.getElementById("college-name-display").innerText = name;
       document.getElementById("college-sub-display").innerText = sub;
       document.getElementById("academic-term-display").innerText = academicTerm;
+      applyCampusModeUI();
 
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
           await window.fSetDoc(window.fDoc(window.fDb, "settings", "general"), {
-            mode,
+            mode: campusMode,
             name,
             sub,
             academicTerm,
@@ -2277,10 +2876,11 @@
       }
     };
 
-    // Render Right-Column Active Student Snapshot on Ustadh Desk
+    // Render Right-Column Active Student Snapshot on Ustadh Desk (including Parent Home Verified Green Badge)
     function renderSelectedStudentSnapshot() {
       const container = document.getElementById("selected-student-snapshot");
       const sel = document.getElementById("t-student-select");
+      const headerHomePill = document.getElementById("ustadh-home-verified-pill");
       if (!container || !sel) return;
 
       const studentId = sel.value || "STD-101";
@@ -2288,8 +2888,14 @@
       if (!std) return;
 
       const stdLogs = globalLogs.filter((l) => l.studentId === std.studentId);
+      const latestLog = stdLogs[0] || null;
       const akhlaq = calculateAkhlaqMetric(stdLogs);
       const activeSch = globalSchedules.find((s) => s.studentId === std.studentId && s.status === "active");
+
+      const isParentVerified = Boolean(latestLog && latestLog.parentHomeVerified);
+      if (headerHomePill) {
+        headerHomePill.classList.toggle("hidden", !isParentVerified);
+      }
 
       container.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
@@ -2302,6 +2908,34 @@
             <div style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-top:4px;">Juz ${std.juzCompleted} / 30</div>
           </div>
         </div>
+
+        ${
+          latestLog
+            ? `
+          <div style="margin-top:10px; padding:9px 11px; border-radius:8px; background:${
+            isParentVerified ? "#f0fdf4" : "#fffbeb"
+          }; border:1px solid ${isParentVerified ? "#86efac" : "#fde68a"}; font-size:0.76rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
+              <strong style="color:${isParentVerified ? "#166534" : "#92400e"};">
+                ${
+                  isParentVerified
+                    ? "✓ Parent Verified Home Revision (വീട്ടിൽ വെച്ച് കേട്ടു)"
+                    : "⏳ Awaiting Parent Home-Revision Sign-Off"
+                }
+              </strong>
+              ${
+                latestLog.departureTime
+                  ? `<span style="font-family:var(--font-mono); font-weight:700; color:#065f46;">Left campus: ${latestLog.departureTime}</span>`
+                  : `<span style="color:#b45309; font-weight:600;">On Campus</span>`
+              }
+            </div>
+            <div style="color:var(--text-secondary); margin-top:3px;">
+              <strong>Assigned Home Target:</strong> ${latestLog.homeRevisionTarget || "Not assigned"} · <strong>Commute:</strong> ${latestLog.commuteMode || "Parent Pickup"}
+            </div>
+          </div>`
+            : ""
+        }
+
         ${
           activeSch
             ? `
@@ -2340,6 +2974,8 @@
           l.studentName.toLowerCase().includes(q) ||
           l.studentId.toLowerCase().includes(q) ||
           l.sabaqTarget.toLowerCase().includes(q) ||
+          (l.shift && l.shift.toLowerCase().includes(q)) ||
+          (l.commuteMode && l.commuteMode.toLowerCase().includes(q)) ||
           l.note.toLowerCase().includes(q);
         return matchesStudent && matchesQuery;
       });
@@ -2360,20 +2996,40 @@
               <strong>${log.studentName}</strong>
               <span style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted);">(${log.studentId})</span>
             </div>
-            <div style="display:flex; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted);">${log.dateStr}</span>
               <span>·</span>
-              <span class="tag ${log.attendance === "Absent" ? "tag-absent" : "tag-present"}">${log.attendance}</span>
+              <span class="tag ${getAttendanceTagClass(log.attendanceStatus)}">${log.attendanceStatus}</span>
+              ${log.schoolExamMode ? `<span class="tag tag-exam-mode">School Exam Mode</span>` : ""}
+              ${log.parentHomeVerified ? `<span class="tag tag-home-verified">✓ Home Verified</span>` : ""}
               <button type="button" onclick="handleDeleteLog('${log.id}')" title="Delete Log" aria-label="Delete log for ${log.studentName} on ${log.dateStr}" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.8rem; padding:2px 4px;">✕</button>
             </div>
           </div>
+
+          <div style="font-size:0.74rem; color:#475569; margin-bottom:5px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <span><strong>Shift:</strong> ${log.shift || "Morning Shift (Before School)"}</span>
+            <span>·</span>
+            <span><strong>Commute:</strong> ${log.commuteMode || "Parent Pickup"}</span>
+            <span>·</span>
+            ${
+              log.departureTime
+                ? `<span style="color:#047857; font-weight:700;">Left campus at ${log.departureTime}</span>`
+                : `<button type="button" onclick="handleOneTapDeparture('${log.id}')" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; border-radius:4px; padding:1px 7px; font-size:0.71rem; font-weight:700; cursor:pointer;">Mark Departed</button>`
+            }
+          </div>
+
           ${
-            log.attendance !== "Absent"
+            log.attendanceStatus !== "Absent"
               ? `
             <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.45;">
               <div><strong>Sabaq:</strong> ${log.sabaqTarget} · <span style="color:#047857; font-weight:700;">${log.sabaqGrade}</span></div>
               <div><strong>Sabqi:</strong> ${log.sabqiTarget} · ${log.sabqiGrade}</div>
               <div><strong>Manzil:</strong> ${log.manzilTarget} · ${log.manzilGrade}</div>
+              ${
+                log.homeRevisionTarget
+                  ? `<div style="color:#065f46; margin-top:2px;"><strong>Home Revision (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം):</strong> ${log.homeRevisionTarget}</div>`
+                  : ""
+              }
             </div>`
               : ""
           }
@@ -2476,7 +3132,7 @@
       const kpiStrip = document.getElementById("analytics-kpi-strip");
       if (kpiStrip) {
         const totalJuz = globalStudents.reduce((acc, s) => acc + (Number(s.juzCompleted) || 0), 0);
-        const presentLogs = globalLogs.filter((l) => l.attendance !== "Absent").length;
+        const presentLogs = globalLogs.filter((l) => l.attendanceStatus !== "Absent").length;
         const attAvg = globalLogs.length > 0 ? Math.round((presentLogs / globalLogs.length) * 100) : 100;
         const avgAkhlaq = Math.round(
           globalStudents.reduce((acc, s) => acc + calculateAkhlaqMetric(globalLogs.filter((l) => l.studentId === s.studentId)).score, 0) /
@@ -2537,7 +3193,7 @@
         tbody.innerHTML = globalStudents
           .map((std) => {
             const logs = globalLogs.filter((l) => l.studentId === std.studentId);
-            const present = logs.filter((l) => l.attendance !== "Absent").length;
+            const present = logs.filter((l) => l.attendanceStatus !== "Absent").length;
             const attRate = logs.length > 0 ? Math.round((present / logs.length) * 100) : 100;
             const mumtazCount = logs.filter((l) => l.sabaqGrade.includes("Mumtaz")).length;
             const mumtazRate = present > 0 ? Math.round((mumtazCount / present) * 100) : 100;
@@ -2572,7 +3228,8 @@
         container.innerHTML = globalStudents
           .map((std) => {
             const logs = globalLogs.filter((l) => l.studentId === std.studentId);
-            const present = logs.filter((l) => l.attendance !== "Absent").length;
+            const latest = logs[0] || null;
+            const present = logs.filter((l) => l.attendanceStatus !== "Absent").length;
             const rate = logs.length > 0 ? Math.round((present / logs.length) * 100) : 100;
             const akhlaq = calculateAkhlaqMetric(logs);
 
@@ -2587,6 +3244,7 @@
                     </div>
                   </div>
                   <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    ${latest && latest.parentHomeVerified ? `<span class="tag tag-home-verified">✓ Parent Verified Home</span>` : ""}
                     <span class="tag ${akhlaq.tagClass}">Akhlaq: ${akhlaq.letter} (${akhlaq.score}%)</span>
                     <button type="button" class="btn-secondary" style="background:#064e3b; color:#ffffff; border-color:#064e3b;" onclick="event.stopPropagation(); openReportCardModal('${std.studentId}')">
                       Print Report Card
@@ -2602,10 +3260,10 @@
                       ${akhlaq.topTags ? `<div style="font-size:0.74rem; color:var(--text-muted); margin-top:4px;"><strong>Logged Tags:</strong> ${akhlaq.topTags}</div>` : ""}
                     </div>
                     <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border);">
-                      <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">GUARDIAN &amp; ATTENDANCE DOSSIER</div>
-                      <div style="font-size:0.84rem; margin-top:4px;"><strong>Guardian:</strong> ${std.guardianName} (${std.guardianPhone})</div>
-                      <div style="font-size:0.84rem; margin-top:2px;"><strong>Assigned Ustadh:</strong> ${std.ustadhName}</div>
-                      <div style="font-size:0.84rem; margin-top:2px;"><strong>Attendance:</strong> ${present} / ${logs.length} Sessions (${rate}%)</div>
+                      <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">DAY MADRASA TRANSIT &amp; GUARDIAN DOSSIER</div>
+                      <div style="font-size:0.82rem; margin-top:4px;"><strong>Guardian:</strong> ${std.guardianName} (${std.guardianPhone})</div>
+                      <div style="font-size:0.82rem; margin-top:2px;"><strong>Commute &amp; Departure:</strong> ${latest ? (latest.commuteMode || "Parent Pickup") + (latest.departureTime ? " · Left at " + latest.departureTime : " · On Campus") : "—"}</div>
+                      <div style="font-size:0.82rem; margin-top:2px;"><strong>Attendance:</strong> ${present} / ${logs.length} Sessions (${rate}%)</div>
                     </div>
                   </div>
                 </div>
@@ -2633,7 +3291,7 @@
       }
     }
 
-    // Render Parent Progress View
+    // Render Parent Progress View (including Real-Time Departure Status & 1-Tap Home Revision Sign-Off)
     function renderParentPortal() {
       const std = globalStudents.find((s) => s.studentId === currentParentStudentId) || globalStudents[0];
       if (!std) return;
@@ -2644,9 +3302,72 @@
       if (metaEl) metaEl.innerText = `Admission ID: ${std.studentId} · ${std.batch} · Assigned Ustadh: ${std.ustadhName}`;
 
       const stdLogs = globalLogs.filter((l) => l.studentId === std.studentId);
-      const present = stdLogs.filter((l) => l.attendance !== "Absent").length;
+      const latestLog = stdLogs[0] || null;
+      const present = stdLogs.filter((l) => l.attendanceStatus !== "Absent").length;
       const attRate = stdLogs.length > 0 ? Math.round((present / stdLogs.length) * 100) : 100;
       const akhlaq = calculateAkhlaqMetric(stdLogs);
+
+      // Day College Transit & Home-Revision Digital Sign-Off Cards
+      const dayCardsContainer = document.getElementById("parent-day-college-cards");
+      if (dayCardsContainer) {
+        const depTime = latestLog && latestLog.departureTime ? latestLog.departureTime : "";
+        const commute = latestLog && latestLog.commuteMode ? latestLog.commuteMode : "Parent Pickup";
+        const shift = latestLog && latestLog.shift ? latestLog.shift : "Morning Shift (Before School)";
+        const homeTarget =
+          latestLog && latestLog.homeRevisionTarget
+            ? latestLog.homeRevisionTarget
+            : std.currentSurah + " (Daily Home Revision)";
+        const isVerified = Boolean(latestLog && latestLog.parentHomeVerified);
+
+        dayCardsContainer.innerHTML = `
+          <!-- Card 1: Real-Time Transit & Pickup Status -->
+          <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+              <span style="font-size:0.74rem; font-weight:700; color:#92400e;">REAL-TIME CAMPUS TRANSIT &amp; PICKUP STATUS</span>
+              <span class="tag ${depTime ? "tag-present" : "tag-late"}">
+                ${depTime ? "Left campus at " + depTime : "Currently On Campus"}
+              </span>
+            </div>
+            <div style="font-size:0.95rem; font-weight:700; color:#78350f; margin-bottom:4px;">
+              ${depTime ? `Left campus at ${depTime}` : "In Session at Madrasa Campus"}
+            </div>
+            <div style="font-size:0.78rem; color:#92400e;">
+              <strong>Commute Mode:</strong> ${commute} · <strong>Shift:</strong> ${shift}
+            </div>
+          </div>
+
+          <!-- Card 2: Parent Home-Revision Digital Sign-Off (ഡിജിറ്റൽ ഒപ്പ്) -->
+          <div style="background:${isVerified ? "#f0fdf4" : "#ffffff"}; border:1px solid ${
+            isVerified ? "#86efac" : "#cbd5e1"
+          }; border-radius:10px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+              <span style="font-size:0.74rem; font-weight:700; color:#065f46;">HOME REVISION TARGET (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം)</span>
+              ${
+                isVerified
+                  ? `<span class="tag tag-home-verified">✓ Digital Sign-Off Complete</span>`
+                  : `<span class="tag tag-late">Pending Parent Sign-Off</span>`
+              }
+            </div>
+            <div style="font-size:0.88rem; font-weight:700; color:var(--text); margin-bottom:10px;">
+              ${homeTarget}
+              ${latestLog && latestLog.schoolExamMode ? ` <span class="tag tag-exam-mode">School Exam Mode</span>` : ""}
+            </div>
+            <button
+              type="button"
+              id="btn-parent-home-verify"
+              class="btn-primary"
+              style="padding:9px 14px; font-size:0.82rem; background:${isVerified ? "#059669" : "#064e3b"};"
+              onclick="handleParentVerifyHomeRevision('${latestLog ? latestLog.id : ""}')"
+            >
+              ${
+                isVerified
+                  ? "✓ Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)"
+                  : "Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)"
+              }
+            </button>
+          </div>
+        `;
+      }
 
       const summaryStrip = document.getElementById("parent-summary-strip");
       if (summaryStrip) {
@@ -2725,16 +3446,28 @@
               (r) => `
             <div class="feed-item">
               <div class="feed-header">
-                <strong>${r.dateStr}</strong>
-                <span class="tag ${r.attendance === "Absent" ? "tag-absent" : "tag-present"}">${r.attendance}</span>
+                <div>
+                  <strong>${r.dateStr}</strong> · <span style="font-size:0.75rem; color:var(--text-muted);">${r.shift || "Morning Shift"}</span>
+                </div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  ${r.departureTime ? `<span class="tag tag-present">Left campus at ${r.departureTime}</span>` : ""}
+                  <span class="tag ${getAttendanceTagClass(r.attendanceStatus)}">${r.attendanceStatus}</span>
+                </div>
               </div>
               ${
-                r.attendance !== "Absent"
+                r.attendanceStatus !== "Absent"
                   ? `
                 <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.45;">
                   <div><strong>Sabaq:</strong> ${r.sabaqTarget} <span class="tag tag-mumtaz">${r.sabaqGrade}</span></div>
                   <div><strong>Sabqi:</strong> ${r.sabqiTarget} (${r.sabqiGrade})</div>
                   <div><strong>Manzil:</strong> ${r.manzilTarget} (${r.manzilGrade})</div>
+                  ${
+                    r.homeRevisionTarget
+                      ? `<div style="margin-top:3px; color:#065f46;"><strong>Home Revision:</strong> ${r.homeRevisionTarget} ${
+                          r.parentHomeVerified ? '<span class="tag tag-home-verified">✓ Verified at Home</span>' : ""
+                        }</div>`
+                      : ""
+                  }
                 </div>`
                   : ""
               }
@@ -2752,7 +3485,7 @@
       const std = globalStudents.find((s) => s.studentId === studentId) || globalStudents[0];
       const stdLogs = globalLogs.filter((l) => l.studentId === std.studentId);
       const total = stdLogs.length;
-      const present = stdLogs.filter((l) => l.attendance !== "Absent").length;
+      const present = stdLogs.filter((l) => l.attendanceStatus !== "Absent").length;
       const attRate = total > 0 ? Math.round((present / total) * 100) : 100;
       const akhlaq = calculateAkhlaqMetric(stdLogs);
       const collegeName = document.getElementById("college-name-display")?.innerText || "Asry Academy";
@@ -2782,14 +3515,14 @@
             ${akhlaq.topTags ? `<div style="margin-top:3px; color:#475569; font-size:0.75rem;"><strong>Recorded Conduct Tags:</strong> ${akhlaq.topTags}</div>` : ""}
           </div>
 
-          <table style="width:100%; border-collapse:collapse; font-size:0.76rem; margin-bottom:16px;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.74rem; margin-bottom:16px;">
             <thead>
               <tr style="background:#f1f5f9; text-align:left;">
-                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Date</th>
-                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Sabaq (New Lesson)</th>
-                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Sabqi (Recent)</th>
-                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Manzil (Old Juz)</th>
-                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Akhlaq &amp; Ustadh Notes</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Date &amp; Shift</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Sabaq</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Sabqi &amp; Manzil</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Home Revision &amp; Transit</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Akhlaq &amp; Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -2801,11 +3534,22 @@
                       .map(
                         (l) => `
                   <tr>
-                    <td style="padding:5px 8px; border:1px solid #cbd5e1; font-family:'JetBrains Mono', monospace;">${l.dateStr}</td>
-                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">${l.attendance === "Absent" ? "Absent" : l.sabaqTarget + " (" + l.sabaqGrade.split(" ")[0] + ")"}</td>
-                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">${l.attendance === "Absent" ? "—" : l.sabqiTarget}</td>
-                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">${l.attendance === "Absent" ? "—" : l.manzilTarget}</td>
-                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">${l.note || "—"} (${l.akhlaqScoreDelta >= 0 ? "+" + l.akhlaqScoreDelta : l.akhlaqScoreDelta})</td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1; font-family:'JetBrains Mono', monospace;">
+                      ${l.dateStr}<br/><span style="font-size:0.68rem; color:#475569;">${l.shift || "Morning"}</span>
+                    </td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">
+                      ${l.attendanceStatus === "Absent" ? "Absent" : l.sabaqTarget + " (" + l.sabaqGrade.split(" ")[0] + ")"}
+                    </td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">
+                      ${l.attendanceStatus === "Absent" ? "—" : l.sabqiTarget + " / " + l.manzilTarget}
+                    </td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">
+                      ${l.homeRevisionTarget || "—"} ${l.parentHomeVerified ? "✓" : ""}<br/>
+                      <span style="font-size:0.68rem; color:#475569;">${l.commuteMode || ""}${l.departureTime ? " · Dep: " + l.departureTime : ""}</span>
+                    </td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">
+                      ${l.note || "—"} (${l.akhlaqScoreDelta >= 0 ? "+" + l.akhlaqScoreDelta : l.akhlaqScoreDelta})
+                    </td>
                   </tr>
                 `
                       )
@@ -2868,9 +3612,8 @@
               if (docSnap.id === "general") {
                 const d = docSnap.data();
                 if (d.mode) {
-                  document.getElementById("campus-badge").innerText =
-                    d.mode === "residential" ? "Residential Campus" : "Day College";
-                  document.getElementById("cfg-campus-mode").value = d.mode;
+                  campusMode = d.mode === "residential" ? "residential" : "day";
+                  applyCampusModeUI();
                 }
                 if (d.name) {
                   document.getElementById("college-name-display").innerText = d.name;
@@ -2898,9 +3641,18 @@
           (snap) => {
             if (!snap.empty) {
               const remoteLogs = [];
-              snap.forEach((d) => remoteLogs.push(normalizeLog(d.data(), d.id)));
+              snap.forEach((d) => {
+                const norm = normalizeLog(d.data(), d.id);
+                const over = localLogOverrides[norm.id];
+                if (over) Object.assign(norm, over);
+                remoteLogs.push(norm);
+              });
               const remoteIds = new Set(remoteLogs.map((l) => l.id));
-              const merged = [...remoteLogs, ...INITIAL_LOGS.filter((l) => !remoteIds.has(l.id))];
+              const seedFallback = INITIAL_LOGS.filter((l) => !remoteIds.has(l.id)).map((l) => {
+                const over = localLogOverrides[l.id];
+                return over ? { ...l, ...over } : l;
+              });
+              const merged = [...remoteLogs, ...seedFallback];
               merged.sort((a, b) => String(b.id).localeCompare(String(a.id)));
               globalLogs = merged;
               renderAllViews();
@@ -2933,7 +3685,7 @@
     window.addEventListener("DOMContentLoaded", () => {
       populateStudentSelectors();
       updateSessionHeader();
-      renderAllViews();
+      applyCampusModeUI();
       if (window.lucide) window.lucide.createIcons();
     });
   </script>

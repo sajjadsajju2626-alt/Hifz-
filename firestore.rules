@@ -88,6 +88,8 @@ service cloud.firestore {
       ]) &&
       data.keys().hasOnly([
         'studentId', 'studentName', 'dateStr', 'isoDate', 'attendance',
+        'attendanceStatus', 'shift', 'commuteMode', 'departureTime',
+        'schoolExamMode', 'homeRevisionTarget', 'parentHomeVerified',
         'sabaqTarget', 'sabaqGrade', 'sabqiTarget', 'sabqiGrade',
         'manzilTarget', 'manzilGrade', 'akhlaqScoreDelta', 'akhlaqTags',
         'note', 'verifiedBy', 'ownerId', 'createdAt', 'updatedAt'
@@ -96,7 +98,14 @@ service cloud.firestore {
       data.studentName is string && data.studentName.size() >= 2 && data.studentName.size() <= 100 &&
       data.dateStr is string && data.dateStr.size() >= 6 && data.dateStr.size() <= 20 &&
       data.isoDate is string && data.isoDate.size() >= 8 && data.isoDate.size() <= 16 &&
-      data.attendance is string && data.attendance in ['Present', 'Absent'] &&
+      data.attendance is string && data.attendance in ['Present', 'Late Arrival (വൈകി എത്തി)', 'Early Permission (നേരത്തെ പോയി)', 'Absent'] &&
+      (!('attendanceStatus' in data) || (data.attendanceStatus is string && data.attendanceStatus in ['Present', 'Late Arrival (വൈകി എത്തി)', 'Early Permission (നേരത്തെ പോയി)', 'Absent'])) &&
+      (!('shift' in data) || (data.shift is string && data.shift.size() >= 2 && data.shift.size() <= 60)) &&
+      (!('commuteMode' in data) || (data.commuteMode is string && data.commuteMode.size() >= 2 && data.commuteMode.size() <= 60)) &&
+      (!('departureTime' in data) || (data.departureTime is string && data.departureTime.size() <= 60)) &&
+      (!('schoolExamMode' in data) || (data.schoolExamMode is bool)) &&
+      (!('homeRevisionTarget' in data) || (data.homeRevisionTarget is string && data.homeRevisionTarget.size() <= 200)) &&
+      (!('parentHomeVerified' in data) || (data.parentHomeVerified is bool)) &&
       data.sabaqTarget is string && data.sabaqTarget.size() >= 1 && data.sabaqTarget.size() <= 120 &&
       data.sabaqGrade is string && data.sabaqGrade.size() >= 1 && data.sabaqGrade.size() <= 60 &&
       data.sabqiTarget is string && data.sabqiTarget.size() >= 1 && data.sabqiTarget.size() <= 120 &&
@@ -248,8 +257,11 @@ service cloud.firestore {
           isAdmin() ||
           (canAccessOwner(existing().ownerId) &&
             incoming().diff(existing()).affectedKeys().hasOnly([
-              'attendance', 'sabaqTarget', 'sabaqGrade', 'sabqiTarget', 'sabqiGrade',
-              'manzilTarget', 'manzilGrade', 'akhlaqScoreDelta', 'akhlaqTags', 'note', 'updatedAt'
+              'attendance', 'attendanceStatus', 'shift', 'commuteMode',
+              'departureTime', 'schoolExamMode', 'homeRevisionTarget',
+              'parentHomeVerified', 'sabaqTarget', 'sabaqGrade', 'sabqiTarget',
+              'sabqiGrade', 'manzilTarget', 'manzilGrade', 'akhlaqScoreDelta',
+              'akhlaqTags', 'note', 'updatedAt'
             ]))
         );
       allow delete: if isValidId(logId) && canAccessOwner(existing().ownerId);

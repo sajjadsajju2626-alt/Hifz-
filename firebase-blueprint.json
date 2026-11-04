@@ -98,7 +98,7 @@
     },
     "HifzLog": {
       "title": "HifzLog",
-      "description": "Daily Hifz verification log recording Sabaq, Sabqi, Manzil, Attendance, and Akhlaq points.",
+      "description": "Daily Hifz verification log recording Sabaq, Sabqi, Manzil, Attendance nuances, Day College transit/pickup, School Exam Mode, Parent Home Revision sign-off, and Akhlaq points.",
       "type": "object",
       "properties": {
         "studentId": {
@@ -128,8 +128,55 @@
         },
         "attendance": {
           "type": "string",
-          "enum": ["Present", "Absent"],
+          "enum": [
+            "Present",
+            "Late Arrival (വൈകി എത്തി)",
+            "Early Permission (നേരത്തെ പോയി)",
+            "Absent"
+          ],
           "description": "Attendance status"
+        },
+        "attendanceStatus": {
+          "type": "string",
+          "enum": [
+            "Present",
+            "Late Arrival (വൈകി എത്തി)",
+            "Early Permission (നേരത്തെ പോയി)",
+            "Absent"
+          ],
+          "description": "Detailed Day/Residential attendance status"
+        },
+        "shift": {
+          "type": "string",
+          "description": "Session shift (Morning Shift (Before School), Evening Shift (After School), or Full Day / Residential)",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "commuteMode": {
+          "type": "string",
+          "description": "Student transit/commute mode (Parent Pickup, Self / Walking, Shared Auto / Van, Public Transport, or Residential Hostel)",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "departureTime": {
+          "type": "string",
+          "description": "Timestamp string when student departed campus or was handed over to parent",
+          "minLength": 0,
+          "maxLength": 60
+        },
+        "schoolExamMode": {
+          "type": "boolean",
+          "description": "Whether School Exam Mode is active (marks Sabaq optional and assigns lighter home revision)"
+        },
+        "homeRevisionTarget": {
+          "type": "string",
+          "description": "Assigned portion for home revision (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം)",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "parentHomeVerified": {
+          "type": "boolean",
+          "description": "Digital sign-off by parent confirming home revision was listened to (വീട്ടിൽ വെച്ച് കേട്ടു)"
         },
         "sabaqTarget": {
           "type": "string",
@@ -211,6 +258,13 @@
         "dateStr",
         "isoDate",
         "attendance",
+        "attendanceStatus",
+        "shift",
+        "commuteMode",
+        "departureTime",
+        "schoolExamMode",
+        "homeRevisionTarget",
+        "parentHomeVerified",
         "sabaqTarget",
         "sabaqGrade",
         "sabqiTarget",
