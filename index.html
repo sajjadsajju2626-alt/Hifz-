@@ -1,22 +1,2941 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Al-Furqan & Asry Academy Hifz Tracker</title>
-    <meta name="description" content="Comprehensive Hifz college management system with daily Sabaq/Sabqi/Manzil verification, automatic monthly Akhlaq grading, memorization schedules, student analytics dashboards, and automated teacher feedback alerts." />
-    <meta property="og:title" content="Al-Furqan & Asry Academy Hifz Tracker" />
-    <meta property="og:description" content="Comprehensive Hifz college management system with daily Sabaq/Sabqi/Manzil verification, automatic monthly Akhlaq grading, memorization schedules, student analytics dashboards, and automated teacher feedback alerts." />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="theme-color" content="#064e3b" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  </head>
-  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-emerald-800 selection:text-white">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Al-Furqan &amp; Asry Academy Hifz Tracker</title>
+  <meta name="description" content="Hifz college memorization tracker, daily Sabaq/Sabqi/Manzil verification desk, memorization schedule manager, student performance analytics, and Automatic Monthly Akhlaq grading system." />
+  <meta property="og:title" content="Al-Furqan &amp; Asry Academy Hifz Tracker" />
+  <meta property="og:description" content="Hifz college memorization tracker, daily Sabaq/Sabqi/Manzil verification desk, memorization schedule manager, student performance analytics, and Automatic Monthly Akhlaq grading system." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#043927" />
 
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Al-Furqan%20%26%20Asry%20Academy%20Hifz%20Tracker%22%2C%22short_name%22%3A%22HifzTracker%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f8faf7%22%2C%22theme_color%22%3A%22%23043927%22%7D" />
+
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase Modular SDK (v11) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      initializeFirestore,
+      collection,
+      doc,
+      setDoc,
+      addDoc,
+      deleteDoc,
+      getDocs,
+      query,
+      where,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      projectId: "gen-lang-client-0385980230",
+      appId: "1:997081475844:web:cfb4a7fd77124bfc70be51",
+      apiKey: "AIzaSyAUD5XOHpddr6JVdggAFIpv5Z4YbhJEeGQ",
+      authDomain: "gen-lang-client-0385980230.firebaseapp.com",
+      firestoreDatabaseId: "ai-studio-3bd0f278-3993-4ebb-b569-7769c7e9cd10",
+      storageBucket: "gen-lang-client-0385980230.firebasestorage.app",
+      messagingSenderId: "997081475844"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = initializeFirestore(
+      app,
+      { experimentalAutoDetectLongPolling: true },
+      firebaseConfig.firestoreDatabaseId
+    );
+
+    window.fDb = db;
+    window.fDoc = doc;
+    window.fSetDoc = setDoc;
+    window.fAddDoc = addDoc;
+    window.fDeleteDoc = deleteDoc;
+    window.fCollection = collection;
+    window.fGetDocs = getDocs;
+    window.fQuery = query;
+    window.fWhere = where;
+    window.fOnSnapshot = onSnapshot;
+    window.fTimestamp = serverTimestamp;
+
+    window.dispatchEvent(new Event("firebase-ready"));
+  </script>
+
+  <style>
+    :root {
+      --primary: #064e3b;
+      --primary-deep: #043927;
+      --primary-light: #047857;
+      --accent: #d97706;
+      --accent-soft: #fef3c7;
+      --bg: #f8faf7;
+      --surface: #ffffff;
+      --surface-elevated: #f1f5f0;
+      --text: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --emerald-border: rgba(6, 78, 59, 0.14);
+      --radius: 12px;
+      --font-serif: 'Amiri', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      background-image: radial-gradient(rgba(6, 78, 59, 0.045) 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Header & Navigation */
+    header {
+      background: linear-gradient(135deg, #043927, #022c22);
+      color: #ffffff;
+      border-bottom: 1px solid rgba(16, 185, 129, 0.25);
+      box-shadow: 0 4px 18px rgba(4, 57, 39, 0.16);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .header-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: 1.55rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      line-height: 1.1;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      color: rgba(209, 250, 229, 0.82);
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .nav-tab-btn:hover {
+      color: #ffffff;
+    }
+
+    .nav-tab-btn.active {
+      color: #ffffff;
+      border-bottom-color: #fbbf24;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-portal-signin {
+      background: #f59e0b;
+      color: #022c22;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .btn-portal-signin:hover {
+      background: #fbbf24;
+    }
+
+    .sub-context-bar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 0.45rem 1.25rem;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .sub-context-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .context-pills {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-campus {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1320px;
+      width: 100%;
+      margin: 1.5rem auto;
+      padding: 0 1.25rem;
+      flex: 1;
+    }
+
+    /* Grid Layouts */
+    .desk-grid {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .two-col-grid {
+      display: grid;
+      grid-template-columns: 5fr 7fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 980px) {
+      .desk-grid,
+      .two-col-grid {
+        grid-template-columns: 1fr;
+      }
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.35rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+      margin-bottom: 1.25rem;
+    }
+
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding-bottom: 0.9rem;
+      margin-bottom: 1.1rem;
+      border-bottom: 1px solid #f1f5f9;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary);
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 1.1rem;
+    }
+
+    .lesson-box {
+      background: rgba(248, 250, 252, 0.75);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.1);
+    }
+
+    /* Portion & Akhlaq Quick Chips */
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 10px;
+    }
+
+    .portion-chip {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      display: inline-block;
+    }
+
+    .portion-chip:hover {
+      background: #059669;
+      color: #ffffff;
+      border-color: #059669;
+    }
+
+    .chip-pos {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .chip-pos:hover {
+      background: #dcfce7;
+      border-color: #4ade80;
+    }
+
+    .chip-neg {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .chip-neg:hover {
+      background: #fee2e2;
+      border-color: #f87171;
+    }
+
+    /* Attendance Toggle */
+    .att-box {
+      display: flex;
+      gap: 10px;
+    }
+
+    .att-btn {
+      flex: 1;
+      padding: 11px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      background: #f8fafc;
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+    }
+
+    .att-btn.present.active {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #10b981;
+      box-shadow: 0 1px 2px rgba(16, 185, 129, 0.12);
+    }
+
+    .att-btn.absent.active {
+      background: #fef2f2;
+      color: #991b1b;
+      border-color: #f87171;
+      box-shadow: 0 1px 2px rgba(239, 68, 68, 0.12);
+    }
+
+    /* Primary & Secondary Buttons */
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-light);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--primary);
+      border: 1px solid #cbd5e1;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.78rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: var(--primary);
+    }
+
+    /* Sub-tabs */
+    .sub-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.2rem;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .sub-tab-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .sub-tab-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Status & Grade Tags */
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .tag-mumtaz {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tag-present {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tag-absent {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .tag-akhlaq-a {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .tag-akhlaq-b {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .tag-akhlaq-c {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    /* Student Dossier Cards */
+    .student-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.15s ease;
+    }
+
+    .student-card:hover {
+      border-color: #cbd5e1;
+    }
+
+    .student-card-header {
+      padding: 14px 16px;
+      background: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .student-body {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      display: none;
+      background: #ffffff;
+    }
+
+    .student-body.active {
+      display: block;
+    }
+
+    /* 30-Juz Completion Grid */
+    .juz-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .juz-grid {
+        grid-template-columns: repeat(6, 1fr);
+      }
+    }
+
+    .juz-cell {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .juz-cell.completed {
+      background: #059669;
+      border-color: #047857;
+      color: #ffffff;
+    }
+
+    .juz-cell.current {
+      background: #fef3c7;
+      border: 2px solid #d97706;
+      color: #92400e;
+    }
+
+    /* Feed List */
+    .feed-item {
+      padding: 12px;
+      border: 1px solid #f1f5f9;
+      border-radius: 8px;
+      background: rgba(248, 250, 252, 0.7);
+      margin-bottom: 10px;
+    }
+
+    .feed-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.84rem;
+      margin-bottom: 6px;
+      gap: 8px;
+    }
+
+    .status-banner {
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-banner.success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .status-banner.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(3px);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      max-width: 820px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      background: #ffffff;
+      padding: 1rem 1.25rem;
+      margin-top: 2rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .footer-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 1-Page Compact Print Report Card Styling */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm;
+      }
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+      header,
+      .sub-context-bar,
+      main > section,
+      footer,
+      .modal-backdrop,
+      .no-print {
+        display: none !important;
+      }
+      #printable-report-card {
+        display: block !important;
+        visibility: visible !important;
+        position: static !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header class="no-print">
+    <div class="header-inner">
+      <div class="brand" onclick="switchWorkspace('teacher')">
+        <div>
+          <div class="brand-title" id="college-name-display">Asry Academy</div>
+        </div>
+      </div>
+
+      <nav class="nav-tabs" aria-label="Primary Workspace Navigation">
+        <button type="button" class="nav-tab-btn active" id="nav-teacher" onclick="switchWorkspace('teacher')">
+          Verification Desk
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-schedules" onclick="switchWorkspace('schedules')">
+          Schedules Vault
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-analytics" onclick="switchWorkspace('analytics')">
+          Analytics &amp; Alerts (<span id="nav-alert-count">0</span>)
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-principal" onclick="switchWorkspace('principal')">
+          Principal Portfolios
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-parent" onclick="switchWorkspace('parent')">
+          Parent Portal
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <button type="button" class="btn-portal-signin" onclick="openLoginModal()">
+          Portal Sign In
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CAMPUS CONTEXT BAR -->
+  <div class="sub-context-bar no-print">
+    <div class="sub-context-inner">
+      <div class="context-pills">
+        <strong style="color: var(--text);" id="college-sub-display">Bendichal · Al-Furqan Hifz Campus</strong>
+        <span>·</span>
+        <span class="badge-campus" id="campus-badge">Residential Campus</span>
+        <span>·</span>
+        <span id="academic-term-display">1448 AH · Rabi Al-Thani Term</span>
+      </div>
+      <div>
+        Active Session: <strong style="color: var(--primary);" id="logged-user-label">Ustadh Ahmad (TEACHER)</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main>
+
+    <!-- 1. TEACHER / USTADH DESK VIEW -->
+    <section id="view-teacher">
+      <div class="desk-grid">
+        <!-- Left Column: Daily Verification & Akhlaq Form -->
+        <div class="card">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">Daily Hifz &amp; Akhlaq Verification Desk</h2>
+              <p class="card-subtitle">Record Sabaq, Sabqi, Manzil &amp; Automatic Monthly Akhlaq conduct points</p>
+            </div>
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px;" id="verifier-badge">
+              Verifier: Ustadh Ahmad
+            </span>
+          </div>
+
+          <div id="sync-status-banner" class="status-banner hidden" role="status">
+            <span id="sync-status-text"></span>
+            <button type="button" onclick="hideSyncBanner()" style="background:none; border:none; font-weight:700; cursor:pointer; color:inherit; font-size:0.75rem;">Dismiss</button>
+          </div>
+
+          <form id="teacher-verification-form" onsubmit="handleLogSubmit(event)" novalidate>
+            <!-- Student Selector -->
+            <div class="form-group">
+              <label for="t-student-select">Select Student</label>
+              <select id="t-student-select" onchange="handleStudentSelectChange()"></select>
+            </div>
+
+            <!-- Attendance Status -->
+            <div class="form-group">
+              <label>Attendance Status</label>
+              <div class="att-box">
+                <button type="button" class="att-btn present active" id="btn-att-present" onclick="setAttendance('Present')">
+                  ✓ Present
+                </button>
+                <button type="button" class="att-btn absent" id="btn-att-absent" onclick="setAttendance('Absent')">
+                  ✗ Absent
+                </button>
+              </div>
+            </div>
+
+            <!-- 1. Sabaq with Quick Portion Chips -->
+            <div class="lesson-box" id="sec-sabaq">
+              <label for="sabaq-target">1. Sabaq (New Lesson · പുതിയ പാഠം)</label>
+              <input type="text" id="sabaq-target" placeholder="Surah &amp; Ayahs (e.g. Surah Al-Kahf 75-110)" />
+              <div class="chips-container">
+                <button type="button" class="portion-chip" onclick="setPortion('sabaq-target', '1/4 Page')">+ 1/4 Page</button>
+                <button type="button" class="portion-chip" onclick="setPortion('sabaq-target', '1/2 Page')">+ 1/2 Page</button>
+                <button type="button" class="portion-chip" onclick="setPortion('sabaq-target', '1 Full Page')">+ 1 Full Page</button>
+                <button type="button" class="portion-chip" onclick="setPortion('sabaq-target', '2 Pages')">+ 2 Pages</button>
+              </div>
+              <label for="sabaq-grade" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Sabaq Evaluation Grade</label>
+              <select id="sabaq-grade">
+                <option value="Mumtaz (ممتاز - Excellent)">Mumtaz (ممتاز - Excellent)</option>
+                <option value="Jayyid Jiddan (جيد جداً - Very Good)">Jayyid Jiddan (جيد جداً - Very Good)</option>
+                <option value="Jayyid (جيد - Good)">Jayyid (جيد - Good)</option>
+                <option value="Needs Repeat (ഇനിയും ഓതണം)">Needs Repeat (ഇനിയും ഓതണം)</option>
+                <option value="Not Recited">Not Recited (കേൾപ്പിച്ചില്ല)</option>
+              </select>
+            </div>
+
+            <!-- 2. Sabqi with Quick Portion Chips -->
+            <div class="lesson-box" id="sec-sabqi">
+              <label for="sabqi-target">2. Sabqi (Recent Juz Revision · സമീപകാല പാഠം)</label>
+              <input type="text" id="sabqi-target" placeholder="Portion (e.g. Last 5 pages)" />
+              <div class="chips-container">
+                <button type="button" class="portion-chip" onclick="setPortion('sabqi-target', '1/4 Juz')">+ 1/4 Juz</button>
+                <button type="button" class="portion-chip" onclick="setPortion('sabqi-target', '1/2 Juz')">+ 1/2 Juz</button>
+                <button type="button" class="portion-chip" onclick="setPortion('sabqi-target', '1 Full Juz')">+ 1 Full Juz</button>
+                <button type="button" class="portion-chip" onclick="setPortion('sabqi-target', '5 Pages')">+ 5 Pages</button>
+              </div>
+              <label for="sabqi-grade" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Sabqi Evaluation Grade</label>
+              <select id="sabqi-grade">
+                <option value="Mumtaz (ممتاز - Excellent)">Mumtaz (ممتاز - Excellent)</option>
+                <option value="Jayyid Jiddan (جيد جداً - Very Good)">Jayyid Jiddan (جيد جداً - Very Good)</option>
+                <option value="Jayyid (جيد - Good)">Jayyid (جيد - Good)</option>
+                <option value="Weak / Needs Repeat (ശ്രദ്ധ കുറവുണ്ട്)">Weak / Needs Repeat (ശ്രദ്ധ കുറവുണ്ട്)</option>
+                <option value="Not Recited">Not Recited (കേൾപ്പിച്ചില്ല)</option>
+              </select>
+            </div>
+
+            <!-- 3. Manzil with Quick Portion Chips -->
+            <div class="lesson-box" id="sec-manzil">
+              <label for="manzil-target">3. Manzil (Old Juz Revision · പഴയ ജുസ്ഉകൾ)</label>
+              <input type="text" id="manzil-target" placeholder="Juz / Portion (e.g. Juz 3)" />
+              <div class="chips-container">
+                <button type="button" class="portion-chip" onclick="setPortion('manzil-target', '1/2 Juz')">+ 1/2 Juz</button>
+                <button type="button" class="portion-chip" onclick="setPortion('manzil-target', '1 Full Juz')">+ 1 Full Juz</button>
+                <button type="button" class="portion-chip" onclick="setPortion('manzil-target', '2 Juz')">+ 2 Juz</button>
+                <button type="button" class="portion-chip" onclick="setPortion('manzil-target', '3 Juz')">+ 3 Juz</button>
+              </div>
+              <label for="manzil-grade" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Manzil Evaluation Grade</label>
+              <select id="manzil-grade">
+                <option value="Mumtaz (Solid / ممتاز - Excellent)">Mumtaz (Solid / ممتاز - Excellent)</option>
+                <option value="Jayyid Jiddan (جيد جداً - Very Good)">Jayyid Jiddan (جيد جداً - Very Good)</option>
+                <option value="Acceptable (جيد - Satisfactory)">Acceptable (جيد - Satisfactory)</option>
+                <option value="Needs Revision (വീണ്ടും ഓതണം)">Needs Revision (വീണ്ടും ഓതണം)</option>
+                <option value="Not Recited">Not Recited (കേൾപ്പിച്ചില്ല)</option>
+              </select>
+            </div>
+
+            <!-- Akhlaq Quick Chips & Score -->
+            <div class="lesson-box">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                <label style="margin:0;">Akhlaq &amp; Conduct Assessment (സ്വഭാവം &amp; അച്ചടക്കം)</label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="font-size:0.76rem; color:var(--text-muted);">
+                    Session Akhlaq Δ: <strong id="akhlaq-delta-badge" style="font-family:var(--font-mono);">0 pts</strong>
+                  </span>
+                  <button type="button" onclick="resetAkhlaqSession()" style="background:none; border:none; font-size:0.74rem; color:var(--text-muted); text-decoration:underline; cursor:pointer;">Reset</button>
+                </div>
+              </div>
+
+              <div style="font-size:0.76rem; font-weight:700; color:#065f46; margin-bottom:4px;">നല്ല സ്വഭാവങ്ങൾ (+2 pts):</div>
+              <div class="chips-container">
+                <button type="button" class="chip-pos" onclick="addAkhlaqTag('അദബ് / മര്യാദ', 2)">+ അദബ് / മര്യാദ</button>
+                <button type="button" class="chip-pos" onclick="addAkhlaqTag('വൃത്തി', 2)">+ വൃത്തി</button>
+                <button type="button" class="chip-pos" onclick="addAkhlaqTag('ഏകാഗ്രത', 2)">+ ഏകാഗ്രത</button>
+                <button type="button" class="chip-pos" onclick="addAkhlaqTag('സഹായമനസ്സ്', 2)">+ സഹായമനസ്സ്</button>
+              </div>
+
+              <div style="font-size:0.76rem; font-weight:700; color:#991b1b; margin-top:6px; margin-bottom:4px;">ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ (-3 pts):</div>
+              <div class="chips-container">
+                <button type="button" class="chip-neg" onclick="addAkhlaqTag('ശ്രദ്ധക്കുറവ്', -3)">- ശ്രദ്ധക്കുറവ്</button>
+                <button type="button" class="chip-neg" onclick="addAkhlaqTag('തർക്കം/വഴക്ക്', -3)">- തർക്കം/വഴക്ക്</button>
+                <button type="button" class="chip-neg" onclick="addAkhlaqTag('അലസത', -3)">- അലസത</button>
+                <button type="button" class="chip-neg" onclick="addAkhlaqTag('അനാവശ്യ സംസാരം', -3)">- അനാവശ്യ സംസാരം</button>
+              </div>
+
+              <input type="text" id="teacher-note" placeholder="Selected remarks will appear here or type custom notes..." style="margin-top:6px;" />
+            </div>
+
+            <button type="submit" class="btn-primary" id="btn-save-log">
+              Submit &amp; Sync Verification
+            </button>
+          </form>
+        </div>
+
+        <!-- Right Column: Active Student Snapshot & Recent Verification Feed -->
+        <div>
+          <div class="card" id="selected-student-snapshot"></div>
+
+          <div class="card">
+            <div class="card-header-row">
+              <h3 class="card-title">Recent Verification Feed (<span id="feed-count-badge">0</span>)</h3>
+              <select id="feed-filter-student" onchange="renderVerificationFeed()" style="width:auto; padding:6px 10px; font-size:0.78rem;"></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0.85rem;">
+              <input type="text" id="feed-search-input" oninput="renderVerificationFeed()" placeholder="Search student, surah, or conduct remark..." />
+            </div>
+            <div id="teacher-verification-feed" style="max-height:540px; overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MEMORIZATION SCHEDULES VAULT VIEW -->
+    <section id="view-schedules" class="hidden">
+      <div class="two-col-grid">
+        <div class="card">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">Assign Memorization Schedule</h2>
+              <p class="card-subtitle">Store structured Sabaq quotas, Sabqi windows, and Manzil cycles in Firestore</p>
+            </div>
+          </div>
+          <form onsubmit="handleCreateSchedule(event)">
+            <div class="form-group">
+              <label for="sch-student">Select Student</label>
+              <select id="sch-student"></select>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 2fr; gap:10px;">
+              <div class="form-group">
+                <label for="sch-juz">Target Juz</label>
+                <input type="number" id="sch-juz" min="1" max="30" value="16" required />
+              </div>
+              <div class="form-group">
+                <label for="sch-surah">Surah &amp; Ayah Range</label>
+                <input type="text" id="sch-surah" placeholder="e.g. Surah Maryam (1-98) to Ta-Ha" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="sch-sabaq">Daily Sabaq Quota</label>
+              <input type="text" id="sch-sabaq" value="1 Full Page (15 lines)" required />
+            </div>
+            <div class="form-group">
+              <label for="sch-sabqi">Sabqi Revision Window</label>
+              <input type="text" id="sch-sabqi" value="Last 7 Pages of Current Juz" required />
+            </div>
+            <div class="form-group">
+              <label for="sch-manzil">Manzil Rotation Cycle</label>
+              <input type="text" id="sch-manzil" value="1 Full Juz daily (15-day Khatm rotation)" required />
+            </div>
+            <div class="form-group">
+              <label for="sch-date">Target Completion Date</label>
+              <input type="date" id="sch-date" value="2026-12-15" required />
+            </div>
+            <button type="submit" class="btn-primary">Save Schedule to Vault</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">Active Memorization Schedules</h2>
+              <p class="card-subtitle">Track daily progress against assigned Juz completion targets</p>
+            </div>
+          </div>
+          <div id="schedules-vault-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. ANALYTICS & AUTOMATED TEACHER FEEDBACK ALERTS VIEW -->
+    <section id="view-analytics" class="hidden">
+      <div class="kpi-grid" id="analytics-kpi-strip"></div>
+
+      <div class="two-col-grid">
+        <div class="card">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">Automated Teacher Feedback Alerts</h2>
+              <p class="card-subtitle">Auto-detected Sabaq stalls, Manzil revision weakness, Akhlaq drops &amp; milestones</p>
+            </div>
+          </div>
+          <div id="automated-alerts-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">Student Performance &amp; Akhlaq Matrix</h2>
+              <p class="card-subtitle">Live monthly metrics across attendance, Sabaq excellence, and conduct</p>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.84rem;">
+              <thead>
+                <tr style="background:#f8fafc; text-align:left; border-bottom:1px solid var(--border);">
+                  <th style="padding:10px 8px;">Student</th>
+                  <th style="padding:10px 8px;">Juz</th>
+                  <th style="padding:10px 8px;">Attendance</th>
+                  <th style="padding:10px 8px;">Sabaq Mumtaz</th>
+                  <th style="padding:10px 8px;">Monthly Akhlaq</th>
+                  <th style="padding:10px 8px; text-align:right;">Report</th>
+                </tr>
+              </thead>
+              <tbody id="analytics-matrix-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PRINCIPAL DASHBOARD VIEW -->
+    <section id="view-principal" class="hidden">
+      <div class="sub-tabs">
+        <button type="button" class="sub-tab-btn active" id="ptab-btn-portfolios" onclick="switchPrincipalTab('portfolios')">
+          Student Portfolios &amp; Auto-Akhlaq
+        </button>
+        <button type="button" class="sub-tab-btn" id="ptab-btn-enroll" onclick="switchPrincipalTab('enroll')">
+          Enroll Student
+        </button>
+        <button type="button" class="sub-tab-btn" id="ptab-btn-notices" onclick="switchPrincipalTab('notices')">
+          Notice Desk
+        </button>
+        <button type="button" class="sub-tab-btn" id="ptab-btn-settings" onclick="switchPrincipalTab('settings')">
+          Campus Settings
+        </button>
+      </div>
+
+      <!-- Tab 1: Student Portfolios -->
+      <div id="p-tab-portfolios">
+        <div class="card">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">Student Portfolios &amp; Automatic Monthly Akhlaq Grading</h2>
+              <p class="card-subtitle">Click any student dossier to inspect behavioral reasons or print a 1-page compact report card</p>
+            </div>
+          </div>
+          <div id="principal-students-list"></div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Enroll Student -->
+      <div id="p-tab-enroll" class="hidden">
+        <div class="card" style="max-width:640px;">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-title">Enroll New Hifz Student</h2>
+              <p class="card-subtitle">Add student profile to Firestore database</p>
+            </div>
+          </div>
+          <form onsubmit="handleAddStudent(event)">
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:12px;">
+              <div class="form-group">
+                <label for="new-std-id">Admission ID</label>
+                <input type="text" id="new-std-id" placeholder="STD-106" required />
+              </div>
+              <div class="form-group">
+                <label for="new-std-name">Full Name</label>
+                <input type="text" id="new-std-name" placeholder="Student Full Name" required />
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label for="new-std-batch">Halqa / Batch</label>
+                <input type="text" id="new-std-batch" value="Halqa Al-Fajr (Senior)" required />
+              </div>
+              <div class="form-group">
+                <label for="new-std-ustadh">Assigned Ustadh</label>
+                <input type="text" id="new-std-ustadh" value="Ustadh Ahmad" required />
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label for="new-std-juz">Completed Juz</label>
+                <input type="number" id="new-std-juz" min="0" max="30" value="5" required />
+              </div>
+              <div class="form-group">
+                <label for="new-std-cur-juz">Current Active Juz</label>
+                <input type="number" id="new-std-cur-juz" min="1" max="30" value="6" required />
+              </div>
+              <div class="form-group">
+                <label for="new-std-pin">Parent Portal PIN</label>
+                <input type="text" id="new-std-pin" value="1234" required />
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+              <div class="form-group">
+                <label for="new-std-surah">Current Surah</label>
+                <input type="text" id="new-std-surah" value="Surah Al-Maidah" required />
+              </div>
+              <div class="form-group">
+                <label for="new-std-guardian">Guardian Name</label>
+                <input type="text" id="new-std-guardian" placeholder="Parent Name" required />
+              </div>
+              <div class="form-group">
+                <label for="new-std-phone">Guardian Phone</label>
+                <input type="text" id="new-std-phone" placeholder="+91 98470 00000" required />
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">Enroll &amp; Sync Student</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tab 3: Notice Desk -->
+      <div id="p-tab-notices" class="hidden">
+        <div class="two-col-grid">
+          <div class="card">
+            <div class="card-header-row">
+              <h2 class="card-title">Publish Campus Circular / Notice</h2>
+            </div>
+            <form onsubmit="handlePublishNotice(event)">
+              <div class="form-group">
+                <label for="notice-title">Notice Heading</label>
+                <input type="text" id="notice-title" placeholder="e.g. Monthly Manzil Assessment Schedule" required />
+              </div>
+              <div class="form-group">
+                <label for="notice-audience">Target Audience</label>
+                <select id="notice-audience">
+                  <option value="all">All (Parents &amp; Asatizah)</option>
+                  <option value="parents">Parents Only</option>
+                  <option value="teachers">Teachers / Asatizah Only</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="notice-content">Circular Message</label>
+                <textarea id="notice-content" rows="4" placeholder="Enter official campus announcement..." required></textarea>
+              </div>
+              <button type="submit" class="btn-primary">Post Official Notice</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header-row">
+              <h2 class="card-title">Published Campus Circulars</h2>
+            </div>
+            <div id="principal-notices-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Campus Settings -->
+      <div id="p-tab-settings" class="hidden">
+        <div class="card" style="max-width:580px;">
+          <div class="card-header-row">
+            <h2 class="card-title">Campus &amp; Grading Configuration</h2>
+          </div>
+          <form onsubmit="handleSaveSettings(event)">
+            <div class="form-group">
+              <label for="cfg-campus-mode">Campus Mode</label>
+              <select id="cfg-campus-mode">
+                <option value="residential">Residential Campus</option>
+                <option value="day">Day College</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cfg-college-name">College Name</label>
+              <input type="text" id="cfg-college-name" value="Asry Academy" required />
+            </div>
+            <div class="form-group">
+              <label for="cfg-college-sub">Location / Subtitle</label>
+              <input type="text" id="cfg-college-sub" value="Bendichal · Al-Furqan Hifz Campus" required />
+            </div>
+            <div class="form-group">
+              <label for="cfg-academic-term">Academic Term</label>
+              <input type="text" id="cfg-academic-term" value="1448 AH · Rabi Al-Thani Term" required />
+            </div>
+            <button type="submit" class="btn-primary">Save &amp; Sync Settings</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. PARENT PROGRESS VIEW -->
+    <section id="view-parent" class="hidden">
+      <div class="card">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-title">Parent Progress Portal: <span id="p-child-name">Zaid Mansoor</span></h2>
+            <p class="card-subtitle" id="p-child-meta">Admission ID: STD-101 · Halqa Al-Fajr (Senior)</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <select id="parent-student-switcher" onchange="handleParentStudentSwitch()" style="width:auto; padding:7px 12px; font-size:0.82rem;"></select>
+            <button type="button" class="btn-secondary" onclick="openReportCardModal(currentParentStudentId)">
+              Print Monthly Report Card
+            </button>
+          </div>
+        </div>
+
+        <div id="parent-summary-strip" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:1.25rem;"></div>
+
+        <h3 style="font-size:0.9rem; font-weight:700; color:var(--primary); margin-bottom:4px;">
+          30-Juz Qur'an Memorization Map
+        </h3>
+        <div class="juz-grid" id="parent-juz-grid"></div>
+        <small style="color:var(--text-muted); display:block; margin-top:8px;">
+          Completed Juz are highlighted in emerald green; current active Juz is highlighted in amber gold.
+        </small>
+      </div>
+
+      <div class="two-col-grid">
+        <div class="card">
+          <div class="card-header-row">
+            <h3 class="card-title">Monthly Akhlaq &amp; Campus Circulars</h3>
+          </div>
+          <div id="parent-akhlaq-card" style="margin-bottom:1rem;"></div>
+          <h4 style="font-size:0.82rem; font-weight:700; color:var(--text-secondary); margin-bottom:8px;">Official Campus Notices</h4>
+          <div id="parent-notices-feed"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header-row">
+            <h3 class="card-title">Daily Hifz &amp; Akhlaq Verification Feed</h3>
+          </div>
+          <div id="parent-feed"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REPORT CARD PREVIEW MODAL -->
+    <div id="report-card-modal" class="modal-backdrop hidden no-print" onclick="if(event.target===this) closeReportCardModal()">
+      <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid var(--border); margin-bottom:16px;">
+          <div>
+            <h3 style="font-size:1rem; font-weight:700; color:var(--primary);">1-Page Official Monthly Report Card Preview</h3>
+            <p style="font-size:0.76rem; color:var(--text-muted);">Formatted for single-page A4 printing with Automatic Monthly Akhlaq analysis</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn-primary" style="width:auto; padding:8px 16px; font-size:0.82rem;" onclick="window.print()">
+              Print 1-Page Report
+            </button>
+            <button type="button" class="btn-secondary" onclick="closeReportCardModal()">Close</button>
+          </div>
+        </div>
+        <div id="report-card-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- PORTAL SIGN IN MODAL -->
+    <div id="login-modal" class="modal-backdrop hidden no-print" onclick="if(event.target===this) closeLoginModal()">
+      <div class="modal-card" style="max-width:420px;">
+        <div class="card-header-row">
+          <div>
+            <h3 class="card-title">Portal Role Sign In</h3>
+            <p class="card-subtitle">Switch active role session for Ustadh, Principal, or Parent</p>
+          </div>
+          <button type="button" class="btn-secondary" onclick="closeLoginModal()">Close</button>
+        </div>
+
+        <div class="form-group">
+          <label for="login-role">Select Role</label>
+          <select id="login-role" onchange="toggleLoginFields()">
+            <option value="teacher">Ustadh / Teacher (അധ്യാപകൻ)</option>
+            <option value="principal">Principal / Admin (പ്രിൻസിപ്പൽ)</option>
+            <option value="parent">Parent (രക്ഷിതാവ്)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label id="login-id-label" for="login-username">Ustadh Username</label>
+          <input type="text" id="login-username" value="ustadh1" placeholder="e.g. ustadh1" />
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">Password / PIN</label>
+          <input type="password" id="login-password" value="1234" placeholder="Enter password or PIN" />
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:0.74rem; color:var(--text-muted); margin-bottom:12px;">
+          <div><strong>Demo Credentials:</strong></div>
+          <div>• Ustadh: <code>ustadh1</code> / <code>1234</code></div>
+          <div>• Principal: <code>admin</code> / <code>admin123</code></div>
+          <div>• Parent: <code>STD-101</code> / <code>1234</code></div>
+        </div>
+
+        <button type="button" class="btn-primary" onclick="performLogin()">
+          Sign In &amp; Open Portal
+        </button>
+      </div>
+    </div>
+
+    <!-- PRINTABLE 1-PAGE REPORT CARD CONTAINER -->
+    <div id="printable-report-card" class="hidden"></div>
+
+  </main>
+
+  <footer class="no-print">
+    <div class="footer-inner">
+      <div>Asry Academy · Bendichal · Al-Furqan Hifz Campus · Automatic Monthly Akhlaq Grading &amp; Hifz Verification System</div>
+      <div style="display:flex; gap:12px;">
+        <button type="button" onclick="switchWorkspace('teacher')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Ustadh Desk</button>
+        <button type="button" onclick="switchWorkspace('principal')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Principal Portal</button>
+        <button type="button" onclick="switchWorkspace('parent')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Parent Portal</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    // Initial Seed Data for Instant Offline/Online Readiness
+    const INITIAL_STUDENTS = [
+      {
+        studentId: "STD-101",
+        name: "Zaid Mansoor",
+        batch: "Halqa Al-Fajr (Senior)",
+        ustadhName: "Ustadh Ahmad",
+        juzCompleted: 15,
+        currentJuz: 16,
+        currentSurah: "Surah Al-Kahf (75-110)",
+        guardianName: "Mansoor Ali",
+        guardianPhone: "+91 98471 22310",
+        pin: "1234"
+      },
+      {
+        studentId: "STD-102",
+        name: "Muhammad Rayyan",
+        batch: "Halqa Al-Furqan (Advanced)",
+        ustadhName: "Ustadh Ahmad",
+        juzCompleted: 22,
+        currentJuz: 23,
+        currentSurah: "Surah Ya-Sin (28-83)",
+        guardianName: "Abdul Kareem",
+        guardianPhone: "+91 94472 88901",
+        pin: "1234"
+      },
+      {
+        studentId: "STD-103",
+        name: "Ahmad Fadhil",
+        batch: "Halqa Al-Noor (Intermediate)",
+        ustadhName: "Ustadh Ibrahim",
+        juzCompleted: 8,
+        currentJuz: 9,
+        currentSurah: "Surah Al-A'raf (88-141)",
+        guardianName: "Fadhil Rahman",
+        guardianPhone: "+91 98950 44112",
+        pin: "1234"
+      },
+      {
+        studentId: "STD-104",
+        name: "Bilal Kareem",
+        batch: "Halqa Al-Furqan (Khatm Prep)",
+        ustadhName: "Ustadh Ahmad",
+        juzCompleted: 27,
+        currentJuz: 28,
+        currentSurah: "Surah Al-Mujadila (1-22)",
+        guardianName: "Kareem Haji",
+        guardianPhone: "+91 97461 55320",
+        pin: "1234"
+      },
+      {
+        studentId: "STD-105",
+        name: "Salman Faris",
+        batch: "Halqa Al-Fajr (Senior)",
+        ustadhName: "Ustadh Ibrahim",
+        juzCompleted: 12,
+        currentJuz: 13,
+        currentSurah: "Surah Yusuf (53-111)",
+        guardianName: "Faris Mohammed",
+        guardianPhone: "+91 99463 11789",
+        pin: "1234"
+      }
+    ];
+
+    const INITIAL_LOGS = [
+      {
+        id: "LOG-101",
+        studentId: "STD-101",
+        studentName: "Zaid Mansoor",
+        dateStr: "04/11/2026",
+        isoDate: "2026-11-04",
+        attendance: "Present",
+        sabaqTarget: "Al-Kahf 75-98 (1 Full Page)",
+        sabaqGrade: "Mumtaz (ممتاز - Excellent)",
+        sabqiTarget: "Juz 16 First Half (1/2 Juz)",
+        sabqiGrade: "Mumtaz (ممتاز - Excellent)",
+        manzilTarget: "Juz 14 (1 Full Juz)",
+        manzilGrade: "Mumtaz (Solid / ممتاز - Excellent)",
+        akhlaqScoreDelta: 4,
+        akhlaqTags: ["അദബ് / മര്യാദ", "ഏകാഗ്രത"],
+        note: "അദബ് / മര്യാദ, ഏകാഗ്രത — Tajweed articulation on Madd rules was crisp today.",
+        verifiedBy: "Ustadh Ahmad"
+      },
+      {
+        id: "LOG-102",
+        studentId: "STD-101",
+        studentName: "Zaid Mansoor",
+        dateStr: "03/11/2026",
+        isoDate: "2026-11-03",
+        attendance: "Present",
+        sabaqTarget: "Al-Kahf 54-74 (1 Full Page)",
+        sabaqGrade: "Jayyid Jiddan (جيد جداً - Very Good)",
+        sabqiTarget: "Al-Kahf 1-53 (5 Pages)",
+        sabqiGrade: "Mumtaz (ممتاز - Excellent)",
+        manzilTarget: "Juz 13 (1 Full Juz)",
+        manzilGrade: "Mumtaz (Solid / ممتاز - Excellent)",
+        akhlaqScoreDelta: -3,
+        akhlaqTags: ["ശ്രദ്ധക്കുറവ്"],
+        note: "ശ്രദ്ധക്കുറവ് — Slightly distracted during post-Asr revision circle.",
+        verifiedBy: "Ustadh Ahmad"
+      },
+      {
+        id: "LOG-103",
+        studentId: "STD-102",
+        studentName: "Muhammad Rayyan",
+        dateStr: "04/11/2026",
+        isoDate: "2026-11-04",
+        attendance: "Present",
+        sabaqTarget: "Ya-Sin 41-83 (2 Pages)",
+        sabaqGrade: "Mumtaz (ممتاز - Excellent)",
+        sabqiTarget: "Juz 22 (1 Full Juz)",
+        sabqiGrade: "Mumtaz (ممتاز - Excellent)",
+        manzilTarget: "Juz 19 & 20 (2 Juz)",
+        manzilGrade: "Mumtaz (Solid / ممتاز - Excellent)",
+        akhlaqScoreDelta: 4,
+        akhlaqTags: ["അദബ് / മര്യാദ", "സഹായമനസ്സ്"],
+        note: "അദബ് / മര്യാദ, സഹായമനസ്സ് — Assisted junior students with Makharij practice.",
+        verifiedBy: "Ustadh Ahmad"
+      },
+      {
+        id: "LOG-104",
+        studentId: "STD-103",
+        studentName: "Ahmad Fadhil",
+        dateStr: "04/11/2026",
+        isoDate: "2026-11-04",
+        attendance: "Present",
+        sabaqTarget: "Al-Araf 88-95 (1/2 Page)",
+        sabaqGrade: "Needs Repeat (ഇനിയും ഓതണം)",
+        sabqiTarget: "Juz 9 (1/4 Juz)",
+        sabqiGrade: "Weak / Needs Repeat (ശ്രദ്ധ കുറവുണ്ട്)",
+        manzilTarget: "Juz 6 (1/2 Juz)",
+        manzilGrade: "Needs Revision (വീണ്ടും ഓതണം)",
+        akhlaqScoreDelta: -24,
+        akhlaqTags: ["ശ്രദ്ധക്കുറവ്", "അനാവശ്യ സംസാരം", "അലസത"],
+        note: "ശ്രദ്ധക്കുറവ്, അനാവശ്യ സംസാരം, അലസത — Needs structured peer supervision during Maghrib halqa.",
+        verifiedBy: "Ustadh Ibrahim"
+      },
+      {
+        id: "LOG-105",
+        studentId: "STD-103",
+        studentName: "Ahmad Fadhil",
+        dateStr: "02/11/2026",
+        isoDate: "2026-11-02",
+        attendance: "Present",
+        sabaqTarget: "Al-Araf 75-87 (1/2 Page)",
+        sabaqGrade: "Needs Repeat (ഇനിയും ഓതണം)",
+        sabqiTarget: "Juz 9 (1/4 Juz)",
+        sabqiGrade: "Jayyid (جيد - Good)",
+        manzilTarget: "Juz 5 (1/2 Juz)",
+        manzilGrade: "Needs Revision (വീണ്ടും ഓതണം)",
+        akhlaqScoreDelta: -18,
+        akhlaqTags: ["ശ്രദ്ധക്കുറവ്", "തർക്കം/വഴക്ക്"],
+        note: "ശ്രദ്ധക്കുറവ്, തർക്കം/വഴക്ക് — Mentor follow-up scheduled with parent.",
+        verifiedBy: "Ustadh Ibrahim"
+      },
+      {
+        id: "LOG-106",
+        studentId: "STD-104",
+        studentName: "Bilal Kareem",
+        dateStr: "04/11/2026",
+        isoDate: "2026-11-04",
+        attendance: "Present",
+        sabaqTarget: "Al-Mujadila 1-11 (1 Full Page)",
+        sabaqGrade: "Mumtaz (ممتاز - Excellent)",
+        sabqiTarget: "Juz 27 (1 Full Juz)",
+        sabqiGrade: "Jayyid Jiddan (جيد جداً - Very Good)",
+        manzilTarget: "Juz 24, 25, 26 (3 Juz)",
+        manzilGrade: "Mumtaz (Solid / ممتاز - Excellent)",
+        akhlaqScoreDelta: 2,
+        akhlaqTags: ["വൃത്തി"],
+        note: "വൃത്തി — Exemplary Mus-haf care and residential dormitory neatness.",
+        verifiedBy: "Ustadh Ahmad"
+      },
+      {
+        id: "LOG-107",
+        studentId: "STD-105",
+        studentName: "Salman Faris",
+        dateStr: "04/11/2026",
+        isoDate: "2026-11-04",
+        attendance: "Present",
+        sabaqTarget: "Yusuf 53-68 (1 Full Page)",
+        sabaqGrade: "Jayyid (جيد - Good)",
+        sabqiTarget: "Yusuf 1-52 (1/2 Juz)",
+        sabqiGrade: "Jayyid Jiddan (جيد جداً - Very Good)",
+        manzilTarget: "Juz 10 (1 Full Juz)",
+        manzilGrade: "Acceptable (جيد - Satisfactory)",
+        akhlaqScoreDelta: -28,
+        akhlaqTags: ["ശ്രദ്ധക്കുറവ്", "തർക്കം/വഴക്ക്"],
+        note: "ശ്രദ്ധക്കുറവ്, തർക്കം/വഴക്ക് — Counselled after Zuhr prayer on brotherhood etiquette.",
+        verifiedBy: "Ustadh Ibrahim"
+      }
+    ];
+
+    const INITIAL_SCHEDULES = [
+      {
+        id: "SCH-101",
+        studentId: "STD-101",
+        studentName: "Zaid Mansoor",
+        targetJuz: 16,
+        targetSurahRange: "Surah Al-Kahf (75-110) to Surah Ta-Ha (1-135)",
+        dailySabaqQuota: "1 Full Page (15 lines)",
+        sabqiWindow: "Last 7 Pages (Juz 16)",
+        manzilCycle: "1 Full Juz daily (15-day Khatm rotation)",
+        startDate: "2026-10-20",
+        targetDate: "2026-11-18",
+        progressPercent: 78,
+        status: "active",
+        assignedBy: "Ustadh Ahmad"
+      },
+      {
+        id: "SCH-102",
+        studentId: "STD-102",
+        studentName: "Muhammad Rayyan",
+        targetJuz: 23,
+        targetSurahRange: "Surah Ya-Sin (28-83) to Surah Az-Zumar (31)",
+        dailySabaqQuota: "2 Pages (30 lines)",
+        sabqiWindow: "Current Juz + Preceding Juz",
+        manzilCycle: "2 Full Juz daily (11-day cycle)",
+        startDate: "2026-10-25",
+        targetDate: "2026-11-12",
+        progressPercent: 86,
+        status: "active",
+        assignedBy: "Ustadh Ahmad"
+      },
+      {
+        id: "SCH-103",
+        studentId: "STD-103",
+        studentName: "Ahmad Fadhil",
+        targetJuz: 9,
+        targetSurahRange: "Surah Al-A'raf (88-206) to Al-Anfal (40)",
+        dailySabaqQuota: "1/2 Page (7-8 lines) + Intensive Makharij",
+        sabqiWindow: "Last 3 Pages only (Focused consolidation)",
+        manzilCycle: "1/2 Juz daily with senior peer partner",
+        startDate: "2026-10-15",
+        targetDate: "2026-11-30",
+        progressPercent: 42,
+        status: "active",
+        assignedBy: "Ustadh Ibrahim"
+      }
+    ];
+
+    const INITIAL_NOTICES = [
+      {
+        id: "NOT-101",
+        title: "Monthly Full-Manzil Verification & Parent Dossier Release",
+        content: "All residential and day-scholar students will undergo their monthly Manzil verification on Friday after Jumu'ah. Parents can download and print the signed Monthly Hifz & Akhlaq Report Card directly from the portal.",
+        audience: "all",
+        dateStr: "04/11/2026",
+        authorName: "Principal Admin"
+      }
+    ];
+
+    const NEGATIVE_TAG_SET = new Set([
+      "ശ്രദ്ധക്കുറവ്",
+      "തർക്കം/വഴക്ക്",
+      "അലസത",
+      "അനാവശ്യ സംസാരം",
+      "സംസാരിക്കുന്നു"
+    ]);
+
+    // Global State
+    let currentUser = { role: "teacher", username: "ustadh1", name: "Ustadh Ahmad" };
+    let currentAttendance = "Present";
+    let dailyAkhlaqDelta = 0;
+    let dailyAkhlaqTags = [];
+    let globalStudents = [...INITIAL_STUDENTS];
+    let globalLogs = [...INITIAL_LOGS];
+    let globalSchedules = [...INITIAL_SCHEDULES];
+    let globalNotices = [...INITIAL_NOTICES];
+    let currentParentStudentId = "STD-101";
+
+    // Helper: Normalize log fields (supports both flat and nested sabaq/sabqi/manzil objects)
+    function normalizeLog(raw, docId) {
+      const sabaqTarget = raw.sabaqTarget || (raw.sabaq && raw.sabaq.target) || "—";
+      const sabaqGrade = raw.sabaqGrade || (raw.sabaq && raw.sabaq.grade) || "Not Recited";
+      const sabqiTarget = raw.sabqiTarget || (raw.sabqi && raw.sabqi.target) || "—";
+      const sabqiGrade = raw.sabqiGrade || (raw.sabqi && raw.sabqi.grade) || "Not Recited";
+      const manzilTarget = raw.manzilTarget || (raw.manzil && raw.manzil.target) || "—";
+      const manzilGrade = raw.manzilGrade || (raw.manzil && raw.manzil.grade) || "Not Recited";
+
+      return {
+        id: docId || raw.id || "LOG-" + Date.now(),
+        studentId: raw.studentId || "STD-101",
+        studentName: raw.studentName || "Zaid Mansoor",
+        dateStr: raw.dateStr || new Date().toLocaleDateString("en-GB"),
+        isoDate: raw.isoDate || new Date().toISOString().slice(0, 10),
+        attendance: raw.attendance === "Absent" ? "Absent" : "Present",
+        sabaqTarget,
+        sabaqGrade,
+        sabqiTarget,
+        sabqiGrade,
+        manzilTarget,
+        manzilGrade,
+        akhlaqScoreDelta: typeof raw.akhlaqScoreDelta === "number" ? raw.akhlaqScoreDelta : 0,
+        akhlaqTags: Array.isArray(raw.akhlaqTags) ? raw.akhlaqTags : [],
+        note: typeof raw.note === "string" ? raw.note : "",
+        verifiedBy: raw.verifiedBy || "Ustadh Ahmad"
+      };
+    }
+
+    // Quick Fill Portion Chip Handler
+    window.setPortion = function(inputId, portionText) {
+      const el = document.getElementById(inputId);
+      if (!el) return;
+      const current = el.value.trim();
+      if (!current) {
+        el.value = portionText;
+      } else if (!current.includes(portionText)) {
+        el.value = current + " (" + portionText + ")";
+      }
+    };
+
+    // Add Akhlaq Tag & Update Score Delta
+    window.addAkhlaqTag = function(tag, points) {
+      dailyAkhlaqDelta += points;
+      dailyAkhlaqTags.push(tag);
+      const noteInput = document.getElementById("teacher-note");
+      if (noteInput) {
+        const cur = noteInput.value.trim();
+        noteInput.value = cur ? cur + ", " + tag : tag;
+      }
+      updateAkhlaqDeltaUI();
+    };
+
+    window.resetAkhlaqSession = function() {
+      dailyAkhlaqDelta = 0;
+      dailyAkhlaqTags = [];
+      const noteInput = document.getElementById("teacher-note");
+      if (noteInput) noteInput.value = "";
+      updateAkhlaqDeltaUI();
+    };
+
+    function updateAkhlaqDeltaUI() {
+      const badge = document.getElementById("akhlaq-delta-badge");
+      if (!badge) return;
+      badge.innerText = (dailyAkhlaqDelta > 0 ? "+" : "") + dailyAkhlaqDelta + " pts";
+      badge.style.color = dailyAkhlaqDelta > 0 ? "#047857" : dailyAkhlaqDelta < 0 ? "#b91c1c" : "#475569";
+    }
+
+    // Attendance Toggle
+    window.setAttendance = function(status) {
+      currentAttendance = status === "Absent" ? "Absent" : "Present";
+      document.getElementById("btn-att-present").classList.toggle("active", currentAttendance === "Present");
+      document.getElementById("btn-att-absent").classList.toggle("active", currentAttendance === "Absent");
+
+      ["sec-sabaq", "sec-sabqi", "sec-manzil"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle("hidden", currentAttendance === "Absent");
+      });
+    };
+
+    // Automatic Monthly Akhlaq Grading Engine
+    function calculateAkhlaqMetric(studentLogs) {
+      let score = 100;
+      const tagCounts = {};
+      const negativeCounts = {};
+      const positiveCounts = {};
+
+      studentLogs.forEach((l) => {
+        if (typeof l.akhlaqScoreDelta === "number") {
+          score += l.akhlaqScoreDelta;
+        }
+        if (Array.isArray(l.akhlaqTags)) {
+          l.akhlaqTags.forEach((rawTag) => {
+            const tag = String(rawTag).trim();
+            if (!tag) return;
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            if (NEGATIVE_TAG_SET.has(tag)) {
+              negativeCounts[tag] = (negativeCounts[tag] || 0) + 1;
+            } else {
+              positiveCounts[tag] = (positiveCounts[tag] || 0) + 1;
+            }
+          });
+        }
+      });
+
+      score = Math.max(0, Math.min(100, score));
+
+      let letter = "A+";
+      let grade = "A+ (Mumtaz - ممتاز / മാതൃകാ സ്വഭാവം)";
+      let tagClass = "tag-akhlaq-a";
+
+      if (score < 60) {
+        letter = "C";
+        grade = "C (Needs Focus / പ്രത്യേക ശ്രദ്ധ ആവശ്യമാണ്)";
+        tagClass = "tag-akhlaq-c";
+      } else if (score < 75) {
+        letter = "B";
+        grade = "B (Jayyid - جيد / തൃപ്തികരം)";
+        tagClass = "tag-akhlaq-b";
+      } else if (score < 90) {
+        letter = "A";
+        grade = "A (Jayyid Jiddan - جيد جداً / നല്ല അച്ചടക്കം)";
+        tagClass = "tag-akhlaq-a";
+      }
+
+      const topTags = Object.keys(tagCounts)
+        .map((k) => k + " (" + tagCounts[k] + ")")
+        .join(", ");
+      const negSummary = Object.keys(negativeCounts)
+        .map((k) => k + " (" + negativeCounts[k] + "x)")
+        .join(", ");
+      const posSummary = Object.keys(positiveCounts)
+        .map((k) => k + " (" + positiveCounts[k] + "x)")
+        .join(", ");
+
+      let autoReasonSummary = "Consistent exemplary adab, focus, and discipline across daily Hifz sessions.";
+      if (score < 90 && negSummary) {
+        autoReasonSummary = "Grade impacted by recorded conduct deductions: " + negSummary + ".";
+      } else if (posSummary) {
+        autoReasonSummary = "Commended for positive traits: " + posSummary + ".";
+      }
+
+      return { score, letter, grade, tagClass, topTags, autoReasonSummary };
+    }
+
+    // Sync Banner Helper
+    function showSyncBanner(type, message) {
+      const banner = document.getElementById("sync-status-banner");
+      const text = document.getElementById("sync-status-text");
+      if (!banner || !text) return;
+      banner.className = "status-banner " + (type === "error" ? "error" : "success");
+      text.innerText = message;
+      banner.classList.remove("hidden");
+    }
+
+    window.hideSyncBanner = function() {
+      const banner = document.getElementById("sync-status-banner");
+      if (banner) banner.classList.add("hidden");
+    };
+
+    // Submit & Sync Verification Handler
+    window.handleLogSubmit = async function(event) {
+      if (event && typeof event.preventDefault === "function") {
+        event.preventDefault();
+      }
+
+      const btn = document.getElementById("btn-save-log");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Syncing Verification to Firestore...";
+      }
+      hideSyncBanner();
+
+      try {
+        const sel = document.getElementById("t-student-select");
+        const safeStudentId = (sel && sel.value ? sel.value : "STD-101").trim() || "STD-101";
+        const stdObj = globalStudents.find((s) => s.studentId === safeStudentId);
+        const safeStudentName = (stdObj && stdObj.name ? stdObj.name : "Zaid Mansoor").trim();
+        const isAbsent = currentAttendance === "Absent";
+
+        const rawSabaq = (document.getElementById("sabaq-target")?.value || "").trim();
+        const rawSabqi = (document.getElementById("sabqi-target")?.value || "").trim();
+        const rawManzil = (document.getElementById("manzil-target")?.value || "").trim();
+
+        const sabaqGrade = document.getElementById("sabaq-grade")?.value || "Mumtaz (ممتاز - Excellent)";
+        const sabqiGrade = document.getElementById("sabqi-grade")?.value || "Mumtaz (ممتاز - Excellent)";
+        const manzilGrade = document.getElementById("manzil-grade")?.value || "Mumtaz (Solid / ممتاز - Excellent)";
+
+        const defaultSabaq = stdObj && stdObj.currentSurah ? stdObj.currentSurah : "1 Full Page";
+        const defaultSabqi = stdObj ? "Juz " + stdObj.currentJuz + " (1/2 Juz)" : "1/2 Juz";
+        const defaultManzil = stdObj ? "Juz " + Math.max(1, stdObj.juzCompleted) + " (1 Full Juz)" : "1 Full Juz";
+
+        const sabaqTarget = isAbsent
+          ? "Absent"
+          : sabaqGrade === "Not Recited"
+          ? "Not Recited"
+          : rawSabaq || defaultSabaq;
+
+        const sabqiTarget = isAbsent
+          ? "Absent"
+          : sabqiGrade === "Not Recited"
+          ? "Not Recited"
+          : rawSabqi || defaultSabqi;
+
+        const manzilTarget = isAbsent
+          ? "Absent"
+          : manzilGrade === "Not Recited"
+          ? "Not Recited"
+          : rawManzil || defaultManzil;
+
+        const safeNote = (document.getElementById("teacher-note")?.value || "").trim() || (isAbsent ? "Marked Absent" : "");
+        const safeVerifier = (currentUser && currentUser.name ? currentUser.name : "Ustadh Ahmad").trim() || "Ustadh Ahmad";
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("en-GB");
+        const isoDate = now.toISOString().slice(0, 10);
+        const newLogId = "LOG-" + Date.now();
+
+        const safeTags = Array.isArray(dailyAkhlaqTags)
+          ? dailyAkhlaqTags.filter((t) => typeof t === "string" && t.trim().length > 0).slice(0, 10)
+          : [];
+        const safeDelta = typeof dailyAkhlaqDelta === "number" && !Number.isNaN(dailyAkhlaqDelta)
+          ? Math.max(-30, Math.min(30, dailyAkhlaqDelta))
+          : 0;
+
+        // Schema-validated Firestore payload
+        const firestorePayload = {
+          studentId: safeStudentId,
+          studentName: safeStudentName,
+          dateStr: dateStr,
+          isoDate: isoDate,
+          attendance: isAbsent ? "Absent" : "Present",
+          sabaqTarget: sabaqTarget.slice(0, 120),
+          sabaqGrade: (isAbsent ? "Not Recited" : sabaqGrade).slice(0, 60),
+          sabqiTarget: sabqiTarget.slice(0, 120),
+          sabqiGrade: (isAbsent ? "Not Recited" : sabqiGrade).slice(0, 60),
+          manzilTarget: manzilTarget.slice(0, 120),
+          manzilGrade: (isAbsent ? "Not Recited" : manzilGrade).slice(0, 60),
+          akhlaqScoreDelta: safeDelta,
+          akhlaqTags: safeTags,
+          note: safeNote.slice(0, 400),
+          verifiedBy: safeVerifier.slice(0, 80),
+          ownerId: "portal-session",
+          createdAt: window.fTimestamp ? window.fTimestamp() : new Date(),
+          updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+        };
+
+        if (window.fDb && window.fSetDoc && window.fDoc && window.fCollection) {
+          await window.fSetDoc(
+            window.fDoc(window.fCollection(window.fDb, "hifz_logs"), newLogId),
+            firestorePayload
+          );
+        }
+
+        const localEntry = normalizeLog(firestorePayload, newLogId);
+        globalLogs = [localEntry, ...globalLogs.filter((l) => l.id !== newLogId)];
+
+        renderAllViews();
+
+        // Reset form fields
+        document.getElementById("sabaq-target").value = "";
+        document.getElementById("sabqi-target").value = "";
+        document.getElementById("manzil-target").value = "";
+        document.getElementById("teacher-note").value = "";
+        dailyAkhlaqDelta = 0;
+        dailyAkhlaqTags = [];
+        updateAkhlaqDeltaUI();
+        setAttendance("Present");
+
+        showSyncBanner(
+          "success",
+          isAbsent
+            ? "Synced successfully! Marked " + safeStudentName + " Absent (" + dateStr + ")."
+            : "Synced successfully! Verified " + safeStudentName + " (" + dateStr + ")."
+        );
+        window.alert("Synced successfully!");
+      } catch (error) {
+        const errMsg = error && error.message ? error.message : String(error);
+        showSyncBanner("error", "Sync Error: " + errMsg);
+        window.alert("Sync Error: " + errMsg);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "Submit & Sync Verification";
+        }
+        if (window.lucide) window.lucide.createIcons();
+      }
+    };
+
+    // Delete Log Entry
+    window.handleDeleteLog = async function(logId) {
+      globalLogs = globalLogs.filter((l) => l.id !== logId);
+      renderAllViews();
+      try {
+        if (window.fDb && window.fDeleteDoc && window.fDoc) {
+          await window.fDeleteDoc(window.fDoc(window.fDb, "hifz_logs", logId));
+        }
+      } catch (e) {
+        console.warn("Firestore log delete notice:", e);
+      }
+    };
+
+    // Create Memorization Schedule
+    window.handleCreateSchedule = async function(e) {
+      e.preventDefault();
+      const studentId = document.getElementById("sch-student").value || "STD-101";
+      const std = globalStudents.find((s) => s.studentId === studentId);
+      const newId = "SCH-" + Date.now();
+      const scheduleObj = {
+        id: newId,
+        studentId,
+        studentName: std ? std.name : studentId,
+        targetJuz: Number(document.getElementById("sch-juz").value) || 16,
+        targetSurahRange: document.getElementById("sch-surah").value.trim() || "Surah Al-Kahf",
+        dailySabaqQuota: document.getElementById("sch-sabaq").value.trim() || "1 Full Page",
+        sabqiWindow: document.getElementById("sch-sabqi").value.trim() || "Last 7 Pages",
+        manzilCycle: document.getElementById("sch-manzil").value.trim() || "1 Full Juz daily",
+        startDate: new Date().toISOString().slice(0, 10),
+        targetDate: document.getElementById("sch-date").value || "2026-12-15",
+        progressPercent: 15,
+        status: "active",
+        assignedBy: currentUser.name || "Ustadh Ahmad"
+      };
+
+      try {
+        if (window.fDb && window.fSetDoc && window.fDoc) {
+          await window.fSetDoc(window.fDoc(window.fDb, "schedules", newId), {
+            studentId: scheduleObj.studentId,
+            studentName: scheduleObj.studentName,
+            targetJuz: scheduleObj.targetJuz,
+            targetSurahRange: scheduleObj.targetSurahRange,
+            dailySabaqQuota: scheduleObj.dailySabaqQuota,
+            sabqiWindow: scheduleObj.sabqiWindow,
+            manzilCycle: scheduleObj.manzilCycle,
+            startDate: scheduleObj.startDate,
+            targetDate: scheduleObj.targetDate,
+            progressPercent: scheduleObj.progressPercent,
+            status: scheduleObj.status,
+            assignedBy: scheduleObj.assignedBy,
+            ownerId: "portal-session",
+            createdAt: window.fTimestamp(),
+            updatedAt: window.fTimestamp()
+          });
+        }
+        globalSchedules = [scheduleObj, ...globalSchedules];
+        renderAllViews();
+        window.alert("Memorization schedule saved to Vault!");
+      } catch (err) {
+        window.alert("Schedule Error: " + err.message);
+      }
+    };
+
+    window.incrementScheduleProgress = function(schId, delta) {
+      globalSchedules = globalSchedules.map((s) => {
+        if (s.id !== schId) return s;
+        const next = Math.min(100, Math.max(0, (s.progressPercent || 0) + delta));
+        return { ...s, progressPercent: next, status: next >= 100 ? "completed" : "active" };
+      });
+      renderAllViews();
+    };
+
+    // Enroll New Student
+    window.handleAddStudent = async function(e) {
+      e.preventDefault();
+      const studentId = document.getElementById("new-std-id").value.trim().toUpperCase();
+      const studentObj = {
+        studentId,
+        name: document.getElementById("new-std-name").value.trim(),
+        batch: document.getElementById("new-std-batch").value.trim(),
+        ustadhName: document.getElementById("new-std-ustadh").value.trim(),
+        juzCompleted: Number(document.getElementById("new-std-juz").value) || 0,
+        currentJuz: Number(document.getElementById("new-std-cur-juz").value) || 1,
+        currentSurah: document.getElementById("new-std-surah").value.trim(),
+        guardianName: document.getElementById("new-std-guardian").value.trim(),
+        guardianPhone: document.getElementById("new-std-phone").value.trim(),
+        pin: document.getElementById("new-std-pin").value.trim() || "1234"
+      };
+
+      try {
+        if (window.fDb && window.fSetDoc && window.fDoc) {
+          await window.fSetDoc(window.fDoc(window.fDb, "students", studentId), {
+            ...studentObj,
+            ownerId: "portal-session",
+            createdAt: window.fTimestamp(),
+            updatedAt: window.fTimestamp()
+          });
+        }
+        globalStudents = [...globalStudents.filter((s) => s.studentId !== studentId), studentObj];
+        populateStudentSelectors();
+        renderAllViews();
+        e.target.reset();
+        switchPrincipalTab("portfolios");
+        window.alert("Student enrolled & synced!");
+      } catch (err) {
+        window.alert("Enrollment Error: " + err.message);
+      }
+    };
+
+    // Publish Official Notice
+    window.handlePublishNotice = async function(e) {
+      e.preventDefault();
+      const newId = "NOT-" + Date.now();
+      const noticeObj = {
+        id: newId,
+        title: document.getElementById("notice-title").value.trim(),
+        content: document.getElementById("notice-content").value.trim(),
+        audience: document.getElementById("notice-audience").value || "all",
+        dateStr: new Date().toLocaleDateString("en-GB"),
+        authorName: currentUser.name || "Principal Admin"
+      };
+
+      try {
+        if (window.fDb && window.fSetDoc && window.fDoc) {
+          await window.fSetDoc(window.fDoc(window.fDb, "notices", newId), {
+            title: noticeObj.title,
+            content: noticeObj.content,
+            audience: noticeObj.audience,
+            dateStr: noticeObj.dateStr,
+            authorName: noticeObj.authorName,
+            ownerId: "portal-session",
+            createdAt: window.fTimestamp(),
+            updatedAt: window.fTimestamp()
+          });
+        }
+        globalNotices = [noticeObj, ...globalNotices];
+        renderAllViews();
+        e.target.reset();
+        window.alert("Notice published!");
+      } catch (err) {
+        window.alert("Error: " + err.message);
+      }
+    };
+
+    // Save Campus Settings
+    window.handleSaveSettings = async function(e) {
+      e.preventDefault();
+      const mode = document.getElementById("cfg-campus-mode").value;
+      const name = document.getElementById("cfg-college-name").value.trim();
+      const sub = document.getElementById("cfg-college-sub").value.trim();
+      const academicTerm = document.getElementById("cfg-academic-term").value.trim();
+
+      document.getElementById("campus-badge").innerText = mode === "residential" ? "Residential Campus" : "Day College";
+      document.getElementById("college-name-display").innerText = name;
+      document.getElementById("college-sub-display").innerText = sub;
+      document.getElementById("academic-term-display").innerText = academicTerm;
+
+      try {
+        if (window.fDb && window.fSetDoc && window.fDoc) {
+          await window.fSetDoc(window.fDoc(window.fDb, "settings", "general"), {
+            mode,
+            name,
+            sub,
+            academicTerm,
+            akhlaqAlertThreshold: 75,
+            ownerId: "portal-session",
+            createdAt: window.fTimestamp(),
+            updatedAt: window.fTimestamp()
+          });
+        }
+        window.alert("Settings saved!");
+      } catch (err) {
+        window.alert("Settings updated locally (" + err.message + ")");
+      }
+    };
+
+    // Workspace & Tab Navigation
+    window.switchWorkspace = function(view) {
+      const views = ["teacher", "schedules", "analytics", "principal", "parent"];
+      views.forEach((v) => {
+        const sec = document.getElementById("view-" + v);
+        const nav = document.getElementById("nav-" + v);
+        if (sec) sec.classList.toggle("hidden", v !== view);
+        if (nav) nav.classList.toggle("active", v === view);
+      });
+      renderAllViews();
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.switchPrincipalTab = function(tab) {
+      ["portfolios", "enroll", "notices", "settings"].forEach((t) => {
+        const el = document.getElementById("p-tab-" + t);
+        const btn = document.getElementById("ptab-btn-" + t);
+        if (el) el.classList.toggle("hidden", t !== tab);
+        if (btn) btn.classList.toggle("active", t === tab);
+      });
+    };
+
+    // Portal Login Modal
+    window.openLoginModal = function() {
+      document.getElementById("login-modal").classList.remove("hidden");
+    };
+
+    window.closeLoginModal = function() {
+      document.getElementById("login-modal").classList.add("hidden");
+    };
+
+    window.toggleLoginFields = function() {
+      const role = document.getElementById("login-role").value;
+      const label = document.getElementById("login-id-label");
+      const input = document.getElementById("login-username");
+      const pass = document.getElementById("login-password");
+
+      if (role === "parent") {
+        label.innerText = "Student ID (അഡ്മിഷൻ നമ്പർ)";
+        input.value = "STD-101";
+        pass.value = "1234";
+      } else if (role === "teacher") {
+        label.innerText = "Ustadh Username";
+        input.value = "ustadh1";
+        pass.value = "1234";
+      } else {
+        label.innerText = "Principal Username";
+        input.value = "admin";
+        pass.value = "admin123";
+      }
+    };
+
+    window.performLogin = function() {
+      const role = document.getElementById("login-role").value;
+      const u = document.getElementById("login-username").value.trim();
+      const p = document.getElementById("login-password").value.trim();
+
+      if (!u || !p) {
+        window.alert("Please enter ID and password");
+        return;
+      }
+
+      if (role === "principal") {
+        if (u === "admin" && p === "admin123") {
+          currentUser = { role: "principal", name: "Principal Admin" };
+          updateSessionHeader();
+          closeLoginModal();
+          switchWorkspace("principal");
+        } else {
+          window.alert("Invalid Principal credentials! Use admin / admin123");
+        }
+        return;
+      }
+
+      if (role === "teacher") {
+        if ((u === "ustadh1" || u.toLowerCase().includes("ustadh")) && p === "1234") {
+          currentUser = { role: "teacher", username: u, name: "Ustadh Ahmad" };
+          updateSessionHeader();
+          closeLoginModal();
+          switchWorkspace("teacher");
+        } else {
+          window.alert("Invalid Ustadh credentials! Use ustadh1 / 1234");
+        }
+        return;
+      }
+
+      if (role === "parent") {
+        const found = globalStudents.find((s) => s.studentId.toUpperCase() === u.toUpperCase());
+        if (found && (p === found.pin || p === "1234")) {
+          currentUser = { role: "parent", studentId: found.studentId, name: found.name + " (Parent)" };
+          currentParentStudentId = found.studentId;
+          const switcher = document.getElementById("parent-student-switcher");
+          if (switcher) switcher.value = found.studentId;
+          updateSessionHeader();
+          closeLoginModal();
+          switchWorkspace("parent");
+        } else {
+          window.alert("Invalid Student ID or PIN! Try STD-101 / 1234");
+        }
+      }
+    };
+
+    function updateSessionHeader() {
+      const lbl = document.getElementById("logged-user-label");
+      const vBadge = document.getElementById("verifier-badge");
+      if (lbl) lbl.innerText = currentUser.name + " (" + currentUser.role.toUpperCase() + ")";
+      if (vBadge && currentUser.role === "teacher") {
+        vBadge.innerText = "Verifier: " + currentUser.name;
+      }
+    }
+
+    // Populate Dropdowns
+    function populateStudentSelectors() {
+      const tSel = document.getElementById("t-student-select");
+      const fSel = document.getElementById("feed-filter-student");
+      const sSel = document.getElementById("sch-student");
+      const pSel = document.getElementById("parent-student-switcher");
+
+      const prevT = tSel ? tSel.value : "STD-101";
+      const prevF = fSel ? fSel.value : "ALL";
+      const prevS = sSel ? sSel.value : "STD-101";
+      const prevP = pSel ? pSel.value : currentParentStudentId;
+
+      if (tSel) {
+        tSel.innerHTML = globalStudents
+          .map(
+            (s) =>
+              `<option value="${s.studentId}">${s.name} (${s.studentId}) — Juz ${s.juzCompleted}/30 · ${s.batch}</option>`
+          )
+          .join("");
+        if (globalStudents.some((s) => s.studentId === prevT)) tSel.value = prevT;
+      }
+
+      if (fSel) {
+        fSel.innerHTML =
+          `<option value="ALL">All Students</option>` +
+          globalStudents.map((s) => `<option value="${s.studentId}">${s.name} (${s.studentId})</option>`).join("");
+        fSel.value = prevF || "ALL";
+      }
+
+      if (sSel) {
+        sSel.innerHTML = globalStudents
+          .map((s) => `<option value="${s.studentId}">${s.name} (${s.studentId})</option>`)
+          .join("");
+        if (globalStudents.some((s) => s.studentId === prevS)) sSel.value = prevS;
+      }
+
+      if (pSel) {
+        pSel.innerHTML = globalStudents
+          .map((s) => `<option value="${s.studentId}">${s.name} (${s.studentId})</option>`)
+          .join("");
+        if (globalStudents.some((s) => s.studentId === prevP)) pSel.value = prevP;
+      }
+    }
+
+    window.handleStudentSelectChange = function() {
+      renderSelectedStudentSnapshot();
+    };
+
+    window.handleParentStudentSwitch = function() {
+      const pSel = document.getElementById("parent-student-switcher");
+      if (pSel && pSel.value) {
+        currentParentStudentId = pSel.value;
+        renderParentPortal();
+      }
+    };
+
+    // Render Right-Column Active Student Snapshot on Ustadh Desk
+    function renderSelectedStudentSnapshot() {
+      const container = document.getElementById("selected-student-snapshot");
+      const sel = document.getElementById("t-student-select");
+      if (!container || !sel) return;
+
+      const studentId = sel.value || "STD-101";
+      const std = globalStudents.find((s) => s.studentId === studentId) || globalStudents[0];
+      if (!std) return;
+
+      const stdLogs = globalLogs.filter((l) => l.studentId === std.studentId);
+      const akhlaq = calculateAkhlaqMetric(stdLogs);
+      const activeSch = globalSchedules.find((s) => s.studentId === std.studentId && s.status === "active");
+
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+          <div>
+            <h3 style="font-size:1rem; font-weight:700; color:var(--text);">${std.name} <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">(${std.studentId})</span></h3>
+            <p style="font-size:0.76rem; color:var(--text-muted); margin-top:2px;">${std.batch} · ${std.ustadhName}</p>
+          </div>
+          <div style="text-align:right;">
+            <span class="tag ${akhlaq.tagClass}">Akhlaq: ${akhlaq.letter} (${akhlaq.score}%)</span>
+            <div style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted); margin-top:4px;">Juz ${std.juzCompleted} / 30</div>
+          </div>
+        </div>
+        ${
+          activeSch
+            ? `
+          <div style="margin-top:12px; padding-top:12px; border-top:1px solid #f1f5f9;">
+            <div style="display:flex; justify-content:space-between; font-size:0.76rem; margin-bottom:4px;">
+              <span style="font-weight:700; color:var(--text-secondary);">Active Schedule: Juz ${activeSch.targetJuz}</span>
+              <span style="font-family:var(--font-mono); font-weight:700; color:var(--primary);">${activeSch.progressPercent}% Complete</span>
+            </div>
+            <div style="width:100%; height:7px; background:#f1f5f9; border-radius:99px; overflow:hidden;">
+              <div style="height:100%; width:${activeSch.progressPercent}%; background:#059669; border-radius:99px;"></div>
+            </div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:6px;">
+              Quota: ${activeSch.dailySabaqQuota} · Sabqi: ${activeSch.sabqiWindow} · Manzil: ${activeSch.manzilCycle}
+            </div>
+          </div>`
+            : ""
+        }
+      `;
+    }
+
+    // Render Recent Verification Feed
+    window.renderVerificationFeed = function() {
+      const container = document.getElementById("teacher-verification-feed");
+      const countBadge = document.getElementById("feed-count-badge");
+      const fSel = document.getElementById("feed-filter-student");
+      const searchInput = document.getElementById("feed-search-input");
+      if (!container) return;
+
+      const filterStudent = fSel ? fSel.value : "ALL";
+      const q = (searchInput ? searchInput.value : "").trim().toLowerCase();
+
+      const filtered = globalLogs.filter((l) => {
+        const matchesStudent = filterStudent === "ALL" || l.studentId === filterStudent;
+        const matchesQuery =
+          !q ||
+          l.studentName.toLowerCase().includes(q) ||
+          l.studentId.toLowerCase().includes(q) ||
+          l.sabaqTarget.toLowerCase().includes(q) ||
+          l.note.toLowerCase().includes(q);
+        return matchesStudent && matchesQuery;
+      });
+
+      if (countBadge) countBadge.innerText = String(filtered.length);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.84rem; text-align:center; padding:1.5rem 0;">No verification logs match the current filter.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered
+        .map(
+          (log) => `
+        <div class="feed-item">
+          <div class="feed-header">
+            <div>
+              <strong>${log.studentName}</strong>
+              <span style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted);">(${log.studentId})</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted);">${log.dateStr}</span>
+              <span>·</span>
+              <span class="tag ${log.attendance === "Absent" ? "tag-absent" : "tag-present"}">${log.attendance}</span>
+              <button type="button" onclick="handleDeleteLog('${log.id}')" title="Delete Log" aria-label="Delete log for ${log.studentName} on ${log.dateStr}" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.8rem; padding:2px 4px;">✕</button>
+            </div>
+          </div>
+          ${
+            log.attendance !== "Absent"
+              ? `
+            <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.45;">
+              <div><strong>Sabaq:</strong> ${log.sabaqTarget} · <span style="color:#047857; font-weight:700;">${log.sabaqGrade}</span></div>
+              <div><strong>Sabqi:</strong> ${log.sabqiTarget} · ${log.sabqiGrade}</div>
+              <div><strong>Manzil:</strong> ${log.manzilTarget} · ${log.manzilGrade}</div>
+            </div>`
+              : ""
+          }
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; padding-top:6px; border-top:1px solid #e2e8f0; font-size:0.74rem; gap:8px;">
+            <span style="color:var(--text-muted); font-style:italic;">${log.note ? '"' + log.note + '"' : "Verified by " + log.verifiedBy}</span>
+            <span style="font-family:var(--font-mono); font-weight:700; color:${
+              log.akhlaqScoreDelta > 0 ? "#047857" : log.akhlaqScoreDelta < 0 ? "#b91c1c" : "#64748b"
+            };">
+              Akhlaq Δ: ${log.akhlaqScoreDelta > 0 ? "+" : ""}${log.akhlaqScoreDelta}
+            </span>
+          </div>
+        </div>
+      `
+        )
+        .join("");
+    };
+
+    // Render Schedules Vault
+    function renderSchedulesVault() {
+      const container = document.getElementById("schedules-vault-list");
+      if (!container) return;
+
+      if (globalSchedules.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">No schedules assigned yet.</p>`;
+        return;
+      }
+
+      container.innerHTML = globalSchedules
+        .map(
+          (sch) => `
+        <div class="feed-item" style="background:#ffffff;">
+          <div class="feed-header">
+            <div>
+              <strong>${sch.studentName}</strong> <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted);">(${sch.studentId})</span>
+              <div style="font-size:0.78rem; color:var(--primary); font-weight:700; margin-top:2px;">Target Juz ${sch.targetJuz}: ${sch.targetSurahRange}</div>
+            </div>
+            <span class="tag ${sch.status === "completed" ? "tag-mumtaz" : "tag-akhlaq-b"}">${sch.status.toUpperCase()}</span>
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-secondary); margin:8px 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:6px;">
+            <div><strong>Daily Sabaq:</strong> ${sch.dailySabaqQuota}</div>
+            <div><strong>Sabqi Window:</strong> ${sch.sabqiWindow}</div>
+            <div><strong>Manzil Cycle:</strong> ${sch.manzilCycle}</div>
+            <div><strong>Target Date:</strong> ${sch.targetDate}</div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px;">
+            <div style="flex:1; height:8px; background:#f1f5f9; border-radius:99px; overflow:hidden;">
+              <div style="height:100%; width:${sch.progressPercent}%; background:#059669;"></div>
+            </div>
+            <span style="font-family:var(--font-mono); font-size:0.78rem; font-weight:700;">${sch.progressPercent}%</span>
+            <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:0.74rem;" onclick="incrementScheduleProgress('${sch.id}', 5)">+5% Progress</button>
+          </div>
+        </div>
+      `
+        )
+        .join("");
+    }
+
+    // Automated Teacher Feedback Alerts Engine & Analytics Matrix
+    function evaluateAutomatedAlerts() {
+      const alerts = [];
+      globalStudents.forEach((std) => {
+        const logs = globalLogs.filter((l) => l.studentId === std.studentId);
+        const akhlaq = calculateAkhlaqMetric(logs);
+        const repeatCount = logs.filter(
+          (l) => l.sabaqGrade.includes("Repeat") || l.manzilGrade.includes("Revision")
+        ).length;
+
+        if (akhlaq.score < 75) {
+          alerts.push({
+            id: "ALT-AKH-" + std.studentId,
+            studentName: std.name,
+            studentId: std.studentId,
+            severity: akhlaq.score < 60 ? "CRITICAL" : "WARNING",
+            title: "Monthly Akhlaq Conduct Drop (" + akhlaq.letter + " · " + akhlaq.score + "%)",
+            message: akhlaq.autoReasonSummary,
+            action: "Schedule a 1-on-1 Tarbiyah mentoring session with " + std.ustadhName + " and notify guardian."
+          });
+        }
+
+        if (repeatCount >= 2) {
+          alerts.push({
+            id: "ALT-SAB-" + std.studentId,
+            studentName: std.name,
+            studentId: std.studentId,
+            severity: "WARNING",
+            title: "Repeated Sabaq / Manzil Consolidation Alert",
+            message: std.name + " has " + repeatCount + " recent sessions marked 'Needs Repeat / Revision'.",
+            action: "Temporarily pause new Sabaq lines for 2 days and consolidate current Juz Sabqi."
+          });
+        }
+      });
+      return alerts;
+    }
+
+    function renderAnalyticsAndAlerts() {
+      const alerts = evaluateAutomatedAlerts();
+      const navCount = document.getElementById("nav-alert-count");
+      if (navCount) navCount.innerText = String(alerts.length);
+
+      const kpiStrip = document.getElementById("analytics-kpi-strip");
+      if (kpiStrip) {
+        const totalJuz = globalStudents.reduce((acc, s) => acc + (Number(s.juzCompleted) || 0), 0);
+        const presentLogs = globalLogs.filter((l) => l.attendance !== "Absent").length;
+        const attAvg = globalLogs.length > 0 ? Math.round((presentLogs / globalLogs.length) * 100) : 100;
+        const avgAkhlaq = Math.round(
+          globalStudents.reduce((acc, s) => acc + calculateAkhlaqMetric(globalLogs.filter((l) => l.studentId === s.studentId)).score, 0) /
+            Math.max(1, globalStudents.length)
+        );
+
+        kpiStrip.innerHTML = `
+          <div class="card" style="margin:0;">
+            <div style="font-size:0.76rem; color:var(--text-muted); font-weight:700;">ENROLLED HUFFAZ</div>
+            <div style="font-family:var(--font-mono); font-size:1.6rem; font-weight:700; color:var(--primary); margin-top:4px;">${globalStudents.length}</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;">Total Cumulative: ${totalJuz} Juz</div>
+          </div>
+          <div class="card" style="margin:0;">
+            <div style="font-size:0.76rem; color:var(--text-muted); font-weight:700;">ATTENDANCE RATE</div>
+            <div style="font-family:var(--font-mono); font-size:1.6rem; font-weight:700; color:#047857; margin-top:4px;">${attAvg}%</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;">${presentLogs} of ${globalLogs.length} Verified Sessions</div>
+          </div>
+          <div class="card" style="margin:0;">
+            <div style="font-size:0.76rem; color:var(--text-muted); font-weight:700;">CAMPUS AKHLAQ INDEX</div>
+            <div style="font-family:var(--font-mono); font-size:1.6rem; font-weight:700; color:#065f46; margin-top:4px;">${avgAkhlaq}%</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;">Auto-Graded Monthly Conduct</div>
+          </div>
+          <div class="card" style="margin:0;">
+            <div style="font-size:0.76rem; color:var(--text-muted); font-weight:700;">ACTIVE ALERTS</div>
+            <div style="font-family:var(--font-mono); font-size:1.6rem; font-weight:700; color:${alerts.length > 0 ? "#b45309" : "#047857"}; margin-top:4px;">${alerts.length}</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;">Automated Teacher Interventions</div>
+          </div>
+        `;
+      }
+
+      const alertsContainer = document.getElementById("automated-alerts-list");
+      if (alertsContainer) {
+        if (alerts.length === 0) {
+          alertsContainer.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">All students are currently meeting Sabaq, Manzil, and Akhlaq thresholds.</p>`;
+        } else {
+          alertsContainer.innerHTML = alerts
+            .map(
+              (a) => `
+            <div class="feed-item" style="border-left:4px solid ${a.severity === "CRITICAL" ? "#dc2626" : "#d97706"}; background:#ffffff;">
+              <div class="feed-header">
+                <strong>${a.studentName} (${a.studentId})</strong>
+                <span class="tag ${a.severity === "CRITICAL" ? "tag-absent" : "tag-akhlaq-b"}">${a.severity}</span>
+              </div>
+              <div style="font-size:0.84rem; font-weight:700; color:var(--text); margin-bottom:4px;">${a.title}</div>
+              <div style="font-size:0.78rem; color:var(--text-secondary); margin-bottom:6px;">${a.message}</div>
+              <div style="font-size:0.76rem; background:#f8fafc; padding:6px 8px; border-radius:6px; color:var(--primary);">
+                <strong>Recommended Action:</strong> ${a.action}
+              </div>
+            </div>
+          `
+            )
+            .join("");
+        }
+      }
+
+      const tbody = document.getElementById("analytics-matrix-tbody");
+      if (tbody) {
+        tbody.innerHTML = globalStudents
+          .map((std) => {
+            const logs = globalLogs.filter((l) => l.studentId === std.studentId);
+            const present = logs.filter((l) => l.attendance !== "Absent").length;
+            const attRate = logs.length > 0 ? Math.round((present / logs.length) * 100) : 100;
+            const mumtazCount = logs.filter((l) => l.sabaqGrade.includes("Mumtaz")).length;
+            const mumtazRate = present > 0 ? Math.round((mumtazCount / present) * 100) : 100;
+            const akhlaq = calculateAkhlaqMetric(logs);
+
+            return `
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:10px 8px;">
+                  <strong>${std.name}</strong>
+                  <div style="font-size:0.72rem; color:var(--text-muted);">${std.studentId} · ${std.batch}</div>
+                </td>
+                <td style="padding:10px 8px; font-family:var(--font-mono); font-weight:700;">${std.juzCompleted}/30</td>
+                <td style="padding:10px 8px; font-family:var(--font-mono);">${attRate}%</td>
+                <td style="padding:10px 8px; font-family:var(--font-mono);">${mumtazRate}%</td>
+                <td style="padding:10px 8px;"><span class="tag ${akhlaq.tagClass}">${akhlaq.letter} (${akhlaq.score}%)</span></td>
+                <td style="padding:10px 8px; text-align:right;">
+                  <button type="button" class="btn-secondary" style="padding:4px 10px; font-size:0.74rem;" onclick="openReportCardModal('${std.studentId}')">
+                    Print Report
+                  </button>
+                </td>
+              </tr>
+            `;
+          })
+          .join("");
+      }
+    }
+
+    // Render Principal Student Dossiers & Notices
+    function renderPrincipalPortfolios() {
+      const container = document.getElementById("principal-students-list");
+      if (container) {
+        container.innerHTML = globalStudents
+          .map((std) => {
+            const logs = globalLogs.filter((l) => l.studentId === std.studentId);
+            const present = logs.filter((l) => l.attendance !== "Absent").length;
+            const rate = logs.length > 0 ? Math.round((present / logs.length) * 100) : 100;
+            const akhlaq = calculateAkhlaqMetric(logs);
+
+            return `
+              <div class="student-card">
+                <div class="student-card-header" onclick="document.getElementById('dossier-${std.studentId}').classList.toggle('active')">
+                  <div>
+                    <strong style="font-size:0.95rem;">${std.name}</strong>
+                    <span style="font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted);">(${std.studentId})</span>
+                    <div style="font-size:0.76rem; color:#047857; font-weight:600; margin-top:2px;">
+                      Juz Completed: ${std.juzCompleted} / 30 · Active Surah: ${std.currentSurah} · ${std.batch}
+                    </div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span class="tag ${akhlaq.tagClass}">Akhlaq: ${akhlaq.letter} (${akhlaq.score}%)</span>
+                    <button type="button" class="btn-secondary" style="background:#064e3b; color:#ffffff; border-color:#064e3b;" onclick="event.stopPropagation(); openReportCardModal('${std.studentId}')">
+                      Print Report Card
+                    </button>
+                  </div>
+                </div>
+                <div class="student-body" id="dossier-${std.studentId}">
+                  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:12px;">
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border);">
+                      <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">AUTOMATIC MONTHLY AKHLAQ GRADE</div>
+                      <div style="font-size:0.92rem; font-weight:700; color:var(--primary); margin-top:4px;">${akhlaq.grade} (${akhlaq.score}%)</div>
+                      <div style="font-size:0.76rem; color:var(--text-secondary); margin-top:4px;">${akhlaq.autoReasonSummary}</div>
+                      ${akhlaq.topTags ? `<div style="font-size:0.74rem; color:var(--text-muted); margin-top:4px;"><strong>Logged Tags:</strong> ${akhlaq.topTags}</div>` : ""}
+                    </div>
+                    <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border);">
+                      <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">GUARDIAN &amp; ATTENDANCE DOSSIER</div>
+                      <div style="font-size:0.84rem; margin-top:4px;"><strong>Guardian:</strong> ${std.guardianName} (${std.guardianPhone})</div>
+                      <div style="font-size:0.84rem; margin-top:2px;"><strong>Assigned Ustadh:</strong> ${std.ustadhName}</div>
+                      <div style="font-size:0.84rem; margin-top:2px;"><strong>Attendance:</strong> ${present} / ${logs.length} Sessions (${rate}%)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      const noticesEl = document.getElementById("principal-notices-list");
+      if (noticesEl) {
+        noticesEl.innerHTML = globalNotices
+          .map(
+            (n) => `
+          <div class="feed-item">
+            <div class="feed-header">
+              <strong>${n.title}</strong>
+              <span style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted);">${n.dateStr}</span>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-secondary); line-height:1.45;">${n.content}</p>
+          </div>
+        `
+          )
+          .join("");
+      }
+    }
+
+    // Render Parent Progress View
+    function renderParentPortal() {
+      const std = globalStudents.find((s) => s.studentId === currentParentStudentId) || globalStudents[0];
+      if (!std) return;
+
+      const nameEl = document.getElementById("p-child-name");
+      const metaEl = document.getElementById("p-child-meta");
+      if (nameEl) nameEl.innerText = std.name;
+      if (metaEl) metaEl.innerText = `Admission ID: ${std.studentId} · ${std.batch} · Assigned Ustadh: ${std.ustadhName}`;
+
+      const stdLogs = globalLogs.filter((l) => l.studentId === std.studentId);
+      const present = stdLogs.filter((l) => l.attendance !== "Absent").length;
+      const attRate = stdLogs.length > 0 ? Math.round((present / stdLogs.length) * 100) : 100;
+      const akhlaq = calculateAkhlaqMetric(stdLogs);
+
+      const summaryStrip = document.getElementById("parent-summary-strip");
+      if (summaryStrip) {
+        summaryStrip.innerHTML = `
+          <div style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px;">
+            <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">COMPLETED JUZ</div>
+            <div style="font-family:var(--font-mono); font-size:1.35rem; font-weight:700; color:var(--primary); margin-top:2px;">${std.juzCompleted} / 30 Juz</div>
+            <div style="font-size:0.74rem; color:var(--text-secondary);">Active: Juz ${std.currentJuz} (${std.currentSurah})</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px;">
+            <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">ATTENDANCE RATE</div>
+            <div style="font-family:var(--font-mono); font-size:1.35rem; font-weight:700; color:#047857; margin-top:2px;">${attRate}%</div>
+            <div style="font-size:0.74rem; color:var(--text-secondary);">${present} Present of ${stdLogs.length} Sessions</div>
+          </div>
+          <div style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px;">
+            <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">MONTHLY AKHLAQ GRADE</div>
+            <div style="font-size:1rem; font-weight:700; color:var(--primary); margin-top:4px;"><span class="tag ${akhlaq.tagClass}">${akhlaq.grade} (${akhlaq.score}%)</span></div>
+          </div>
+        `;
+      }
+
+      // 30-Juz Grid
+      const grid = document.getElementById("parent-juz-grid");
+      if (grid) {
+        let cellsHtml = "";
+        for (let i = 1; i <= 30; i++) {
+          const isCompleted = i <= std.juzCompleted;
+          const isCurrent = i === std.currentJuz && !isCompleted;
+          cellsHtml += `
+            <div class="juz-cell ${isCompleted ? "completed" : isCurrent ? "current" : ""}">
+              <span>Juz ${i}</span>
+              <span style="font-size:0.65rem; font-weight:500;">${isCompleted ? "✓" : isCurrent ? "Active" : ""}</span>
+            </div>
+          `;
+        }
+        grid.innerHTML = cellsHtml;
+      }
+
+      // Akhlaq Breakdown Card
+      const akhlaqCard = document.getElementById("parent-akhlaq-card");
+      if (akhlaqCard) {
+        akhlaqCard.innerHTML = `
+          <div style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px;">
+            <div style="font-size:0.84rem; font-weight:700; color:var(--primary); margin-bottom:4px;">
+              Automatic Monthly Akhlaq Evaluation: ${akhlaq.grade}
+            </div>
+            <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.45;">${akhlaq.autoReasonSummary}</p>
+            ${akhlaq.topTags ? `<div style="font-size:0.74rem; color:var(--text-muted); margin-top:6px;"><strong>Recorded Conduct Tags:</strong> ${akhlaq.topTags}</div>` : ""}
+          </div>
+        `;
+      }
+
+      // Campus Notices
+      const pNotices = document.getElementById("parent-notices-feed");
+      if (pNotices) {
+        pNotices.innerHTML = globalNotices
+          .map(
+            (n) => `
+          <div class="feed-item">
+            <div class="feed-header"><strong>${n.title}</strong> <span>${n.dateStr}</span></div>
+            <p style="font-size:0.78rem; color:var(--text-secondary);">${n.content}</p>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      // Parent Verification Feed
+      const pFeed = document.getElementById("parent-feed");
+      if (pFeed) {
+        if (stdLogs.length === 0) {
+          pFeed.innerHTML = `<p style="color:var(--text-muted); font-size:0.84rem;">No daily logs recorded for this student yet.</p>`;
+        } else {
+          pFeed.innerHTML = stdLogs
+            .map(
+              (r) => `
+            <div class="feed-item">
+              <div class="feed-header">
+                <strong>${r.dateStr}</strong>
+                <span class="tag ${r.attendance === "Absent" ? "tag-absent" : "tag-present"}">${r.attendance}</span>
+              </div>
+              ${
+                r.attendance !== "Absent"
+                  ? `
+                <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.45;">
+                  <div><strong>Sabaq:</strong> ${r.sabaqTarget} <span class="tag tag-mumtaz">${r.sabaqGrade}</span></div>
+                  <div><strong>Sabqi:</strong> ${r.sabqiTarget} (${r.sabqiGrade})</div>
+                  <div><strong>Manzil:</strong> ${r.manzilTarget} (${r.manzilGrade})</div>
+                </div>`
+                  : ""
+              }
+              ${r.note ? `<div style="font-size:0.76rem; color:var(--text-muted); font-style:italic; margin-top:6px;">"${r.note}"</div>` : ""}
+            </div>
+          `
+            )
+            .join("");
+        }
+      }
+    }
+
+    // 1-Page Compact Printable Monthly Report Card Builder
+    function buildReportCardHTML(studentId) {
+      const std = globalStudents.find((s) => s.studentId === studentId) || globalStudents[0];
+      const stdLogs = globalLogs.filter((l) => l.studentId === std.studentId);
+      const total = stdLogs.length;
+      const present = stdLogs.filter((l) => l.attendance !== "Absent").length;
+      const attRate = total > 0 ? Math.round((present / total) * 100) : 100;
+      const akhlaq = calculateAkhlaqMetric(stdLogs);
+      const collegeName = document.getElementById("college-name-display")?.innerText || "Asry Academy";
+      const collegeSub = document.getElementById("college-sub-display")?.innerText || "Bendichal · Al-Furqan Hifz Campus";
+
+      return `
+        <div style="border:2px solid #064e3b; border-radius:10px; padding:18px; background:#ffffff; color:#0f172a; font-family:'Plus Jakarta Sans', sans-serif;">
+          <div style="text-align:center; border-bottom:2px solid #064e3b; padding-bottom:10px; margin-bottom:14px;">
+            <div style="font-family:'Amiri', serif; font-size:1.5rem; font-weight:700; color:#064e3b;">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+            <h2 style="font-family:'Amiri', serif; font-size:1.45rem; color:#064e3b; margin:2px 0;">${collegeName}</h2>
+            <p style="font-size:0.8rem; color:#475569; margin:0;">${collegeSub} — Official 1-Page Monthly Hifz &amp; Akhlaq Progress Report</p>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-size:0.8rem; margin-bottom:12px;">
+            <div><strong>Student:</strong> ${std.name} (${std.studentId})</div>
+            <div><strong>Halqa:</strong> ${std.batch}</div>
+            <div><strong>Completed Hifz:</strong> ${std.juzCompleted} / 30 Juz</div>
+            <div><strong>Attendance:</strong> ${attRate}% (${present}/${total})</div>
+          </div>
+
+          <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:8px; padding:10px; margin-bottom:12px; font-size:0.8rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+              <strong>Automatic Monthly Akhlaq Evaluation: ${akhlaq.grade}</strong>
+              <span style="font-family:'JetBrains Mono', monospace; font-weight:700; color:#065f46;">Score: ${akhlaq.score}%</span>
+            </div>
+            <div style="margin-top:4px; color:#1e293b;"><strong>Behavioral Analysis:</strong> ${akhlaq.autoReasonSummary}</div>
+            ${akhlaq.topTags ? `<div style="margin-top:3px; color:#475569; font-size:0.75rem;"><strong>Recorded Conduct Tags:</strong> ${akhlaq.topTags}</div>` : ""}
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; font-size:0.76rem; margin-bottom:16px;">
+            <thead>
+              <tr style="background:#f1f5f9; text-align:left;">
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Date</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Sabaq (New Lesson)</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Sabqi (Recent)</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Manzil (Old Juz)</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Akhlaq &amp; Ustadh Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${
+                stdLogs.length === 0
+                  ? `<tr><td colspan="5" style="padding:10px; text-align:center; border:1px solid #cbd5e1;">No verification logs recorded this month.</td></tr>`
+                  : stdLogs
+                      .slice(0, 12)
+                      .map(
+                        (l) => `
+                  <tr>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1; font-family:'JetBrains Mono', monospace;">${l.dateStr}</td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">${l.attendance === "Absent" ? "Absent" : l.sabaqTarget + " (" + l.sabaqGrade.split(" ")[0] + ")"}</td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">${l.attendance === "Absent" ? "—" : l.sabqiTarget}</td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">${l.attendance === "Absent" ? "—" : l.manzilTarget}</td>
+                    <td style="padding:5px 8px; border:1px solid #cbd5e1;">${l.note || "—"} (${l.akhlaqScoreDelta >= 0 ? "+" + l.akhlaqScoreDelta : l.akhlaqScoreDelta})</td>
+                  </tr>
+                `
+                      )
+                      .join("")
+              }
+            </tbody>
+          </table>
+
+          <div style="display:flex; justify-content:space-between; margin-top:24px; padding-top:10px; font-size:0.78rem; color:#334155;">
+            <div>Ustadh Signature (${std.ustadhName}): ______________________</div>
+            <div>Guardian Signature: ______________________</div>
+            <div>Principal Seal &amp; Sign: ______________________</div>
+          </div>
+        </div>
+      `;
+    }
+
+    window.openReportCardModal = function(studentId) {
+      const html = buildReportCardHTML(studentId);
+      const modalBody = document.getElementById("report-card-modal-body");
+      const printContainer = document.getElementById("printable-report-card");
+      if (modalBody) modalBody.innerHTML = html;
+      if (printContainer) printContainer.innerHTML = html;
+      document.getElementById("report-card-modal").classList.remove("hidden");
+    };
+
+    window.closeReportCardModal = function() {
+      document.getElementById("report-card-modal").classList.add("hidden");
+    };
+
+    window.printMonthlyReport = function(studentId) {
+      const html = buildReportCardHTML(studentId);
+      const printContainer = document.getElementById("printable-report-card");
+      if (printContainer) printContainer.innerHTML = html;
+      window.print();
+    };
+
+    // Master Render Function
+    function renderAllViews() {
+      renderSelectedStudentSnapshot();
+      renderVerificationFeed();
+      renderSchedulesVault();
+      renderAnalyticsAndAlerts();
+      renderPrincipalPortfolios();
+      renderParentPortal();
+    }
+
+    // Firestore Real-Time Listeners
+    window.addEventListener("firebase-ready", () => {
+      if (!window.fDb || !window.fOnSnapshot || !window.fQuery || !window.fWhere) return;
+
+      const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
+
+      // Listen to Settings
+      try {
+        window.fOnSnapshot(
+          window.fQuery(window.fCollection(window.fDb, "settings"), ownerFilter),
+          (snap) => {
+            snap.forEach((docSnap) => {
+              if (docSnap.id === "general") {
+                const d = docSnap.data();
+                if (d.mode) {
+                  document.getElementById("campus-badge").innerText =
+                    d.mode === "residential" ? "Residential Campus" : "Day College";
+                  document.getElementById("cfg-campus-mode").value = d.mode;
+                }
+                if (d.name) {
+                  document.getElementById("college-name-display").innerText = d.name;
+                  document.getElementById("cfg-college-name").value = d.name;
+                }
+                if (d.sub) {
+                  document.getElementById("college-sub-display").innerText = d.sub;
+                  document.getElementById("cfg-college-sub").value = d.sub;
+                }
+                if (d.academicTerm) {
+                  document.getElementById("academic-term-display").innerText = d.academicTerm;
+                  document.getElementById("cfg-academic-term").value = d.academicTerm;
+                }
+              }
+            });
+          },
+          () => {}
+        );
+      } catch (e) {}
+
+      // Listen to Hifz Logs
+      try {
+        window.fOnSnapshot(
+          window.fQuery(window.fCollection(window.fDb, "hifz_logs"), ownerFilter),
+          (snap) => {
+            if (!snap.empty) {
+              const remoteLogs = [];
+              snap.forEach((d) => remoteLogs.push(normalizeLog(d.data(), d.id)));
+              const remoteIds = new Set(remoteLogs.map((l) => l.id));
+              const merged = [...remoteLogs, ...INITIAL_LOGS.filter((l) => !remoteIds.has(l.id))];
+              merged.sort((a, b) => String(b.id).localeCompare(String(a.id)));
+              globalLogs = merged;
+              renderAllViews();
+            }
+          },
+          () => {}
+        );
+      } catch (e) {}
+
+      // Listen to Students
+      try {
+        window.fOnSnapshot(
+          window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter),
+          (snap) => {
+            if (!snap.empty) {
+              const remoteStudents = [];
+              snap.forEach((d) => remoteStudents.push(d.data()));
+              const remoteIds = new Set(remoteStudents.map((s) => s.studentId));
+              globalStudents = [...INITIAL_STUDENTS.filter((s) => !remoteIds.has(s.studentId)), ...remoteStudents];
+              populateStudentSelectors();
+              renderAllViews();
+            }
+          },
+          () => {}
+        );
+      } catch (e) {}
+    });
+
+    // Initialize UI on DOM Ready
+    window.addEventListener("DOMContentLoaded", () => {
+      populateStudentSelectors();
+      updateSessionHeader();
+      renderAllViews();
+      if (window.lucide) window.lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
