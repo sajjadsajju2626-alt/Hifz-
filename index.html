@@ -852,6 +852,95 @@
       box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
     }
 
+    /* Auth Portal Sign In Screen (Initial View Lock) */
+    .auth-container {
+      max-width: 480px;
+      margin: 2rem auto 3rem;
+      width: 100%;
+    }
+
+    .auth-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-top: 5px solid var(--primary);
+      border-radius: 14px;
+      padding: 2rem 1.85rem;
+      box-shadow: 0 16px 36px -8px rgba(6, 78, 59, 0.12);
+    }
+
+    .auth-role-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 1.25rem;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .auth-role-btn {
+      padding: 8px 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .auth-role-btn:hover {
+      color: var(--text);
+    }
+
+    .auth-role-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .demo-credentials-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 1rem;
+    }
+
+    .demo-pill {
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .demo-pill:hover {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #065f46;
+    }
+
+    .demo-pill code {
+      font-family: var(--font-mono);
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+    }
+
     footer {
       border-top: 1px solid var(--border);
       background: #ffffff;
@@ -909,14 +998,14 @@
   <!-- TOP HEADER -->
   <header class="no-print">
     <div class="header-inner">
-      <div class="brand" onclick="switchWorkspace('teacher')">
+      <div class="brand" onclick="handleBrandClick()" title="Al-Furqan & Asry Academy">
         <div>
           <div class="brand-title" id="college-name-display">Asry Academy</div>
         </div>
       </div>
 
-      <nav class="nav-tabs" aria-label="Primary Workspace Navigation">
-        <button type="button" class="nav-tab-btn active" id="nav-teacher" onclick="switchWorkspace('teacher')">
+      <nav class="nav-tabs hidden" id="main-nav-tabs" aria-label="Primary Workspace Navigation">
+        <button type="button" class="nav-tab-btn" id="nav-teacher" onclick="switchWorkspace('teacher')">
           Verification Desk
         </button>
         <button type="button" class="nav-tab-btn" id="nav-schedules" onclick="switchWorkspace('schedules')">
@@ -934,7 +1023,7 @@
       </nav>
 
       <div class="header-actions">
-        <button type="button" class="btn-portal-signin" onclick="openLoginModal()">
+        <button type="button" class="btn-portal-signin" id="btn-header-auth" onclick="handleHeaderAuthClick()">
           Portal Sign In
         </button>
       </div>
@@ -960,7 +1049,7 @@
         <span id="academic-term-display">1448 AH · Rabi Al-Thani Term</span>
       </div>
       <div>
-        Active Session: <strong style="color: var(--primary);" id="logged-user-label">Ustadh Ahmad (TEACHER)</strong>
+        Active Session: <strong style="color: var(--primary);" id="logged-user-label">Guest · Not Signed In</strong>
       </div>
     </div>
   </div>
@@ -968,8 +1057,128 @@
   <!-- MAIN WORKSPACE -->
   <main>
 
+    <!-- 0. PORTAL SIGN IN VIEW (INITIAL VIEW LOCK) -->
+    <section id="view-auth">
+      <div class="auth-container">
+        <div class="auth-card">
+          <div style="text-align: center; margin-bottom: 1.25rem;">
+            <div style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.25rem;">
+              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </div>
+            <h1 style="font-family: var(--font-display); font-size: 1.45rem; color: var(--primary-deep); line-height: 1.2; margin-bottom: 0.35rem;">
+              Al-Furqan &amp; Asry Academy
+            </h1>
+            <p style="font-size: 0.84rem; color: var(--text-secondary); font-weight: 600;">
+              Hifz College &amp; Day Madrasa Portal
+            </p>
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;">
+              Please sign in to access daily Hifz verification, memorization schedules, transit/pickup monitoring, and student progress dossiers.
+            </p>
+          </div>
+
+          <!-- Role Selector Tabs -->
+          <div class="auth-role-tabs">
+            <button
+              type="button"
+              class="auth-role-btn active"
+              id="role-tab-teacher"
+              onclick="selectAuthRole('teacher')"
+            >
+              👨‍🏫 Ustadh / Teacher
+            </button>
+            <button
+              type="button"
+              class="auth-role-btn"
+              id="role-tab-principal"
+              onclick="selectAuthRole('principal')"
+            >
+              🏛️ Principal / Admin
+            </button>
+            <button
+              type="button"
+              class="auth-role-btn"
+              id="role-tab-parent"
+              onclick="selectAuthRole('parent')"
+            >
+              👨‍👩‍👦 Parent (രക്ഷിതാവ്)
+            </button>
+          </div>
+
+          <div id="auth-alert-banner" class="status-banner error hidden" role="alert">
+            <span id="auth-alert-text"></span>
+          </div>
+
+          <form id="auth-portal-form" onsubmit="handleAuthSubmit(event)">
+            <div class="form-group">
+              <label for="auth-username" id="auth-username-label">Ustadh Username</label>
+              <input
+                type="text"
+                id="auth-username"
+                value="ustadh1"
+                placeholder="Enter username or Admission ID"
+                required
+                autocomplete="username"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="auth-password" id="auth-password-label">Password / PIN</label>
+              <input
+                type="password"
+                id="auth-password"
+                value="1234"
+                placeholder="Enter password or PIN"
+                required
+                autocomplete="current-password"
+              />
+            </div>
+
+            <div class="demo-credentials-box">
+              <div style="font-size: 0.74rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">
+                Quick Demo Credentials (Tap to Auto-Fill &amp; Sign In):
+              </div>
+              <div class="chips-container" style="margin: 0;">
+                <button
+                  type="button"
+                  class="demo-pill"
+                  onclick="fillAndLogin('teacher', 'ustadh1', '1234')"
+                  title="Sign in as Ustadh Ahmad"
+                >
+                  Ustadh: <code>ustadh1 / 1234</code>
+                </button>
+                <button
+                  type="button"
+                  class="demo-pill"
+                  onclick="fillAndLogin('principal', 'admin', 'admin123')"
+                  title="Sign in as Principal Admin"
+                >
+                  Principal: <code>admin / admin123</code>
+                </button>
+                <button
+                  type="button"
+                  class="demo-pill"
+                  onclick="fillAndLogin('parent', 'STD-101', '1234')"
+                  title="Sign in as Parent of Zaid Mansoor"
+                >
+                  Parent: <code>STD-101 / 1234</code>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btn-auth-submit" style="margin-top: 1rem;">
+              Sign In to Portal
+            </button>
+          </form>
+
+          <div style="margin-top: 1.15rem; padding-top: 0.85rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted); text-align: center;">
+            🔒 Secure Session · Encrypted via Firestore Database · Day Madrasa Transit &amp; Auto-Akhlaq Active
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 1. TEACHER / USTADH DESK VIEW -->
-    <section id="view-teacher">
+    <section id="view-teacher" class="hidden">
       <div class="desk-grid">
         <!-- Left Column: Daily Verification & Akhlaq Form -->
         <div class="card">
@@ -1963,7 +2172,8 @@
     ]);
 
     // Global State
-    let currentUser = { role: "teacher", username: "ustadh1", name: "Ustadh Ahmad" };
+    let currentUser = null;
+    let currentAuthRole = "teacher";
     let campusMode = "day"; // Default to 'day' so Day College / Day Madrasa features are immediately active
     let currentShift = "Morning Shift (Before School)";
     let currentAttendance = "Present";
@@ -2564,7 +2774,7 @@
         targetDate: document.getElementById("sch-date").value || "2026-12-15",
         progressPercent: 15,
         status: "active",
-        assignedBy: currentUser.name || "Ustadh Ahmad"
+        assignedBy: (currentUser && currentUser.name) || "Ustadh Ahmad"
       };
 
       try {
@@ -2651,7 +2861,7 @@
         content: document.getElementById("notice-content").value.trim(),
         audience: document.getElementById("notice-audience").value || "all",
         dateStr: new Date().toLocaleDateString("en-GB"),
-        authorName: currentUser.name || "Principal Admin"
+        authorName: (currentUser && currentUser.name) || "Principal Admin"
       };
 
       try {
@@ -2711,7 +2921,12 @@
 
     // Workspace & Tab Navigation
     window.switchWorkspace = function(view) {
+      if (!currentUser) {
+        showAuthView();
+        return;
+      }
       const views = ["teacher", "schedules", "analytics", "principal", "parent"];
+      document.getElementById("view-auth")?.classList.add("hidden");
       views.forEach((v) => {
         const sec = document.getElementById("view-" + v);
         const nav = document.getElementById("nav-" + v);
@@ -2729,6 +2944,258 @@
         if (el) el.classList.toggle("hidden", t !== tab);
         if (btn) btn.classList.toggle("active", t === tab);
       });
+    };
+
+    // Header & Navigation Action Handlers
+    window.handleBrandClick = function() {
+      if (!currentUser) {
+        showAuthView();
+      } else if (currentUser.role === "parent") {
+        switchWorkspace("parent");
+      } else if (currentUser.role === "principal") {
+        switchWorkspace("principal");
+      } else {
+        switchWorkspace("teacher");
+      }
+    };
+
+    window.handleHeaderAuthClick = function() {
+      if (currentUser) {
+        performLogout();
+      } else {
+        showAuthView();
+      }
+    };
+
+    // Role Selection on Portal Sign In Screen
+    window.selectAuthRole = function(role) {
+      currentAuthRole = role;
+      document.getElementById("role-tab-teacher")?.classList.toggle("active", role === "teacher");
+      document.getElementById("role-tab-principal")?.classList.toggle("active", role === "principal");
+      document.getElementById("role-tab-parent")?.classList.toggle("active", role === "parent");
+
+      const userLabel = document.getElementById("auth-username-label");
+      const userInput = document.getElementById("auth-username");
+      const passInput = document.getElementById("auth-password");
+
+      if (role === "parent") {
+        if (userLabel) userLabel.innerText = "Student Admission ID (അഡ്മിഷൻ നമ്പർ)";
+        if (userInput) {
+          userInput.placeholder = "e.g. STD-101";
+          if (!userInput.value || userInput.value === "ustadh1" || userInput.value === "admin") {
+            userInput.value = "STD-101";
+          }
+        }
+        if (passInput && (!passInput.value || passInput.value === "admin123")) {
+          passInput.value = "1234";
+        }
+      } else if (role === "principal") {
+        if (userLabel) userLabel.innerText = "Principal Username";
+        if (userInput) {
+          userInput.placeholder = "e.g. admin";
+          if (!userInput.value || userInput.value === "ustadh1" || userInput.value === "STD-101") {
+            userInput.value = "admin";
+          }
+        }
+        if (passInput && (!passInput.value || passInput.value === "1234")) {
+          passInput.value = "admin123";
+        }
+      } else {
+        if (userLabel) userLabel.innerText = "Ustadh Username";
+        if (userInput) {
+          userInput.placeholder = "e.g. ustadh1";
+          if (!userInput.value || userInput.value === "admin" || userInput.value === "STD-101") {
+            userInput.value = "ustadh1";
+          }
+        }
+        if (passInput && (!passInput.value || passInput.value === "admin123")) {
+          passInput.value = "1234";
+        }
+      }
+    };
+
+    window.fillAndLogin = function(role, username, password) {
+      selectAuthRole(role);
+      const u = document.getElementById("auth-username");
+      const p = document.getElementById("auth-password");
+      if (u) u.value = username;
+      if (p) p.value = password;
+      const res = loginWithCredentials(role, username, password);
+      if (!res.success) {
+        showAuthAlert(res.message);
+      }
+    };
+
+    function showAuthAlert(message) {
+      const banner = document.getElementById("auth-alert-banner");
+      const text = document.getElementById("auth-alert-text");
+      if (banner && text) {
+        text.innerText = message;
+        banner.classList.remove("hidden");
+      } else {
+        window.alert(message);
+      }
+    }
+
+    window.handleAuthSubmit = function(e) {
+      if (e && typeof e.preventDefault === "function") {
+        e.preventDefault();
+      }
+      const banner = document.getElementById("auth-alert-banner");
+      if (banner) banner.classList.add("hidden");
+
+      const u = (document.getElementById("auth-username")?.value || "").trim();
+      const p = (document.getElementById("auth-password")?.value || "").trim();
+
+      const res = loginWithCredentials(currentAuthRole, u, p);
+      if (!res.success) {
+        showAuthAlert(res.message);
+      }
+    };
+
+    // Core Credential Verification & Session Storage
+    window.loginWithCredentials = function(role, username, password) {
+      const u = (username || "").trim();
+      const p = (password || "").trim();
+
+      if (!u || !p) {
+        return { success: false, message: "Please enter your Username / ID and Password / PIN." };
+      }
+
+      if (role === "principal") {
+        if (u === "admin" && p === "admin123") {
+          currentUser = {
+            role: "principal",
+            username: "admin",
+            name: "Principal Admin",
+            loginTime: new Date().toISOString()
+          };
+          try {
+            localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
+          } catch (err) {}
+          applyAuthenticatedState("principal");
+          return { success: true };
+        }
+        return { success: false, message: "Invalid Principal credentials! Use admin / admin123" };
+      }
+
+      if (role === "teacher") {
+        if ((u === "ustadh1" || u.toLowerCase().includes("ustadh")) && p === "1234") {
+          const name = u.toLowerCase() === "ustadh2" ? "Ustadh Ibrahim" : "Ustadh Ahmad";
+          currentUser = {
+            role: "teacher",
+            username: u,
+            name,
+            loginTime: new Date().toISOString()
+          };
+          try {
+            localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
+          } catch (err) {}
+          applyAuthenticatedState("teacher");
+          return { success: true };
+        }
+        return { success: false, message: "Invalid Ustadh credentials! Use ustadh1 / 1234" };
+      }
+
+      if (role === "parent") {
+        const found = globalStudents.find((s) => s.studentId.toUpperCase() === u.toUpperCase());
+        if (found && (p === found.pin || p === "1234")) {
+          currentUser = {
+            role: "parent",
+            username: found.studentId,
+            studentId: found.studentId,
+            name: "Parent of " + found.name,
+            loginTime: new Date().toISOString()
+          };
+          currentParentStudentId = found.studentId;
+          try {
+            localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
+          } catch (err) {}
+          applyAuthenticatedState("parent");
+          return { success: true };
+        }
+        return { success: false, message: "Invalid Student ID or Parent PIN! Try STD-101 / 1234" };
+      }
+
+      return { success: false, message: "Unknown role specified." };
+    };
+
+    // Logout and Return to Clean Initial Sign In View
+    window.performLogout = function() {
+      try {
+        localStorage.removeItem("hifz_portal_session");
+      } catch (err) {
+        console.warn("localStorage removal notice:", err);
+      }
+      currentUser = null;
+      showAuthView();
+    };
+
+    // Show ONLY Portal Sign In View (Initial View Lock)
+    window.showAuthView = function() {
+      // 1. Hide all dashboard views
+      const views = ["teacher", "schedules", "analytics", "principal", "parent"];
+      views.forEach((v) => {
+        document.getElementById("view-" + v)?.classList.add("hidden");
+        document.getElementById("nav-" + v)?.classList.remove("active");
+      });
+
+      // 2. Display ONLY the Portal Sign In screen
+      document.getElementById("view-auth")?.classList.remove("hidden");
+
+      // 3. Hide dashboard navigation tabs so unauthenticated users cannot bypass view lock
+      const navTabs = document.getElementById("main-nav-tabs");
+      if (navTabs) navTabs.classList.add("hidden");
+
+      // 4. Update Header button
+      const authBtn = document.getElementById("btn-header-auth");
+      if (authBtn) {
+        authBtn.innerText = "Portal Sign In";
+        authBtn.onclick = function() { window.showAuthView(); };
+      }
+
+      // 5. Update session header
+      const sessLbl = document.getElementById("logged-user-label");
+      if (sessLbl) sessLbl.innerText = "Guest · Not Signed In";
+
+      // 6. Reset alert banner
+      const banner = document.getElementById("auth-alert-banner");
+      if (banner) banner.classList.add("hidden");
+
+      selectAuthRole(currentAuthRole || "teacher");
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    // Apply Authenticated View State
+    window.applyAuthenticatedState = function(role) {
+      // 1. Reveal dashboard navigation tabs
+      const navTabs = document.getElementById("main-nav-tabs");
+      if (navTabs) navTabs.classList.remove("hidden");
+
+      // 2. Hide auth view
+      document.getElementById("view-auth")?.classList.add("hidden");
+
+      // 3. Update header action button to Logout
+      const authBtn = document.getElementById("btn-header-auth");
+      if (authBtn && currentUser) {
+        authBtn.innerText = "Logout (" + (currentUser.name || "").split(" ")[0] + ")";
+        authBtn.onclick = function() { window.performLogout(); };
+      }
+
+      // 4. Update session header
+      updateSessionHeader();
+
+      // 5. Route to respective dashboard
+      if (role === "parent") {
+        currentParentStudentId = (currentUser && currentUser.studentId) || "STD-101";
+        const switcher = document.getElementById("parent-student-switcher");
+        if (switcher) switcher.value = currentParentStudentId;
+        switchWorkspace("parent");
+      } else if (role === "principal") {
+        switchWorkspace("principal");
+      } else {
+        switchWorkspace("teacher");
+      }
     };
 
     // Portal Login Modal
@@ -2766,54 +3233,22 @@
       const u = document.getElementById("login-username").value.trim();
       const p = document.getElementById("login-password").value.trim();
 
-      if (!u || !p) {
-        window.alert("Please enter ID and password");
-        return;
-      }
-
-      if (role === "principal") {
-        if (u === "admin" && p === "admin123") {
-          currentUser = { role: "principal", name: "Principal Admin" };
-          updateSessionHeader();
-          closeLoginModal();
-          switchWorkspace("principal");
-        } else {
-          window.alert("Invalid Principal credentials! Use admin / admin123");
-        }
-        return;
-      }
-
-      if (role === "teacher") {
-        if ((u === "ustadh1" || u.toLowerCase().includes("ustadh")) && p === "1234") {
-          currentUser = { role: "teacher", username: u, name: "Ustadh Ahmad" };
-          updateSessionHeader();
-          closeLoginModal();
-          switchWorkspace("teacher");
-        } else {
-          window.alert("Invalid Ustadh credentials! Use ustadh1 / 1234");
-        }
-        return;
-      }
-
-      if (role === "parent") {
-        const found = globalStudents.find((s) => s.studentId.toUpperCase() === u.toUpperCase());
-        if (found && (p === found.pin || p === "1234")) {
-          currentUser = { role: "parent", studentId: found.studentId, name: found.name + " (Parent)" };
-          currentParentStudentId = found.studentId;
-          const switcher = document.getElementById("parent-student-switcher");
-          if (switcher) switcher.value = found.studentId;
-          updateSessionHeader();
-          closeLoginModal();
-          switchWorkspace("parent");
-        } else {
-          window.alert("Invalid Student ID or PIN! Try STD-101 / 1234");
-        }
+      const res = loginWithCredentials(role, u, p);
+      if (res.success) {
+        closeLoginModal();
+      } else {
+        window.alert(res.message);
       }
     };
 
     function updateSessionHeader() {
       const lbl = document.getElementById("logged-user-label");
       const vBadge = document.getElementById("verifier-badge");
+      if (!currentUser) {
+        if (lbl) lbl.innerText = "Guest · Not Signed In";
+        if (vBadge) vBadge.innerText = "Verifier: Not Signed In";
+        return;
+      }
       if (lbl) lbl.innerText = currentUser.name + " (" + currentUser.role.toUpperCase() + ")";
       if (vBadge && currentUser.role === "teacher") {
         vBadge.innerText = "Verifier: " + currentUser.name;
@@ -3684,8 +4119,32 @@
     // Initialize UI on DOM Ready
     window.addEventListener("DOMContentLoaded", () => {
       populateStudentSelectors();
-      updateSessionHeader();
       applyCampusModeUI();
+
+      // Session Handling & Initial View Lock:
+      currentUser = null;
+      let savedSession = null;
+      try {
+        const stored = localStorage.getItem("hifz_portal_session");
+        if (stored) {
+          savedSession = JSON.parse(stored);
+        }
+      } catch (err) {
+        console.warn("Error reading stored session:", err);
+        localStorage.removeItem("hifz_portal_session");
+      }
+
+      if (savedSession && savedSession.role && (savedSession.name || savedSession.username)) {
+        currentUser = savedSession;
+        if (currentUser.role === "parent") {
+          currentParentStudentId = currentUser.studentId || "STD-101";
+        }
+        applyAuthenticatedState(currentUser.role);
+      } else {
+        // ALWAYS defaults to the Portal Sign In page when first opened if no session
+        showAuthView();
+      }
+
       if (window.lucide) window.lucide.createIcons();
     });
   </script>
