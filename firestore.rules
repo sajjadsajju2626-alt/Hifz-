@@ -217,6 +217,26 @@ service cloud.firestore {
       data.createdAt is timestamp;
     }
 
+    function isValidTeacher(data) {
+      return data.keys().hasAll([
+        'teacherId', 'name', 'batch', 'phone', 'username', 'pin',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'teacherId', 'name', 'batch', 'phone', 'username', 'pin',
+        'ownerId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.teacherId is string && data.teacherId.size() >= 2 && data.teacherId.size() <= 64 && data.teacherId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
+      data.batch is string && data.batch.size() >= 1 && data.batch.size() <= 80 &&
+      data.phone is string && data.phone.size() >= 3 && data.phone.size() <= 30 &&
+      data.username is string && data.username.size() >= 2 && data.username.size() <= 40 && data.username.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.pin is string && data.pin.size() >= 3 && data.pin.size() <= 30 &&
+      isValidOwner(data.ownerId) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
     // 3. Collection Rules
     match /students/{studentId} {
       allow get: if isValidId(studentId) && canAccessOwner(existing().ownerId);
@@ -235,6 +255,24 @@ service cloud.firestore {
             ]))
         );
       allow delete: if isValidId(studentId) && canAccessOwner(existing().ownerId);
+    }
+
+    match /teachers/{teacherId} {
+      allow get: if isValidId(teacherId) && canAccessOwner(existing().ownerId);
+      allow list: if canAccessOwner(resource.data.ownerId);
+      allow create: if isValidId(teacherId) && isValidTeacher(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isValidId(teacherId) && isValidTeacher(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (canAccessOwner(existing().ownerId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'batch', 'phone', 'username', 'pin', 'updatedAt'
+            ]))
+        );
+      allow delete: if isValidId(teacherId) && canAccessOwner(existing().ownerId);
     }
 
     match /hifz_logs/{logId} {
