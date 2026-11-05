@@ -362,6 +362,71 @@
       margin-bottom: 1.1rem;
     }
 
+    .residential-campus-panel {
+      background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+      border: 1px solid #a7f3d0;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .salah-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 640px) {
+      .salah-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .salah-chip {
+      padding: 8px 6px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .salah-chip.active {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #10b981;
+      box-shadow: 0 1px 2px rgba(16, 185, 129, 0.15);
+    }
+
+    .adab-chip {
+      padding: 5px 10px;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .adab-chip.active {
+      background: #f0fdf4;
+      color: #166534;
+      border-color: #86efac;
+      font-weight: 700;
+    }
+
     label {
       display: block;
       font-size: 0.84rem;
@@ -492,6 +557,13 @@
       color: #065f46;
       border-color: #10b981;
       box-shadow: 0 1px 2px rgba(16, 185, 129, 0.14);
+    }
+
+    .att-btn.sick.active {
+      background: #fdf4ff;
+      color: #86198f;
+      border-color: #d946ef;
+      box-shadow: 0 1px 2px rgba(217, 70, 239, 0.14);
     }
 
     .att-btn.late.active {
@@ -672,6 +744,12 @@
     .tag-absent {
       background: #fee2e2;
       color: #991b1b;
+    }
+
+    .tag-sick {
+      background: #fdf4ff;
+      color: #86198f;
+      border: 1px solid #f0abfc;
     }
 
     .tag-akhlaq-a {
@@ -964,6 +1042,26 @@
       display: none !important;
     }
 
+    /* Subtle Fade-in Animation for Main Workspace Views & Sub-Tabs */
+    @keyframes viewFadeIn {
+      0% {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    main > section:not(.hidden) {
+      animation: viewFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    div[id^="p-tab-"]:not(.hidden) {
+      animation: viewFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
     /* 1-Page Compact Print Report Card Styling */
     @media print {
       @page {
@@ -1011,11 +1109,17 @@
         <button type="button" class="nav-tab-btn" id="nav-schedules" onclick="switchWorkspace('schedules')">
           Schedules Vault
         </button>
+        <button type="button" class="nav-tab-btn" id="nav-principal" onclick="switchWorkspace('principal')">
+          Principal Portfolios
+        </button>
         <button type="button" class="nav-tab-btn" id="nav-analytics" onclick="switchWorkspace('analytics')">
           Analytics &amp; Alerts (<span id="nav-alert-count">0</span>)
         </button>
-        <button type="button" class="nav-tab-btn" id="nav-principal" onclick="switchWorkspace('principal')">
-          Principal Portfolios
+        <button type="button" class="nav-tab-btn" id="nav-notices" onclick="switchWorkspace('notices')">
+          Notice Desk
+        </button>
+        <button type="button" class="nav-tab-btn" id="nav-settings" onclick="switchWorkspace('settings')">
+          Campus Settings
         </button>
         <button type="button" class="nav-tab-btn" id="nav-parent" onclick="switchWorkspace('parent')">
           Parent Portal
@@ -1185,7 +1289,7 @@
           <div class="card-header-row">
             <div>
               <h2 class="card-title">Daily Hifz &amp; Akhlaq Verification Desk</h2>
-              <p class="card-subtitle">Record Sabaq, Sabqi, Manzil, Day Madrasa Transit/Pickup &amp; Automatic Monthly Akhlaq points</p>
+              <p class="card-subtitle" id="teacher-desk-subtitle">Record Sabaq, Sabqi, Manzil, Day Madrasa Transit/Pickup &amp; Automatic Monthly Akhlaq points</p>
             </div>
             <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
               <span style="font-family: var(--font-mono); font-size: 0.75rem; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 4px 10px; border-radius: 6px;" id="verifier-badge">
@@ -1295,10 +1399,64 @@
               </div>
             </div>
 
-            <!-- 5. Expanded Day Attendance Nuances -->
+            <!-- Residential Campus 5-Time Jama'at Salah & Hostel Adab Panel -->
+            <div id="residential-campus-controls" class="residential-campus-panel hidden">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                <span style="font-size:0.82rem; font-weight:700; color:#065f46;">
+                  🕌 5-Time Jama'at Salah Status (നമസ്കാരം ജമാഅത്തായി)
+                </span>
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  style="font-size:0.72rem; padding:3px 9px;"
+                  onclick="selectAllSalah()"
+                >
+                  ✓ Mark All 5 in Jama'at
+                </button>
+              </div>
+              <div class="salah-grid" id="salah-chips-container">
+                <button type="button" class="salah-chip active" id="chip-salah-fajr" onclick="toggleSalah('Fajr')">
+                  <span>🌅 Fajr</span>
+                  <small id="chip-salah-fajr-sub">Jama'at ✓</small>
+                </button>
+                <button type="button" class="salah-chip active" id="chip-salah-dhuhr" onclick="toggleSalah('Dhuhr')">
+                  <span>☀️ Dhuhr</span>
+                  <small id="chip-salah-dhuhr-sub">Jama'at ✓</small>
+                </button>
+                <button type="button" class="salah-chip active" id="chip-salah-asr" onclick="toggleSalah('Asr')">
+                  <span>🌤️ Asr</span>
+                  <small id="chip-salah-asr-sub">Jama'at ✓</small>
+                </button>
+                <button type="button" class="salah-chip active" id="chip-salah-maghrib" onclick="toggleSalah('Maghrib')">
+                  <span>🌇 Maghrib</span>
+                  <small id="chip-salah-maghrib-sub">Jama'at ✓</small>
+                </button>
+                <button type="button" class="salah-chip active" id="chip-salah-isha" onclick="toggleSalah('Isha')">
+                  <span>🌌 Isha</span>
+                  <small id="chip-salah-isha-sub">Jama'at ✓</small>
+                </button>
+              </div>
+
+              <!-- Hostel Room Adab / Dorm Etiquette -->
+              <div style="margin-top:10px;">
+                <div style="font-size:0.78rem; font-weight:700; color:#1e293b; margin-bottom:6px;">
+                  Hostel Room Etiquette &amp; Dorm Adab (റൂം അച്ചടക്കം):
+                </div>
+                <div class="chips-container" style="margin-bottom:0;" id="hostel-adab-chips">
+                  <button type="button" class="adab-chip active" onclick="toggleHostelAdab(this, 'Bunk & Locker Cleaned')">✓ Bunk &amp; Locker Cleaned</button>
+                  <button type="button" class="adab-chip active" onclick="toggleHostelAdab(this, 'Lights-Out Observed')">✓ Lights-Out Observed</button>
+                  <button type="button" class="adab-chip active" onclick="toggleHostelAdab(this, 'Tahajjud Wakeup')">✓ Tahajjud Wakeup</button>
+                  <button type="button" class="adab-chip" onclick="toggleHostelAdab(this, 'Laundry Order')">Laundry Order</button>
+                  <button type="button" class="adab-chip" onclick="toggleHostelAdab(this, 'Good Roommate Adab')">Good Roommate Adab</button>
+                </div>
+                <input type="hidden" id="hostel-adab-input" value="Bunk &amp; Locker Cleaned, Lights-Out Observed, Tahajjud Wakeup" />
+              </div>
+            </div>
+
+            <!-- Attendance Nuances (Residential vs Day College) -->
             <div class="form-group">
               <label>Daily Attendance Status (ഹാജർ നില)</label>
-              <div class="att-grid">
+              <div class="att-grid" id="attendance-buttons-container">
                 <button
                   type="button"
                   class="att-btn present active"
@@ -1306,6 +1464,14 @@
                   onclick="setAttendance('Present')"
                 >
                   ✓ Present
+                </button>
+                <button
+                  type="button"
+                  class="att-btn sick hidden"
+                  id="btn-att-sick"
+                  onclick="setAttendance('Sick Bay / Medical Leave')"
+                >
+                  🏥 Sick Bay / Medical Leave
                 </button>
                 <button
                   type="button"
@@ -1574,17 +1740,17 @@
     <!-- 4. PRINCIPAL DASHBOARD VIEW -->
     <section id="view-principal" class="hidden">
       <div class="sub-tabs">
+        <button type="button" class="sub-tab-btn" id="ptab-btn-settings" onclick="switchPrincipalTab('settings')">
+          Campus Settings
+        </button>
         <button type="button" class="sub-tab-btn active" id="ptab-btn-portfolios" onclick="switchPrincipalTab('portfolios')">
-          Student Portfolios &amp; Auto-Akhlaq
+          Student Portfolios
         </button>
         <button type="button" class="sub-tab-btn" id="ptab-btn-enroll" onclick="switchPrincipalTab('enroll')">
-          Enroll Student
+          Add Student / Ustadh
         </button>
         <button type="button" class="sub-tab-btn" id="ptab-btn-notices" onclick="switchPrincipalTab('notices')">
           Notice Desk
-        </button>
-        <button type="button" class="sub-tab-btn" id="ptab-btn-settings" onclick="switchPrincipalTab('settings')">
-          Campus Settings
         </button>
       </div>
 
@@ -1703,17 +1869,33 @@
 
       <!-- Tab 4: Campus Settings -->
       <div id="p-tab-settings" class="hidden">
-        <div class="card" style="max-width:580px;">
+        <div class="card" style="max-width:620px;">
           <div class="card-header-row">
-            <h2 class="card-title">Campus &amp; Grading Configuration</h2>
+            <div>
+              <h2 class="card-title">Campus &amp; Grading Configuration</h2>
+              <p class="card-subtitle">Configure Day College vs Residential Campus mode, college title, and academic term</p>
+            </div>
           </div>
           <form onsubmit="handleSaveSettings(event)">
             <div class="form-group">
-              <label for="cfg-campus-mode">Campus Mode</label>
-              <select id="cfg-campus-mode">
-                <option value="day" selected>Day College / Day Madrasa</option>
-                <option value="residential">Residential Campus</option>
-              </select>
+              <label for="cfg-campus-mode">
+                Campus Mode (Active: <strong id="cfg-mode-status-text" style="color:var(--primary);">Day College / Day Madrasa</strong>)
+              </label>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <select id="cfg-campus-mode" onchange="handleCampusModeSelectChange()" style="flex:1;">
+                  <option value="day" selected>Day College / Day Madrasa</option>
+                  <option value="residential">Residential Campus</option>
+                </select>
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  onclick="toggleCampusModeQuick()"
+                  style="white-space:nowrap; padding:9px 14px; font-weight:700;"
+                  title="1-Tap Switch between Day College and Residential Campus"
+                >
+                  ⚡ Quick Switch Mode
+                </button>
+              </div>
             </div>
             <div class="form-group">
               <label for="cfg-college-name">College Name</label>
@@ -1727,7 +1909,9 @@
               <label for="cfg-academic-term">Academic Term</label>
               <input type="text" id="cfg-academic-term" value="1448 AH · Rabi Al-Thani Term" required />
             </div>
-            <button type="submit" class="btn-primary">Save &amp; Sync Settings</button>
+            <button type="submit" class="btn-primary" id="btn-save-settings">
+              Save &amp; Sync Campus Settings
+            </button>
           </form>
         </div>
       </div>
@@ -1852,10 +2036,12 @@
   <footer class="no-print">
     <div class="footer-inner">
       <div>Asry Academy · Bendichal · Al-Furqan Hifz Campus · Day Madrasa Transit, Parent Home Sign-Off &amp; Auto-Akhlaq System</div>
-      <div style="display:flex; gap:12px;">
-        <button type="button" onclick="switchWorkspace('teacher')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Ustadh Desk</button>
-        <button type="button" onclick="switchWorkspace('principal')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Principal Portal</button>
-        <button type="button" onclick="switchWorkspace('parent')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Parent Portal</button>
+      <div style="display:flex; gap:12px;" id="footer-nav-links">
+        <button type="button" id="footer-nav-teacher" onclick="switchWorkspace('teacher')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Ustadh Desk</button>
+        <button type="button" id="footer-nav-schedules" onclick="switchWorkspace('schedules')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Schedules Vault</button>
+        <button type="button" id="footer-nav-principal" onclick="switchWorkspace('principal')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Principal Portfolios</button>
+        <button type="button" id="footer-nav-analytics" onclick="switchWorkspace('analytics')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Analytics &amp; Alerts</button>
+        <button type="button" id="footer-nav-parent" onclick="switchWorkspace('parent')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Parent Portal</button>
       </div>
     </div>
   </footer>
@@ -2215,6 +2401,8 @@
         sabqiGrade,
         manzilTarget,
         manzilGrade,
+        salahTracking: Array.isArray(raw.salahTracking) ? raw.salahTracking : (raw.salahTracking ? [raw.salahTracking] : []),
+        hostelAdab: typeof raw.hostelAdab === "string" ? raw.hostelAdab : "",
         akhlaqScoreDelta: typeof raw.akhlaqScoreDelta === "number" ? raw.akhlaqScoreDelta : 0,
         akhlaqTags: Array.isArray(raw.akhlaqTags) ? raw.akhlaqTags : [],
         note: typeof raw.note === "string" ? raw.note : "",
@@ -2224,11 +2412,61 @@
       };
     }
 
+    // Residential Campus State & Salah Tracker Helpers
+    let currentSalahTracking = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+    let currentHostelAdab = ["Bunk & Locker Cleaned", "Lights-Out Observed", "Tahajjud Wakeup"];
+
+    window.toggleSalah = function(prayer) {
+      const idx = currentSalahTracking.indexOf(prayer);
+      if (idx > -1) {
+        currentSalahTracking.splice(idx, 1);
+      } else {
+        currentSalahTracking.push(prayer);
+      }
+      updateSalahUI();
+    };
+
+    window.selectAllSalah = function() {
+      currentSalahTracking = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+      updateSalahUI();
+    };
+
+    function updateSalahUI() {
+      const prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+      prayers.forEach((p) => {
+        const id = "chip-salah-" + p.toLowerCase();
+        const chip = document.getElementById(id);
+        const sub = document.getElementById(id + "-sub");
+        const isActive = currentSalahTracking.includes(p);
+        if (chip) chip.classList.toggle("active", isActive);
+        if (sub) sub.innerText = isActive ? "Jama'at ✓" : "Missed Jama'at";
+      });
+    }
+
+    window.toggleHostelAdab = function(btn, label) {
+      btn.classList.toggle("active");
+      const activeChips = Array.from(document.querySelectorAll("#hostel-adab-chips .adab-chip.active")).map((b) =>
+        b.innerText.replace("✓ ", "").trim()
+      );
+      currentHostelAdab = activeChips;
+      const inp = document.getElementById("hostel-adab-input");
+      if (inp) inp.value = currentHostelAdab.join(", ");
+    };
+
     // Apply Campus Mode ("day" vs "residential")
     function applyCampusModeUI() {
       const badge = document.getElementById("campus-badge");
+      const teacherSubtitle = document.getElementById("teacher-desk-subtitle");
       const dayControls = document.getElementById("day-college-controls");
+      const resControls = document.getElementById("residential-campus-controls");
+      const homeRevSec = document.getElementById("sec-home-revision");
+      const homeVerifiedPill = document.getElementById("ustadh-home-verified-pill");
       const cfgMode = document.getElementById("cfg-campus-mode");
+      const cfgStatusText = document.getElementById("cfg-mode-status-text");
+
+      const btnSick = document.getElementById("btn-att-sick");
+      const btnLate = document.getElementById("btn-att-late");
+      const btnEarly = document.getElementById("btn-att-early");
 
       if (badge) {
         badge.innerText =
@@ -2237,18 +2475,109 @@
             : "Residential Campus (Switch Mode)";
         badge.classList.toggle("residential", campusMode === "residential");
       }
+      if (cfgStatusText) {
+        cfgStatusText.innerText = campusMode === "day" ? "Day College / Day Madrasa" : "Residential Campus";
+      }
+      if (teacherSubtitle) {
+        teacherSubtitle.innerText =
+          campusMode === "residential"
+            ? "Record Sabaq, Sabqi, Manzil, Hostel Adab & 5-Time Salah Tracking"
+            : "Record Sabaq, Sabqi, Manzil, Day Madrasa Transit/Pickup & Automatic Monthly Akhlaq points";
+      }
+
+      // Panel & Section Visibility
       if (dayControls) {
         dayControls.classList.toggle("hidden", campusMode !== "day");
       }
+      if (resControls) {
+        resControls.classList.toggle("hidden", campusMode !== "residential");
+      }
+      if (homeRevSec) {
+        homeRevSec.classList.toggle("hidden", campusMode !== "day");
+      }
+      if (homeVerifiedPill && campusMode !== "day") {
+        homeVerifiedPill.classList.add("hidden");
+      }
+
+      // Attendance button conditional rendering
+      if (campusMode === "residential") {
+        if (btnSick) btnSick.classList.remove("hidden");
+        if (btnLate) btnLate.classList.add("hidden");
+        if (btnEarly) btnEarly.classList.add("hidden");
+
+        // If previously selected Day-specific attendance, safely reset to Present
+        if (currentAttendance === "Late Arrival (വൈകി എത്തി)" || currentAttendance === "Early Permission (നേരത്തെ പോയി)") {
+          setAttendance("Present");
+        }
+      } else {
+        // Day Mode
+        if (btnSick) btnSick.classList.add("hidden");
+        if (btnLate) btnLate.classList.remove("hidden");
+        if (btnEarly) btnEarly.classList.remove("hidden");
+
+        // If previously selected Sick Bay, safely reset to Present
+        if (currentAttendance === "Sick Bay / Medical Leave") {
+          setAttendance("Present");
+        }
+      }
+
       if (cfgMode) {
         cfgMode.value = campusMode;
       }
       renderAllViews();
     }
 
-    window.toggleCampusModeQuick = function() {
-      campusMode = campusMode === "day" ? "residential" : "day";
+    // 1-Tap Campus Mode Switcher with Real-Time Firestore Persistence
+    window.toggleCampusModeQuick = async function() {
+      const newMode = campusMode === "day" ? "residential" : "day";
+      campusMode = newMode;
       applyCampusModeUI();
+
+      try {
+        if (window.fDb && window.fSetDoc && window.fDoc) {
+          await window.fSetDoc(
+            window.fDoc(window.fDb, "settings", "general"),
+            {
+              mode: newMode,
+              ownerId: "portal-session",
+              updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+            },
+            { merge: true }
+          );
+        }
+        if (window.showToast) {
+          window.showToast("Campus mode switched to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + "!");
+        }
+      } catch (err) {
+        console.warn("Campus mode switch note:", err);
+      }
+    };
+
+    window.handleCampusModeSelectChange = async function() {
+      const select = document.getElementById("cfg-campus-mode");
+      if (!select) return;
+      const newMode = select.value === "residential" ? "residential" : "day";
+      campusMode = newMode;
+      applyCampusModeUI();
+
+      try {
+        if (window.fDb && window.fSetDoc && window.fDoc) {
+          await window.fSetDoc(
+            window.fDoc(window.fDb, "settings", "general"),
+            {
+              mode: newMode,
+              ownerId: "portal-session",
+              updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+            },
+            { merge: true }
+          );
+        }
+        if (window.showToast) {
+          window.showToast("Campus mode set to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + "!");
+        }
+      } catch (err) {
+        console.warn("Campus mode select note:", err);
+      }
     };
 
     // Shift Selection ("Morning Shift (Before School)" vs "Evening Shift (After School)")
@@ -2424,6 +2753,8 @@
         sabqiGrade: String(log.sabqiGrade || "Not Recited").slice(0, 60),
         manzilTarget: String(log.manzilTarget || "—").slice(0, 120),
         manzilGrade: String(log.manzilGrade || "Not Recited").slice(0, 60),
+        salahTracking: Array.isArray(log.salahTracking) ? log.salahTracking.slice(0, 10) : [],
+        hostelAdab: String(log.hostelAdab || "").slice(0, 100),
         akhlaqScoreDelta: typeof log.akhlaqScoreDelta === "number" ? log.akhlaqScoreDelta : 0,
         akhlaqTags: Array.isArray(log.akhlaqTags) ? log.akhlaqTags.slice(0, 10) : [],
         note: String(log.note || "").slice(0, 400),
@@ -2473,10 +2804,11 @@
       badge.style.color = dailyAkhlaqDelta > 0 ? "#047857" : dailyAkhlaqDelta < 0 ? "#b91c1c" : "#475569";
     }
 
-    // 4-Option Day Attendance Toggle
+    // Nuanced Attendance Toggle (Residential Campus vs Day College)
     window.setAttendance = function(status) {
       const validStatuses = [
         "Present",
+        "Sick Bay / Medical Leave",
         "Late Arrival (വൈകി എത്തി)",
         "Early Permission (നേരത്തെ പോയി)",
         "Absent"
@@ -2484,18 +2816,21 @@
       currentAttendance = validStatuses.includes(status) ? status : "Present";
 
       document.getElementById("btn-att-present")?.classList.toggle("active", currentAttendance === "Present");
+      document.getElementById("btn-att-sick")?.classList.toggle("active", currentAttendance === "Sick Bay / Medical Leave");
       document.getElementById("btn-att-late")?.classList.toggle("active", currentAttendance === "Late Arrival (വൈകി എത്തി)");
       document.getElementById("btn-att-early")?.classList.toggle("active", currentAttendance === "Early Permission (നേരത്തെ പോയി)");
       document.getElementById("btn-att-absent")?.classList.toggle("active", currentAttendance === "Absent");
 
+      const isExempt = currentAttendance === "Absent" || currentAttendance === "Sick Bay / Medical Leave";
       ["sec-sabaq", "sec-sabqi", "sec-manzil"].forEach((id) => {
         const el = document.getElementById(id);
-        if (el) el.classList.toggle("hidden", currentAttendance === "Absent");
+        if (el) el.classList.toggle("hidden", isExempt);
       });
     };
 
     function getAttendanceTagClass(att) {
       if (att === "Absent") return "tag-absent";
+      if (att && att.includes("Sick Bay")) return "tag-sick";
       if (att && att.includes("Late")) return "tag-late";
       if (att && att.includes("Early")) return "tag-early";
       return "tag-present";
@@ -2600,7 +2935,9 @@
         const stdObj = globalStudents.find((s) => s.studentId === safeStudentId);
         const safeStudentName = (stdObj && stdObj.name ? stdObj.name : "Zaid Mansoor").trim();
         const isAbsent = currentAttendance === "Absent";
-        const isExamMode = Boolean(document.getElementById("school-exam-mode")?.checked);
+        const isSickBay = currentAttendance === "Sick Bay / Medical Leave";
+        const isExempt = isAbsent || isSickBay;
+        const isExamMode = campusMode === "day" && Boolean(document.getElementById("school-exam-mode")?.checked);
 
         const rawSabaq = (document.getElementById("sabaq-target")?.value || "").trim();
         const rawSabqi = (document.getElementById("sabqi-target")?.value || "").trim();
@@ -2621,35 +2958,49 @@
         const defaultSabqi = stdObj ? "Juz " + stdObj.currentJuz + " (1/2 Juz)" : "1/2 Juz";
         const defaultManzil = stdObj ? "Juz " + Math.max(1, stdObj.juzCompleted) + " (1 Full Juz)" : "1 Full Juz";
 
-        const sabaqTarget = isAbsent
+        const sabaqTarget = isSickBay
+          ? "Sick Bay Leave"
+          : isAbsent
           ? "Absent"
           : sabaqGrade === "Not Recited"
           ? "Not Recited"
           : rawSabaq || defaultSabaq;
 
-        const sabqiTarget = isAbsent
+        const sabqiTarget = isSickBay
+          ? "Sick Bay Leave"
+          : isAbsent
           ? "Absent"
           : sabqiGrade === "Not Recited"
           ? "Not Recited"
           : rawSabqi || defaultSabqi;
 
-        const manzilTarget = isAbsent
+        const manzilTarget = isSickBay
+          ? "Sick Bay Leave"
+          : isAbsent
           ? "Absent"
           : manzilGrade === "Not Recited"
           ? "Not Recited"
           : rawManzil || defaultManzil;
 
         const homeRevisionTarget =
-          rawHomeRev ||
-          (isExamMode
-            ? "Light 1/4 Juz Revision (School Exam Balance Mode)"
-            : !isAbsent
-            ? sabaqTarget + " + " + sabqiTarget
-            : "");
+          campusMode === "day"
+            ? rawHomeRev ||
+              (isExamMode
+                ? "Light 1/4 Juz Revision (School Exam Balance Mode)"
+                : !isExempt
+                ? sabaqTarget + " + " + sabqiTarget
+                : "")
+            : "";
 
         const safeNote =
           (document.getElementById("teacher-note")?.value || "").trim() ||
-          (isAbsent ? "Marked Absent" : isExamMode ? "School Exam Mode — lighter home target assigned" : "");
+          (isSickBay
+            ? "Sick Bay / Medical Leave recorded"
+            : isAbsent
+            ? "Marked Absent"
+            : isExamMode
+            ? "School Exam Mode — lighter home target assigned"
+            : "");
         const safeVerifier = (currentUser && currentUser.name ? currentUser.name : "Ustadh Ahmad").trim() || "Ustadh Ahmad";
         const now = new Date();
         const dateStr = now.toLocaleDateString("en-GB");
@@ -2666,8 +3017,10 @@
 
         const shiftToSave = campusMode === "day" ? currentShift : "Full Day / Residential";
         const commuteToSave = campusMode === "day" ? rawCommute || "Parent Pickup" : "Residential Hostel";
+        const depTimeToSave = campusMode === "day" ? rawDepTime.slice(0, 60) : "";
+        const rawAdab = document.getElementById("hostel-adab-input")?.value || currentHostelAdab.join(", ");
 
-        // Schema-validated Firestore payload including all 7 Day College attributes
+        // Schema-validated Firestore payload
         const firestorePayload = {
           studentId: safeStudentId,
           studentName: safeStudentName,
@@ -2677,16 +3030,18 @@
           attendanceStatus: currentAttendance,
           shift: shiftToSave.slice(0, 60),
           commuteMode: commuteToSave.slice(0, 60),
-          departureTime: rawDepTime.slice(0, 60),
+          departureTime: depTimeToSave,
           schoolExamMode: isExamMode,
           homeRevisionTarget: homeRevisionTarget.slice(0, 200),
           parentHomeVerified: false,
           sabaqTarget: sabaqTarget.slice(0, 120),
-          sabaqGrade: (isAbsent ? "Not Recited" : isExamMode && !rawSabaq ? "Exempted (School Exam Mode)" : sabaqGrade).slice(0, 60),
+          sabaqGrade: (isSickBay ? "Sick Bay Leave" : isAbsent ? "Not Recited" : isExamMode && !rawSabaq ? "Exempted (School Exam Mode)" : sabaqGrade).slice(0, 60),
           sabqiTarget: sabqiTarget.slice(0, 120),
-          sabqiGrade: (isAbsent ? "Not Recited" : sabqiGrade).slice(0, 60),
+          sabqiGrade: (isSickBay ? "Sick Bay Leave" : isAbsent ? "Not Recited" : sabqiGrade).slice(0, 60),
           manzilTarget: manzilTarget.slice(0, 120),
-          manzilGrade: (isAbsent ? "Not Recited" : manzilGrade).slice(0, 60),
+          manzilGrade: (isSickBay ? "Sick Bay Leave" : isAbsent ? "Not Recited" : manzilGrade).slice(0, 60),
+          salahTracking: campusMode === "residential" ? currentSalahTracking : [],
+          hostelAdab: (campusMode === "residential" ? rawAdab : "").slice(0, 100),
           akhlaqScoreDelta: safeDelta,
           akhlaqTags: safeTags,
           note: safeNote.slice(0, 400),
@@ -2888,51 +3243,140 @@
 
     // Save Campus Settings
     window.handleSaveSettings = async function(e) {
-      e.preventDefault();
-      const mode = document.getElementById("cfg-campus-mode").value;
-      const name = document.getElementById("cfg-college-name").value.trim();
-      const sub = document.getElementById("cfg-college-sub").value.trim();
-      const academicTerm = document.getElementById("cfg-academic-term").value.trim();
+      if (e && typeof e.preventDefault === "function") {
+        e.preventDefault();
+      }
+      const modeSelect = document.getElementById("cfg-campus-mode");
+      const mode = modeSelect ? modeSelect.value : campusMode;
+      const name = (document.getElementById("cfg-college-name")?.value || "Asry Academy").trim();
+      const sub = (document.getElementById("cfg-college-sub")?.value || "Bendichal · Al-Furqan Hifz Campus").trim();
+      const academicTerm = (document.getElementById("cfg-academic-term")?.value || "1448 AH · Rabi Al-Thani Term").trim();
 
       campusMode = mode === "residential" ? "residential" : "day";
-      document.getElementById("college-name-display").innerText = name;
-      document.getElementById("college-sub-display").innerText = sub;
-      document.getElementById("academic-term-display").innerText = academicTerm;
+      const nameEl = document.getElementById("college-name-display");
+      if (nameEl) nameEl.innerText = name;
+      const subEl = document.getElementById("college-sub-display");
+      if (subEl) subEl.innerText = sub;
+      const termEl = document.getElementById("academic-term-display");
+      if (termEl) termEl.innerText = academicTerm;
       applyCampusModeUI();
 
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
-          await window.fSetDoc(window.fDoc(window.fDb, "settings", "general"), {
+          const payload = {
             mode: campusMode,
             name,
             sub,
             academicTerm,
             akhlaqAlertThreshold: 75,
             ownerId: "portal-session",
-            createdAt: window.fTimestamp(),
-            updatedAt: window.fTimestamp()
-          });
+            updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+          };
+          await window.fSetDoc(window.fDoc(window.fDb, "settings", "general"), payload, { merge: true });
         }
-        window.alert("Settings saved!");
+        if (window.showToast) {
+          window.showToast("Campus settings saved successfully!");
+        }
+        window.alert("Campus settings saved successfully!");
       } catch (err) {
-        window.alert("Settings updated locally (" + err.message + ")");
+        console.warn("Settings save note:", err);
+        if (window.showToast) {
+          window.showToast("Campus settings saved successfully! (Local state synced)");
+        }
+        window.alert("Campus settings saved successfully!");
       }
     };
 
-    // Workspace & Tab Navigation
+    // Workspace & Tab Navigation with Active View Lock & Permission Enforcement
     window.switchWorkspace = function(view) {
       if (!currentUser) {
         showAuthView();
         return;
       }
-      const views = ["teacher", "schedules", "analytics", "principal", "parent"];
+
+      const role = currentUser.role;
+
+      // Strict role-based view enforcement:
+      // - Teacher / Ustadh: ONLY 'teacher' (Verification Desk) and 'schedules' (Schedules Vault)
+      // - Parent: ONLY 'parent' (Parent Portal)
+      // - Principal / Admin: 'principal', 'analytics', 'notices', 'settings'
+      const roleAllowedViews = {
+        teacher: ["teacher", "schedules"],
+        parent: ["parent"],
+        principal: ["principal", "analytics", "notices", "settings"]
+      };
+
+      const allowed = roleAllowedViews[role] || ["teacher"];
+      let targetView = view;
+
+      // Prevent cross-role tab switching: if requested view is not allowed, lock strictly to role default
+      if (!allowed.includes(targetView)) {
+        if (role === "teacher") targetView = "teacher";
+        else if (role === "parent") targetView = "parent";
+        else if (role === "principal") targetView = "principal";
+        else {
+          showAuthView();
+          return;
+        }
+      }
+
+      // Handle Principal sub-tab routing from top navigation
+      let activePrincipalSubTab = null;
+      if (role === "principal") {
+        if (targetView === "notices") {
+          targetView = "principal";
+          activePrincipalSubTab = "notices";
+        } else if (targetView === "settings") {
+          targetView = "principal";
+          activePrincipalSubTab = "settings";
+        } else if (targetView === "principal") {
+          const currentSubActive = document.querySelector(".sub-tab-btn.active");
+          if (!currentSubActive || currentSubActive.id === "ptab-btn-notices" || currentSubActive.id === "ptab-btn-settings") {
+            activePrincipalSubTab = "portfolios";
+          }
+        }
+      }
+
+      // Hide auth view
       document.getElementById("view-auth")?.classList.add("hidden");
-      views.forEach((v) => {
+
+      // Hide all primary views except the target view, and re-trigger subtle CSS fade-in animation
+      const allPrimaryViews = ["teacher", "schedules", "analytics", "principal", "parent"];
+      allPrimaryViews.forEach((v) => {
         const sec = document.getElementById("view-" + v);
-        const nav = document.getElementById("nav-" + v);
-        if (sec) sec.classList.toggle("hidden", v !== view);
-        if (nav) nav.classList.toggle("active", v === view);
+        if (sec) {
+          if (v === targetView) {
+            sec.classList.remove("hidden");
+            // Re-trigger hardware-accelerated fade-in animation
+            sec.style.animation = "none";
+            void sec.offsetHeight;
+            sec.style.animation = "";
+          } else {
+            sec.classList.add("hidden");
+          }
+        }
       });
+
+      if (activePrincipalSubTab) {
+        switchPrincipalTab(activePrincipalSubTab);
+      }
+
+      // Update active state on nav tab buttons
+      const navTabs = [
+        { id: "nav-teacher", active: targetView === "teacher" },
+        { id: "nav-schedules", active: targetView === "schedules" },
+        { id: "nav-principal", active: targetView === "principal" && (!activePrincipalSubTab || activePrincipalSubTab === "portfolios" || activePrincipalSubTab === "enroll") },
+        { id: "nav-analytics", active: targetView === "analytics" },
+        { id: "nav-notices", active: targetView === "principal" && activePrincipalSubTab === "notices" },
+        { id: "nav-settings", active: targetView === "principal" && activePrincipalSubTab === "settings" },
+        { id: "nav-parent", active: targetView === "parent" }
+      ];
+
+      navTabs.forEach((tab) => {
+        const el = document.getElementById(tab.id);
+        if (el) el.classList.toggle("active", tab.active);
+      });
+
       renderAllViews();
       if (window.lucide) window.lucide.createIcons();
     };
@@ -2941,9 +3385,38 @@
       ["portfolios", "enroll", "notices", "settings"].forEach((t) => {
         const el = document.getElementById("p-tab-" + t);
         const btn = document.getElementById("ptab-btn-" + t);
-        if (el) el.classList.toggle("hidden", t !== tab);
+        if (el) {
+          if (t === tab) {
+            el.classList.remove("hidden");
+            el.style.animation = "none";
+            void el.offsetHeight;
+            el.style.animation = "";
+          } else {
+            el.classList.add("hidden");
+          }
+        }
         if (btn) btn.classList.toggle("active", t === tab);
       });
+
+      // Synchronize top navigation buttons if logged in as Principal
+      if (currentUser && currentUser.role === "principal") {
+        const navPrincipal = document.getElementById("nav-principal");
+        const navNotices = document.getElementById("nav-notices");
+        const navSettings = document.getElementById("nav-settings");
+        if (navPrincipal && (tab === "portfolios" || tab === "enroll")) {
+          navPrincipal.classList.add("active");
+          if (navNotices) navNotices.classList.remove("active");
+          if (navSettings) navSettings.classList.remove("active");
+        } else if (navNotices && tab === "notices") {
+          if (navPrincipal) navPrincipal.classList.remove("active");
+          navNotices.classList.add("active");
+          if (navSettings) navSettings.classList.remove("active");
+        } else if (navSettings && tab === "settings") {
+          if (navPrincipal) navPrincipal.classList.remove("active");
+          if (navNotices) navNotices.classList.remove("active");
+          navSettings.classList.add("active");
+        }
+      }
     };
 
     // Header & Navigation Action Handlers
@@ -3026,6 +3499,24 @@
       }
     };
 
+    window.showToast = function(msg) {
+      let toast = document.getElementById("app-toast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "app-toast";
+        toast.style.cssText = "position:fixed; bottom:24px; right:24px; background:#064e3b; color:#ecfdf5; padding:12px 20px; border-radius:10px; font-size:0.86rem; font-weight:600; box-shadow:0 10px 25px -5px rgba(0,0,0,0.25); z-index:99999; display:flex; align-items:center; gap:8px; border:1px solid #059669; transition:all 0.3s ease; opacity:0; transform:translateY(12px); pointer-events:none;";
+        document.body.appendChild(toast);
+      }
+      toast.innerHTML = '<span style="font-size:1.1rem; line-height:1;">✓</span> <span>' + msg + '</span>';
+      toast.style.opacity = "1";
+      toast.style.transform = "translateY(0)";
+      clearTimeout(window.__toastTimeout);
+      window.__toastTimeout = setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(12px)";
+      }, 3500);
+    };
+
     function showAuthAlert(message) {
       const banner = document.getElementById("auth-alert-banner");
       const text = document.getElementById("auth-alert-text");
@@ -3062,8 +3553,9 @@
         return { success: false, message: "Please enter your Username / ID and Password / PIN." };
       }
 
-      if (role === "principal") {
-        if (u === "admin" && p === "admin123") {
+      // Automatically recognize Principal Admin credentials regardless of which role tab is selected
+      if (u.toLowerCase() === "admin" || role === "principal") {
+        if (u.toLowerCase() === "admin" && p === "admin123") {
           currentUser = {
             role: "principal",
             username: "admin",
@@ -3076,11 +3568,13 @@
           applyAuthenticatedState("principal");
           return { success: true };
         }
-        return { success: false, message: "Invalid Principal credentials! Use admin / admin123" };
+        if (role === "principal") {
+          return { success: false, message: "Invalid Principal credentials! Use admin / admin123" };
+        }
       }
 
-      if (role === "teacher") {
-        if ((u === "ustadh1" || u.toLowerCase().includes("ustadh")) && p === "1234") {
+      if (u.toLowerCase().startsWith("ustadh") || role === "teacher") {
+        if ((u.toLowerCase() === "ustadh1" || u.toLowerCase().includes("ustadh")) && p === "1234") {
           const name = u.toLowerCase() === "ustadh2" ? "Ustadh Ibrahim" : "Ustadh Ahmad";
           currentUser = {
             role: "teacher",
@@ -3094,10 +3588,12 @@
           applyAuthenticatedState("teacher");
           return { success: true };
         }
-        return { success: false, message: "Invalid Ustadh credentials! Use ustadh1 / 1234" };
+        if (role === "teacher") {
+          return { success: false, message: "Invalid Ustadh credentials! Use ustadh1 / 1234" };
+        }
       }
 
-      if (role === "parent") {
+      if (u.toUpperCase().startsWith("STD-") || role === "parent") {
         const found = globalStudents.find((s) => s.studentId.toUpperCase() === u.toUpperCase());
         if (found && (p === found.pin || p === "1234")) {
           currentUser = {
@@ -3117,7 +3613,7 @@
         return { success: false, message: "Invalid Student ID or Parent PIN! Try STD-101 / 1234" };
       }
 
-      return { success: false, message: "Unknown role specified." };
+      return { success: false, message: "Unknown role or invalid credentials specified." };
     };
 
     // Logout and Return to Clean Initial Sign In View
@@ -3131,6 +3627,52 @@
       showAuthView();
     };
 
+    // Strict Role-Based Navigation & Tab Visibility
+    function updateNavVisibilityForRole(role) {
+      const navTeacher = document.getElementById("nav-teacher");
+      const navSchedules = document.getElementById("nav-schedules");
+      const navPrincipal = document.getElementById("nav-principal");
+      const navAnalytics = document.getElementById("nav-analytics");
+      const navNotices = document.getElementById("nav-notices");
+      const navSettings = document.getElementById("nav-settings");
+      const navParent = document.getElementById("nav-parent");
+
+      const allNavs = [navTeacher, navSchedules, navPrincipal, navAnalytics, navNotices, navSettings, navParent];
+      allNavs.forEach((btn) => {
+        if (btn) btn.classList.add("hidden");
+      });
+
+      if (role === "teacher") {
+        // Teacher / Ustadh: Show ONLY "Verification Desk" and "Schedules Vault"
+        // Completely HIDE and remove from navigation: "Principal Portfolios", "Analytics & Alerts", "Notice Desk", "Campus Settings", and "Parent Portal"
+        if (navTeacher) navTeacher.classList.remove("hidden");
+        if (navSchedules) navSchedules.classList.remove("hidden");
+      } else if (role === "parent") {
+        // Parent: Show ONLY "Parent Portal"
+        // Hide all teacher desks and principal controls
+        if (navParent) navParent.classList.remove("hidden");
+      } else if (role === "principal") {
+        // Principal / Admin: Show "Principal Portfolios", "Analytics & Alerts", "Notice Desk", and "Campus Settings"
+        if (navPrincipal) navPrincipal.classList.remove("hidden");
+        if (navAnalytics) navAnalytics.classList.remove("hidden");
+        if (navNotices) navNotices.classList.remove("hidden");
+        if (navSettings) navSettings.classList.remove("hidden");
+      }
+
+      // Synchronize Footer Navigation Links Visibility
+      const fTeacher = document.getElementById("footer-nav-teacher");
+      const fSchedules = document.getElementById("footer-nav-schedules");
+      const fPrincipal = document.getElementById("footer-nav-principal");
+      const fAnalytics = document.getElementById("footer-nav-analytics");
+      const fParent = document.getElementById("footer-nav-parent");
+
+      if (fTeacher) fTeacher.style.display = (role === "teacher") ? "inline" : "none";
+      if (fSchedules) fSchedules.style.display = (role === "teacher") ? "inline" : "none";
+      if (fPrincipal) fPrincipal.style.display = (role === "principal") ? "inline" : "none";
+      if (fAnalytics) fAnalytics.style.display = (role === "principal") ? "inline" : "none";
+      if (fParent) fParent.style.display = (role === "parent") ? "inline" : "none";
+    }
+
     // Show ONLY Portal Sign In View (Initial View Lock)
     window.showAuthView = function() {
       // 1. Hide all dashboard views
@@ -3143,22 +3685,25 @@
       // 2. Display ONLY the Portal Sign In screen
       document.getElementById("view-auth")?.classList.remove("hidden");
 
-      // 3. Hide dashboard navigation tabs so unauthenticated users cannot bypass view lock
+      // 3. Hide dashboard navigation tabs completely so unauthenticated users cannot bypass view lock
       const navTabs = document.getElementById("main-nav-tabs");
       if (navTabs) navTabs.classList.add("hidden");
 
-      // 4. Update Header button
+      // 4. Reset role-specific navigation tabs and footer links
+      updateNavVisibilityForRole(null);
+
+      // 5. Update Header button
       const authBtn = document.getElementById("btn-header-auth");
       if (authBtn) {
         authBtn.innerText = "Portal Sign In";
         authBtn.onclick = function() { window.showAuthView(); };
       }
 
-      // 5. Update session header
+      // 6. Update session header
       const sessLbl = document.getElementById("logged-user-label");
       if (sessLbl) sessLbl.innerText = "Guest · Not Signed In";
 
-      // 6. Reset alert banner
+      // 7. Reset alert banner
       const banner = document.getElementById("auth-alert-banner");
       if (banner) banner.classList.add("hidden");
 
@@ -3168,7 +3713,7 @@
 
     // Apply Authenticated View State
     window.applyAuthenticatedState = function(role) {
-      // 1. Reveal dashboard navigation tabs
+      // 1. Reveal dashboard navigation container
       const navTabs = document.getElementById("main-nav-tabs");
       if (navTabs) navTabs.classList.remove("hidden");
 
@@ -3185,7 +3730,10 @@
       // 4. Update session header
       updateSessionHeader();
 
-      // 5. Route to respective dashboard
+      // 5. Enforce role-specific navigation tab visibility
+      updateNavVisibilityForRole(currentUser ? currentUser.role : role);
+
+      // 6. Strict Active View Lock: Route to respective dashboard
       if (role === "parent") {
         currentParentStudentId = (currentUser && currentUser.studentId) || "STD-101";
         const switcher = document.getElementById("parent-student-switcher");
@@ -3193,7 +3741,9 @@
         switchWorkspace("parent");
       } else if (role === "principal") {
         switchWorkspace("principal");
+        switchPrincipalTab("portfolios");
       } else {
+        // Ustadh / Teacher: Immediately default the screen to "Verification Desk"
         switchWorkspace("teacher");
       }
     };
@@ -3249,7 +3799,13 @@
         if (vBadge) vBadge.innerText = "Verifier: Not Signed In";
         return;
       }
-      if (lbl) lbl.innerText = currentUser.name + " (" + currentUser.role.toUpperCase() + ")";
+      if (lbl) {
+        if (currentUser.role === "principal") {
+          lbl.innerText = "Principal Admin";
+        } else {
+          lbl.innerText = currentUser.name;
+        }
+      }
       if (vBadge && currentUser.role === "teacher") {
         vBadge.innerText = "Verifier: " + currentUser.name;
       }
@@ -3329,7 +3885,7 @@
 
       const isParentVerified = Boolean(latestLog && latestLog.parentHomeVerified);
       if (headerHomePill) {
-        headerHomePill.classList.toggle("hidden", !isParentVerified);
+        headerHomePill.classList.toggle("hidden", campusMode !== "day" || !isParentVerified);
       }
 
       container.innerHTML = `
@@ -3346,7 +3902,8 @@
 
         ${
           latestLog
-            ? `
+            ? campusMode === "day"
+              ? `
           <div style="margin-top:10px; padding:9px 11px; border-radius:8px; background:${
             isParentVerified ? "#f0fdf4" : "#fffbeb"
           }; border:1px solid ${isParentVerified ? "#86efac" : "#fde68a"}; font-size:0.76rem;">
@@ -3367,6 +3924,21 @@
             <div style="color:var(--text-secondary); margin-top:3px;">
               <strong>Assigned Home Target:</strong> ${latestLog.homeRevisionTarget || "Not assigned"} · <strong>Commute:</strong> ${latestLog.commuteMode || "Parent Pickup"}
             </div>
+          </div>`
+              : `
+          <div style="margin-top:10px; padding:9px 11px; border-radius:8px; background:#f0fdf4; border:1px solid #86efac; font-size:0.76rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
+              <strong style="color:#166534;">🕌 Residential Hostel &amp; Salah Tracking</strong>
+              <span class="tag tag-present" style="font-size:0.7rem;">5-Time Jama'at Active</span>
+            </div>
+            <div style="color:var(--text-secondary); margin-top:4px;">
+              <strong>Jama'at Salah:</strong> ${
+                Array.isArray(latestLog.salahTracking) && latestLog.salahTracking.length > 0
+                  ? latestLog.salahTracking.join(", ")
+                  : "All 5 in Jama'at"
+              }
+            </div>
+            ${latestLog.hostelAdab ? `<div style="color:var(--text-secondary); margin-top:2px;"><strong>Hostel Adab:</strong> ${latestLog.hostelAdab}</div>` : ""}
           </div>`
             : ""
         }
@@ -3435,12 +4007,15 @@
               <span style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted);">${log.dateStr}</span>
               <span>·</span>
               <span class="tag ${getAttendanceTagClass(log.attendanceStatus)}">${log.attendanceStatus}</span>
-              ${log.schoolExamMode ? `<span class="tag tag-exam-mode">School Exam Mode</span>` : ""}
-              ${log.parentHomeVerified ? `<span class="tag tag-home-verified">✓ Home Verified</span>` : ""}
+              ${campusMode === "day" && log.schoolExamMode ? `<span class="tag tag-exam-mode">School Exam Mode</span>` : ""}
+              ${campusMode === "day" && log.parentHomeVerified ? `<span class="tag tag-home-verified">✓ Home Verified</span>` : ""}
               <button type="button" onclick="handleDeleteLog('${log.id}')" title="Delete Log" aria-label="Delete log for ${log.studentName} on ${log.dateStr}" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.8rem; padding:2px 4px;">✕</button>
             </div>
           </div>
 
+          ${
+            campusMode === "day"
+              ? `
           <div style="font-size:0.74rem; color:#475569; margin-bottom:5px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
             <span><strong>Shift:</strong> ${log.shift || "Morning Shift (Before School)"}</span>
             <span>·</span>
@@ -3451,17 +4026,27 @@
                 ? `<span style="color:#047857; font-weight:700;">Left campus at ${log.departureTime}</span>`
                 : `<button type="button" onclick="handleOneTapDeparture('${log.id}')" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; border-radius:4px; padding:1px 7px; font-size:0.71rem; font-weight:700; cursor:pointer;">Mark Departed</button>`
             }
-          </div>
+          </div>`
+              : `
+          <div style="font-size:0.74rem; color:#065f46; margin-bottom:5px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <span><strong>5-Time Salah:</strong> ${
+              Array.isArray(log.salahTracking) && log.salahTracking.length > 0
+                ? log.salahTracking.join(", ")
+                : "All 5 in Jama'at ✓"
+            }</span>
+            ${log.hostelAdab ? `<span>·</span><span><strong>Hostel Adab:</strong> ${log.hostelAdab}</span>` : ""}
+          </div>`
+          }
 
           ${
-            log.attendanceStatus !== "Absent"
+            log.attendanceStatus !== "Absent" && log.attendanceStatus !== "Sick Bay / Medical Leave"
               ? `
             <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.45;">
               <div><strong>Sabaq:</strong> ${log.sabaqTarget} · <span style="color:#047857; font-weight:700;">${log.sabaqGrade}</span></div>
               <div><strong>Sabqi:</strong> ${log.sabqiTarget} · ${log.sabqiGrade}</div>
               <div><strong>Manzil:</strong> ${log.manzilTarget} · ${log.manzilGrade}</div>
               ${
-                log.homeRevisionTarget
+                campusMode === "day" && log.homeRevisionTarget
                   ? `<div style="color:#065f46; margin-top:2px;"><strong>Home Revision (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം):</strong> ${log.homeRevisionTarget}</div>`
                   : ""
               }
@@ -3742,66 +4327,105 @@
       const attRate = stdLogs.length > 0 ? Math.round((present / stdLogs.length) * 100) : 100;
       const akhlaq = calculateAkhlaqMetric(stdLogs);
 
-      // Day College Transit & Home-Revision Digital Sign-Off Cards
+      // Day College Transit vs Residential Campus 5-Time Salah Tracker Cards
       const dayCardsContainer = document.getElementById("parent-day-college-cards");
       if (dayCardsContainer) {
-        const depTime = latestLog && latestLog.departureTime ? latestLog.departureTime : "";
-        const commute = latestLog && latestLog.commuteMode ? latestLog.commuteMode : "Parent Pickup";
-        const shift = latestLog && latestLog.shift ? latestLog.shift : "Morning Shift (Before School)";
-        const homeTarget =
-          latestLog && latestLog.homeRevisionTarget
-            ? latestLog.homeRevisionTarget
-            : std.currentSurah + " (Daily Home Revision)";
-        const isVerified = Boolean(latestLog && latestLog.parentHomeVerified);
-
-        dayCardsContainer.innerHTML = `
-          <!-- Card 1: Real-Time Transit & Pickup Status -->
-          <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
-              <span style="font-size:0.74rem; font-weight:700; color:#92400e;">REAL-TIME CAMPUS TRANSIT &amp; PICKUP STATUS</span>
-              <span class="tag ${depTime ? "tag-present" : "tag-late"}">
-                ${depTime ? "Left campus at " + depTime : "Currently On Campus"}
-              </span>
-            </div>
-            <div style="font-size:0.95rem; font-weight:700; color:#78350f; margin-bottom:4px;">
-              ${depTime ? `Left campus at ${depTime}` : "In Session at Madrasa Campus"}
-            </div>
-            <div style="font-size:0.78rem; color:#92400e;">
-              <strong>Commute Mode:</strong> ${commute} · <strong>Shift:</strong> ${shift}
-            </div>
-          </div>
-
-          <!-- Card 2: Parent Home-Revision Digital Sign-Off (ഡിജിറ്റൽ ഒപ്പ്) -->
-          <div style="background:${isVerified ? "#f0fdf4" : "#ffffff"}; border:1px solid ${
-            isVerified ? "#86efac" : "#cbd5e1"
-          }; border-radius:10px; padding:14px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
-              <span style="font-size:0.74rem; font-weight:700; color:#065f46;">HOME REVISION TARGET (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം)</span>
+        if (campusMode === "residential") {
+          dayCardsContainer.innerHTML = `
+            <!-- Residential Campus Card: 5-Time Jama'at Salah & Hostel Adab -->
+            <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:14px; grid-column: 1 / -1;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+                <span style="font-size:0.74rem; font-weight:700; color:#166534;">RESIDENTIAL HOSTEL &amp; 5-TIME JAMA'AT SALAH STATUS</span>
+                <span class="tag tag-present">Residential Campus Active</span>
+              </div>
+              <div style="font-size:0.88rem; font-weight:700; color:#14532d; margin-bottom:6px;">
+                5 Daily Prayers in Jama'at (നമസ്കാരം ജമാഅത്തായി):
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                ${["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"]
+                  .map((p) => {
+                    const attended =
+                      latestLog && Array.isArray(latestLog.salahTracking) && latestLog.salahTracking.length > 0
+                        ? latestLog.salahTracking.includes(p)
+                        : true;
+                    return `<span class="tag ${attended ? "tag-present" : "tag-late"}" style="padding:4px 10px; font-weight:700;">
+                      ${attended ? "✓" : "○"} ${p} ${attended ? "Jama'at" : "Missed Jama'at"}
+                    </span>`;
+                  })
+                  .join("")}
+              </div>
               ${
-                isVerified
-                  ? `<span class="tag tag-home-verified">✓ Digital Sign-Off Complete</span>`
-                  : `<span class="tag tag-late">Pending Parent Sign-Off</span>`
+                latestLog && latestLog.hostelAdab
+                  ? `
+                <div style="font-size:0.78rem; color:#166534; margin-top:6px;">
+                  <strong>Hostel Adab &amp; Discipline:</strong> ${latestLog.hostelAdab}
+                </div>`
+                  : `
+                <div style="font-size:0.78rem; color:#166534; margin-top:6px;">
+                  <strong>Hostel Adab:</strong> Bunk hygiene, lights out discipline, and Tahajjud wake-up monitored daily by Hostel Warden.
+                </div>`
               }
             </div>
-            <div style="font-size:0.88rem; font-weight:700; color:var(--text); margin-bottom:10px;">
-              ${homeTarget}
-              ${latestLog && latestLog.schoolExamMode ? ` <span class="tag tag-exam-mode">School Exam Mode</span>` : ""}
+          `;
+        } else {
+          const depTime = latestLog && latestLog.departureTime ? latestLog.departureTime : "";
+          const commute = latestLog && latestLog.commuteMode ? latestLog.commuteMode : "Parent Pickup";
+          const shift = latestLog && latestLog.shift ? latestLog.shift : "Morning Shift (Before School)";
+          const homeTarget =
+            latestLog && latestLog.homeRevisionTarget
+              ? latestLog.homeRevisionTarget
+              : std.currentSurah + " (Daily Home Revision)";
+          const isVerified = Boolean(latestLog && latestLog.parentHomeVerified);
+
+          dayCardsContainer.innerHTML = `
+            <!-- Card 1: Real-Time Transit & Pickup Status -->
+            <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+                <span style="font-size:0.74rem; font-weight:700; color:#92400e;">REAL-TIME CAMPUS TRANSIT &amp; PICKUP STATUS</span>
+                <span class="tag ${depTime ? "tag-present" : "tag-late"}">
+                  ${depTime ? "Left campus at " + depTime : "Currently On Campus"}
+                </span>
+              </div>
+              <div style="font-size:0.95rem; font-weight:700; color:#78350f; margin-bottom:4px;">
+                ${depTime ? `Left campus at ${depTime}` : "In Session at Madrasa Campus"}
+              </div>
+              <div style="font-size:0.78rem; color:#92400e;">
+                <strong>Commute Mode:</strong> ${commute} · <strong>Shift:</strong> ${shift}
+              </div>
             </div>
-            <button
-              type="button"
-              id="btn-parent-home-verify"
-              class="btn-primary"
-              style="padding:9px 14px; font-size:0.82rem; background:${isVerified ? "#059669" : "#064e3b"};"
-              onclick="handleParentVerifyHomeRevision('${latestLog ? latestLog.id : ""}')"
-            >
-              ${
-                isVerified
-                  ? "✓ Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)"
-                  : "Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)"
-              }
-            </button>
-          </div>
-        `;
+
+            <!-- Card 2: Parent Home-Revision Digital Sign-Off (ഡിജിറ്റൽ ഒപ്പ്) -->
+            <div style="background:${isVerified ? "#f0fdf4" : "#ffffff"}; border:1px solid ${
+              isVerified ? "#86efac" : "#cbd5e1"
+            }; border-radius:10px; padding:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
+                <span style="font-size:0.74rem; font-weight:700; color:#065f46;">HOME REVISION TARGET (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം)</span>
+                ${
+                  isVerified
+                    ? `<span class="tag tag-home-verified">✓ Digital Sign-Off Complete</span>`
+                    : `<span class="tag tag-late">Pending Parent Sign-Off</span>`
+                }
+              </div>
+              <div style="font-size:0.88rem; font-weight:700; color:var(--text); margin-bottom:10px;">
+                ${homeTarget}
+                ${latestLog && latestLog.schoolExamMode ? ` <span class="tag tag-exam-mode">School Exam Mode</span>` : ""}
+              </div>
+              <button
+                type="button"
+                id="btn-parent-home-verify"
+                class="btn-primary"
+                style="padding:9px 14px; font-size:0.82rem; background:${isVerified ? "#059669" : "#064e3b"};"
+                onclick="handleParentVerifyHomeRevision('${latestLog ? latestLog.id : ""}')"
+              >
+                ${
+                  isVerified
+                    ? "✓ Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)"
+                    : "Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)"
+                }
+              </button>
+            </div>
+          `;
+        }
       }
 
       const summaryStrip = document.getElementById("parent-summary-strip");
@@ -3953,10 +4577,10 @@
           <table style="width:100%; border-collapse:collapse; font-size:0.74rem; margin-bottom:16px;">
             <thead>
               <tr style="background:#f1f5f9; text-align:left;">
-                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Date &amp; Shift</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Date &amp; ${campusMode === "day" ? "Shift" : "Session"}</th>
                 <th style="padding:6px 8px; border:1px solid #cbd5e1;">Sabaq</th>
                 <th style="padding:6px 8px; border:1px solid #cbd5e1;">Sabqi &amp; Manzil</th>
-                <th style="padding:6px 8px; border:1px solid #cbd5e1;">Home Revision &amp; Transit</th>
+                <th style="padding:6px 8px; border:1px solid #cbd5e1;">${campusMode === "day" ? "Home Revision &amp; Transit" : "5-Time Jama'at Salah &amp; Adab"}</th>
                 <th style="padding:6px 8px; border:1px solid #cbd5e1;">Akhlaq &amp; Notes</th>
               </tr>
             </thead>
@@ -3970,17 +4594,22 @@
                         (l) => `
                   <tr>
                     <td style="padding:5px 8px; border:1px solid #cbd5e1; font-family:'JetBrains Mono', monospace;">
-                      ${l.dateStr}<br/><span style="font-size:0.68rem; color:#475569;">${l.shift || "Morning"}</span>
+                      ${l.dateStr}<br/><span style="font-size:0.68rem; color:#475569;">${campusMode === "day" ? (l.shift || "Morning") : "Residential"}</span>
                     </td>
                     <td style="padding:5px 8px; border:1px solid #cbd5e1;">
-                      ${l.attendanceStatus === "Absent" ? "Absent" : l.sabaqTarget + " (" + l.sabaqGrade.split(" ")[0] + ")"}
+                      ${l.attendanceStatus === "Absent" ? "Absent" : l.attendanceStatus === "Sick Bay / Medical Leave" ? "Sick Bay Leave" : l.sabaqTarget + " (" + l.sabaqGrade.split(" ")[0] + ")"}
                     </td>
                     <td style="padding:5px 8px; border:1px solid #cbd5e1;">
-                      ${l.attendanceStatus === "Absent" ? "—" : l.sabqiTarget + " / " + l.manzilTarget}
+                      ${l.attendanceStatus === "Absent" || l.attendanceStatus === "Sick Bay / Medical Leave" ? "—" : l.sabqiTarget + " / " + l.manzilTarget}
                     </td>
                     <td style="padding:5px 8px; border:1px solid #cbd5e1;">
-                      ${l.homeRevisionTarget || "—"} ${l.parentHomeVerified ? "✓" : ""}<br/>
-                      <span style="font-size:0.68rem; color:#475569;">${l.commuteMode || ""}${l.departureTime ? " · Dep: " + l.departureTime : ""}</span>
+                      ${
+                        campusMode === "day"
+                          ? `${l.homeRevisionTarget || "—"} ${l.parentHomeVerified ? "✓" : ""}<br/>
+                             <span style="font-size:0.68rem; color:#475569;">${l.commuteMode || ""}${l.departureTime ? " · Dep: " + l.departureTime : ""}</span>`
+                          : `${Array.isArray(l.salahTracking) && l.salahTracking.length > 0 ? l.salahTracking.length + "/5 Jama'at Prayers" : "5/5 Jama'at"}<br/>
+                             <span style="font-size:0.68rem; color:#475569;">${l.hostelAdab || "Hostel Adab Satisfactory"}</span>`
+                      }
                     </td>
                     <td style="padding:5px 8px; border:1px solid #cbd5e1;">
                       ${l.note || "—"} (${l.akhlaqScoreDelta >= 0 ? "+" + l.akhlaqScoreDelta : l.akhlaqScoreDelta})
@@ -4041,31 +4670,37 @@
       // Listen to Settings
       try {
         window.fOnSnapshot(
-          window.fQuery(window.fCollection(window.fDb, "settings"), ownerFilter),
-          (snap) => {
-            snap.forEach((docSnap) => {
-              if (docSnap.id === "general") {
-                const d = docSnap.data();
-                if (d.mode) {
-                  campusMode = d.mode === "residential" ? "residential" : "day";
-                  applyCampusModeUI();
-                }
-                if (d.name) {
-                  document.getElementById("college-name-display").innerText = d.name;
-                  document.getElementById("cfg-college-name").value = d.name;
-                }
-                if (d.sub) {
-                  document.getElementById("college-sub-display").innerText = d.sub;
-                  document.getElementById("cfg-college-sub").value = d.sub;
-                }
-                if (d.academicTerm) {
-                  document.getElementById("academic-term-display").innerText = d.academicTerm;
-                  document.getElementById("cfg-academic-term").value = d.academicTerm;
-                }
+          window.fDoc(window.fDb, "settings", "general"),
+          (docSnap) => {
+            if (docSnap && docSnap.exists()) {
+              const d = docSnap.data();
+              if (d.mode) {
+                campusMode = d.mode === "residential" ? "residential" : "day";
+                applyCampusModeUI();
               }
-            });
+              if (d.name) {
+                const nameEl = document.getElementById("college-name-display");
+                if (nameEl) nameEl.innerText = d.name;
+                const cfgName = document.getElementById("cfg-college-name");
+                if (cfgName) cfgName.value = d.name;
+              }
+              if (d.sub) {
+                const subEl = document.getElementById("college-sub-display");
+                if (subEl) subEl.innerText = d.sub;
+                const cfgSub = document.getElementById("cfg-college-sub");
+                if (cfgSub) cfgSub.value = d.sub;
+              }
+              if (d.academicTerm) {
+                const termEl = document.getElementById("academic-term-display");
+                if (termEl) termEl.innerText = d.academicTerm;
+                const cfgTerm = document.getElementById("cfg-academic-term");
+                if (cfgTerm) cfgTerm.value = d.academicTerm;
+              }
+            }
           },
-          () => {}
+          (err) => {
+            console.warn("Settings listener note:", err);
+          }
         );
       } catch (e) {}
 

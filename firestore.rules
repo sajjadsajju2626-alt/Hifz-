@@ -92,20 +92,23 @@ service cloud.firestore {
         'schoolExamMode', 'homeRevisionTarget', 'parentHomeVerified',
         'sabaqTarget', 'sabaqGrade', 'sabqiTarget', 'sabqiGrade',
         'manzilTarget', 'manzilGrade', 'akhlaqScoreDelta', 'akhlaqTags',
+        'salahTracking', 'hostelAdab',
         'note', 'verifiedBy', 'ownerId', 'createdAt', 'updatedAt'
       ]) &&
       data.studentId is string && data.studentId.size() >= 2 && data.studentId.size() <= 32 && data.studentId.matches('^[a-zA-Z0-9_\\-]+$') &&
       data.studentName is string && data.studentName.size() >= 2 && data.studentName.size() <= 100 &&
       data.dateStr is string && data.dateStr.size() >= 6 && data.dateStr.size() <= 20 &&
       data.isoDate is string && data.isoDate.size() >= 8 && data.isoDate.size() <= 16 &&
-      data.attendance is string && data.attendance in ['Present', 'Late Arrival (വൈകി എത്തി)', 'Early Permission (നേരത്തെ പോയി)', 'Absent'] &&
-      (!('attendanceStatus' in data) || (data.attendanceStatus is string && data.attendanceStatus in ['Present', 'Late Arrival (വൈകി എത്തി)', 'Early Permission (നേരത്തെ പോയി)', 'Absent'])) &&
+      data.attendance is string && data.attendance in ['Present', 'Late Arrival (വൈകി എത്തി)', 'Early Permission (നേരത്തെ പോയി)', 'Sick Bay / Medical Leave', 'Absent'] &&
+      (!('attendanceStatus' in data) || (data.attendanceStatus is string && data.attendanceStatus in ['Present', 'Late Arrival (വൈകി എത്തി)', 'Early Permission (നേരത്തെ പോയി)', 'Sick Bay / Medical Leave', 'Absent'])) &&
       (!('shift' in data) || (data.shift is string && data.shift.size() >= 2 && data.shift.size() <= 60)) &&
       (!('commuteMode' in data) || (data.commuteMode is string && data.commuteMode.size() >= 2 && data.commuteMode.size() <= 60)) &&
       (!('departureTime' in data) || (data.departureTime is string && data.departureTime.size() <= 60)) &&
       (!('schoolExamMode' in data) || (data.schoolExamMode is bool)) &&
       (!('homeRevisionTarget' in data) || (data.homeRevisionTarget is string && data.homeRevisionTarget.size() <= 200)) &&
       (!('parentHomeVerified' in data) || (data.parentHomeVerified is bool)) &&
+      (!('salahTracking' in data) || (data.salahTracking is list && data.salahTracking.size() <= 10)) &&
+      (!('hostelAdab' in data) || (data.hostelAdab is string && data.hostelAdab.size() <= 100)) &&
       data.sabaqTarget is string && data.sabaqTarget.size() >= 1 && data.sabaqTarget.size() <= 120 &&
       data.sabaqGrade is string && data.sabaqGrade.size() >= 1 && data.sabaqGrade.size() <= 60 &&
       data.sabqiTarget is string && data.sabqiTarget.size() >= 1 && data.sabqiTarget.size() <= 120 &&
@@ -198,22 +201,12 @@ service cloud.firestore {
     }
 
     function isValidSettings(data) {
-      return data.keys().hasAll([
-        'mode', 'name', 'sub', 'academicTerm', 'akhlaqAlertThreshold',
-        'ownerId', 'createdAt', 'updatedAt'
-      ]) &&
-      data.keys().hasOnly([
-        'mode', 'name', 'sub', 'academicTerm', 'akhlaqAlertThreshold',
-        'ownerId', 'createdAt', 'updatedAt'
-      ]) &&
-      data.mode is string && data.mode in ['residential', 'day'] &&
-      data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
-      data.sub is string && data.sub.size() >= 2 && data.sub.size() <= 100 &&
-      data.academicTerm is string && data.academicTerm.size() >= 2 && data.academicTerm.size() <= 60 &&
-      data.akhlaqAlertThreshold is number && data.akhlaqAlertThreshold >= 50 && data.akhlaqAlertThreshold <= 90 &&
-      isValidOwner(data.ownerId) &&
-      data.createdAt is timestamp &&
-      data.updatedAt is timestamp;
+      return (!('mode' in data) || (data.mode is string && data.mode in ['residential', 'day'])) &&
+        (!('name' in data) || (data.name is string && data.name.size() >= 1 && data.name.size() <= 120)) &&
+        (!('sub' in data) || (data.sub is string && data.sub.size() >= 1 && data.sub.size() <= 120)) &&
+        (!('academicTerm' in data) || (data.academicTerm is string && data.academicTerm.size() <= 80)) &&
+        (!('akhlaqAlertThreshold' in data) || (data.akhlaqAlertThreshold is number)) &&
+        (!('ownerId' in data) || (data.ownerId is string && data.ownerId.size() <= 128));
     }
 
     function isValidAdmin(data) {
@@ -261,7 +254,7 @@ service cloud.firestore {
               'departureTime', 'schoolExamMode', 'homeRevisionTarget',
               'parentHomeVerified', 'sabaqTarget', 'sabaqGrade', 'sabqiTarget',
               'sabqiGrade', 'manzilTarget', 'manzilGrade', 'akhlaqScoreDelta',
-              'akhlaqTags', 'note', 'updatedAt'
+              'akhlaqTags', 'salahTracking', 'hostelAdab', 'note', 'updatedAt'
             ]))
         );
       allow delete: if isValidId(logId) && canAccessOwner(existing().ownerId);
@@ -327,20 +320,8 @@ service cloud.firestore {
     }
 
     match /settings/{settingId} {
-      allow get: if isValidId(settingId) && canAccessOwner(existing().ownerId);
-      allow list: if canAccessOwner(resource.data.ownerId);
-      allow create: if isValidId(settingId) && isValidSettings(incoming()) &&
-        incoming().createdAt == request.time && incoming().updatedAt == request.time;
-      allow update: if isValidId(settingId) && isValidSettings(incoming()) &&
-        incoming().ownerId == existing().ownerId &&
-        incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time && (
-          isAdmin() ||
-          (canAccessOwner(existing().ownerId) &&
-            incoming().diff(existing()).affectedKeys().hasOnly([
-              'mode', 'name', 'sub', 'academicTerm', 'akhlaqAlertThreshold', 'updatedAt'
-            ]))
-        );
+      allow get, list: if isValidId(settingId);
+      allow create, update: if isValidId(settingId) && isValidSettings(incoming());
       allow delete: if isValidId(settingId) && isAdmin();
     }
 
