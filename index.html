@@ -26,7 +26,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
-      initializeFirestore,
+      getFirestore,
       collection,
       doc,
       setDoc,
@@ -52,17 +52,32 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = initializeFirestore(
-      app,
-      { experimentalAutoDetectLongPolling: true },
-      firebaseConfig.firestoreDatabaseId
-    );
+    const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+    function handleFirestoreError(error, operationType, path) {
+      const errInfo = {
+        error: error instanceof Error ? error.message : String(error),
+        authInfo: {
+          userId: null,
+          email: null,
+          emailVerified: null,
+          isAnonymous: null,
+          tenantId: null,
+          providerInfo: []
+        },
+        operationType,
+        path
+      };
+      console.error("Firestore Error: ", JSON.stringify(errInfo));
+      throw new Error(JSON.stringify(errInfo));
+    }
+    window.handleFirestoreError = handleFirestoreError;
 
     async function testConnection() {
       try {
         await getDocFromServer(doc(db, "test", "connection"));
       } catch (error) {
-        if (error instanceof Error && error.message.includes("the client is offline")) {
+        if (error instanceof Error && error.message && error.message.includes("the client is offline")) {
           console.error("Please check your Firebase configuration.");
         }
       }
@@ -1749,9 +1764,20 @@
           <div id="teacher-parent-alert-banner" class="hidden" style="margin-bottom:12px; padding:10px 14px; border-radius:8px; font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; gap:8px;"></div>
 
           <form id="teacher-verification-form" onsubmit="handleLogSubmit(event)" novalidate>
-            <!-- Student Selector -->
-            <div class="form-group" style="margin-bottom:0.65rem;">
-              <label for="t-student-select">Select Student</label>
+            <!-- Student Selector & Profile Photo Action Row -->
+            <div class="form-group" style="margin-bottom:0.75rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:5px;">
+                <label for="t-student-select" style="margin:0;">Select Student (വിദ്യാർത്ഥി)</label>
+                <button
+                  type="button"
+                  id="btn-ustadh-capture-photo"
+                  onclick="openStudentPhotoModal()"
+                  style="background:#f0fdf4; border:1px solid #86efac; color:#064e3b; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.15s ease;"
+                  title="Capture or update student profile photo using camera or file"
+                >
+                  📷 <span>Capture / Update Photo (ഫോട്ടോ മാറ്റുക)</span>
+                </button>
+              </div>
               <select id="t-student-select" onchange="handleStudentSelectChange()"></select>
             </div>
 
@@ -1769,62 +1795,65 @@
                 </span>
               </div>
 
-              <!-- 1. Shift / Session Logging -->
-              <div class="form-group" style="margin-bottom:0.85rem;">
-                <label>Session Shift (ഷിഫ്റ്റ് തിരഞ്ഞെടുക്കുക)</label>
-                <div class="shift-box">
-                  <button
-                    type="button"
-                    class="shift-btn active"
-                    id="btn-shift-morning"
-                    onclick="setShift('Morning Shift (Before School)')"
-                  >
-                    🌅 Morning Shift (Before School)
-                  </button>
-                  <button
-                    type="button"
-                    class="shift-btn"
-                    id="btn-shift-evening"
-                    onclick="setShift('Evening Shift (After School)')"
-                  >
-                    🌇 Evening Shift (After School)
-                  </button>
+              <!-- Shift & Transit Tracking Controls (Controlled by Principal Campus Settings) -->
+              <div id="day-shift-transit-box">
+                <!-- 1. Shift / Session Logging -->
+                <div class="form-group" style="margin-bottom:0.85rem;">
+                  <label>Session Shift (ഷിഫ്റ്റ് തിരഞ്ഞെടുക്കുക)</label>
+                  <div class="shift-box">
+                    <button
+                      type="button"
+                      class="shift-btn active"
+                      id="btn-shift-morning"
+                      onclick="setShift('Morning Shift (Before School)')"
+                    >
+                      🌅 Morning Shift (Before School)
+                    </button>
+                    <button
+                      type="button"
+                      class="shift-btn"
+                      id="btn-shift-evening"
+                      onclick="setShift('Evening Shift (After School)')"
+                    >
+                      🌇 Evening Shift (After School)
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <!-- 2. Transit & Pickup Tracking -->
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; align-items:end; margin-bottom:0.85rem;">
-                <div>
-                  <label for="commute-mode">Commute / Pickup Mode (യാത്രാ രീതി)</label>
-                  <select id="commute-mode">
-                    <option value="Parent Pickup">Parent Pickup (രക്ഷിതാവ് നേരിട്ട്)</option>
-                    <option value="Self / Walking">Self / Walking (നടന്ന് / സൈക്കിൾ)</option>
-                    <option value="Shared Auto / Van">Shared Auto / Van (ഓട്ടോ / വാൻ)</option>
-                    <option value="Public Transport">Public Transport (ബസ്)</option>
-                  </select>
+                <!-- 2. Transit & Pickup Tracking -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; align-items:end; margin-bottom:0.85rem;">
+                  <div>
+                    <label for="commute-mode">Commute / Pickup Mode (യാത്രാ രീതി)</label>
+                    <select id="commute-mode">
+                      <option value="Parent Pickup">Parent Pickup (രക്ഷിതാവ് നേരിട്ട്)</option>
+                      <option value="Self / Walking">Self / Walking (നടന്ന് / സൈക്കിൾ)</option>
+                      <option value="Shared Auto / Van">Shared Auto / Van (ഓട്ടോ / വാൻ)</option>
+                      <option value="Public Transport">Public Transport (ബസ്)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="departure-time-input">Campus Departure Timestamp</label>
+                    <input
+                      type="text"
+                      id="departure-time-input"
+                      placeholder="e.g. 9:35 AM (Not departed yet)"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label for="departure-time-input">Campus Departure Timestamp</label>
-                  <input
-                    type="text"
-                    id="departure-time-input"
-                    placeholder="e.g. 9:35 AM (Not departed yet)"
-                  />
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:0.85rem;">
+                  <span style="font-size:0.75rem; color:#92400e;">
+                    1-Tap Campus Handover logs real-time departure status to the Parent Portal:
+                  </span>
+                  <button
+                    type="button"
+                    class="btn-departure"
+                    id="btn-mark-departed"
+                    onclick="handleOneTapDeparture()"
+                    title="Stamp current departure time and sync to Parent Portal"
+                  >
+                    Mark Departed / Handed Over to Parent
+                  </button>
                 </div>
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:0.85rem;">
-                <span style="font-size:0.75rem; color:#92400e;">
-                  1-Tap Campus Handover logs real-time departure status to the Parent Portal:
-                </span>
-                <button
-                  type="button"
-                  class="btn-departure"
-                  id="btn-mark-departed"
-                  onclick="handleOneTapDeparture()"
-                  title="Stamp current departure time and sync to Parent Portal"
-                >
-                  Mark Departed / Handed Over to Parent
-                </button>
               </div>
 
               <!-- 3. School & Exam Balance Mode -->
@@ -2441,15 +2470,15 @@
                   </select>
                 </div>
 
-                <!-- 5-Time Jama'at Salah Tracking Toggle -->
-                <div class="form-group" style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:10px 12px;">
+                <!-- 1. Residential Mode: 5-Time Jama'at Salah Tracking Toggle Card -->
+                <div id="cfg-salah-toggle-card" class="form-group" style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:10px 12px;">
                   <label for="cfg-enable-salah" style="margin:0; display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
                     <div>
-                      <div style="font-size:0.84rem; font-weight:700; color:#064e3b;">
-                        🕌 Enable 5-Time Jama'at Salah Tracking
+                      <div style="font-size:0.84rem; font-weight:700; color:#064e3b;" id="lbl-cfg-salah-title">
+                        🕌 Enable 5-Time Jama'at Salah Tracking (5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന)
                       </div>
-                      <div style="font-size:0.73rem; color:#047857; font-weight:500; margin-top:2px;">
-                        When turned OFF, hides 5-Time Jama'at fields from Ustadh Desk, Parent Portal &amp; Report Card
+                      <div style="font-size:0.73rem; color:#047857; font-weight:500; margin-top:2px;" id="lbl-cfg-salah-sub">
+                        Residential Campus: Turn OFF to hide 5-Time Jama'at Salah fields from Ustadh Desk, Parent Portal &amp; Report Card
                       </div>
                     </div>
                     <input
@@ -2458,6 +2487,27 @@
                       checked
                       onchange="handleSalahTrackingToggle(this.checked)"
                       style="width:20px; height:20px; accent-color:#059669; flex-shrink:0;"
+                    />
+                  </label>
+                </div>
+
+                <!-- 2. Day School Mode: Morning/Evening Shift & Transit Tracking Toggle Card -->
+                <div id="cfg-shift-transit-toggle-card" class="form-group hidden" style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px;">
+                  <label for="cfg-enable-shift-transit" style="margin:0; display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
+                    <div>
+                      <div style="font-size:0.84rem; font-weight:700; color:#92400e;" id="lbl-cfg-shift-transit-title">
+                        🌅 Enable Morning / Evening Shift &amp; Transit Tracking (രാവിലെ / വൈകുന്നേരം ഷിഫ്റ്റ് &amp; യാത്രാ സമയം പരിശോധന സജീവമാക്കുക)
+                      </div>
+                      <div style="font-size:0.73rem; color:#b45309; font-weight:500; margin-top:2px;" id="lbl-cfg-shift-transit-sub">
+                        Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal &amp; Report Card
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      id="cfg-enable-shift-transit"
+                      checked
+                      onchange="handleShiftTransitTrackingToggle(this.checked)"
+                      style="width:20px; height:20px; accent-color:#d97706; flex-shrink:0;"
                     />
                   </label>
                 </div>
@@ -2484,6 +2534,13 @@
                   </div>
                 </div>
 
+                <div class="form-group" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px;">
+                  <label for="cfg-madrasa-id" style="font-weight:700;">Madrasa Code / ഐഡി (Multi-Campus Isolation)</label>
+                  <div style="font-size:0.73rem; color:#64748b; margin-bottom:6px;">
+                    Unique Madrasa Code to keep this campus data, teachers, and students separate from other institutions (Default: <code>MDR-01</code>)
+                  </div>
+                  <input type="text" id="cfg-madrasa-id" value="MDR-01" placeholder="e.g. MDR-01 or ASRY-01" required style="font-family:monospace; font-weight:700; text-transform:uppercase;" />
+                </div>
                 <div class="form-group">
                   <label for="cfg-college-name">College Name</label>
                   <input type="text" id="cfg-college-name" value="Asry Academy" required />
@@ -2627,9 +2684,12 @@
     <section id="view-parent" class="hidden" style="width:100%; max-width:100%; overflow-x:hidden; box-sizing:border-box;">
       <div class="card">
         <div class="card-header-row">
-          <div>
-            <h2 class="card-title"><span id="p-portal-title-prefix">Parent Progress Portal:</span> <span id="p-child-name">Zaid Mansoor</span></h2>
-            <p class="card-subtitle" id="p-child-meta">Admission ID: STD-101 · Halqa Al-Fajr (Senior)</p>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div id="p-child-avatar"></div>
+            <div>
+              <h2 class="card-title"><span id="p-portal-title-prefix">Parent Progress Portal:</span> <span id="p-child-name">Zaid Mansoor</span></h2>
+              <p class="card-subtitle" id="p-child-meta">Admission ID: STD-101 · Halqa Al-Fajr (Senior)</p>
+            </div>
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <select id="parent-student-switcher" onchange="handleParentStudentSwitch()" style="width:auto; padding:7px 12px; font-size:0.82rem;"></select>
@@ -2765,6 +2825,130 @@
           </div>
         </div>
         <div id="report-card-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- STUDENT PROFILE PHOTO CAPTURE & UPLOAD MODAL -->
+    <div id="student-photo-modal" class="modal-backdrop hidden no-print" onclick="if(event.target===this) closeStudentPhotoModal()">
+      <div class="modal-card" style="max-width:440px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:14px;">
+          <div>
+            <h3 style="font-size:1rem; font-weight:700; color:var(--primary); margin:0;" id="photo-modal-title">
+              📷 Student Profile Photo (പ്രൊഫൈൽ ഫോട്ടോ)
+            </h3>
+            <p style="font-size:0.76rem; color:var(--text-muted); margin:2px 0 0;" id="photo-modal-subtitle">
+              Capture using camera or choose an image file
+            </p>
+          </div>
+          <button type="button" class="btn-secondary" onclick="closeStudentPhotoModal()" style="padding:4px 10px; font-size:0.76rem;">✕</button>
+        </div>
+
+        <!-- Hidden inputs & canvas for processing -->
+        <input type="file" id="photo-modal-file-input" accept="image/*" style="display:none;" onchange="handleStudentPhotoFileSelected(event)" />
+        <canvas id="photo-modal-canvas" width="200" height="200" style="display:none;"></canvas>
+
+        <!-- Viewfinder / Preview Box -->
+        <div style="background:#0f172a; border-radius:12px; padding:16px 12px; text-align:center; margin-bottom:14px; position:relative; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;">
+          <!-- Live Video Viewfinder -->
+          <video id="photo-modal-video" autoplay playsinline muted style="width:100%; max-width:220px; height:220px; object-fit:cover; border-radius:50%; border:3px solid #10b981; display:none; margin:0 auto; box-shadow:0 0 20px rgba(16,185,129,0.35);"></video>
+
+          <!-- Captured / Existing Preview Image -->
+          <img id="photo-modal-img" alt="Student Preview" style="width:180px; height:180px; object-fit:cover; border-radius:50%; border:3px solid #10b981; display:none; margin:0 auto; box-shadow:0 4px 16px rgba(0,0,0,0.4);" />
+
+          <!-- Placeholder when no camera and no photo -->
+          <div id="photo-modal-placeholder" style="color:#94a3b8; padding:20px 10px;">
+            <div style="font-size:2.8rem; margin-bottom:6px;">👤</div>
+            <div style="font-size:0.88rem; font-weight:700; color:#e2e8f0;" id="photo-modal-placeholder-title">No Photo Recorded</div>
+            <div style="font-size:0.74rem; color:#94a3b8; margin-top:2px;" id="photo-modal-placeholder-sub">Use camera or choose an image file below</div>
+          </div>
+
+          <!-- Live camera badge -->
+          <div id="photo-modal-cam-badge" class="hidden" style="position:absolute; top:10px; left:12px; background:rgba(239,68,68,0.9); color:#ffffff; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:99px; display:flex; align-items:center; gap:4px;">
+            <span style="width:6px; height:6px; border-radius:50%; background:#ffffff; display:inline-block;"></span>
+            <span>LIVE CAMERA</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons Container -->
+        <div id="photo-modal-actions" style="display:flex; flex-direction:column; gap:8px;">
+          <!-- Row 1: Source options (Camera & File) -->
+          <div id="photo-source-buttons" style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <button
+              type="button"
+              class="btn-primary"
+              id="btn-photo-start-camera"
+              onclick="startStudentCamera()"
+              style="padding:10px; font-size:0.8rem; background:#064e3b; display:inline-flex; align-items:center; justify-content:center; gap:6px;"
+            >
+              📷 <span>Use Camera (ക്യാമറ)</span>
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              id="btn-photo-pick-file"
+              onclick="document.getElementById('photo-modal-file-input').click()"
+              style="padding:10px; font-size:0.8rem; display:inline-flex; align-items:center; justify-content:center; gap:6px; border-color:#cbd5e1;"
+            >
+              📁 <span>Choose File (ഫയൽ)</span>
+            </button>
+          </div>
+
+          <!-- Camera Live Controls (Hidden until camera is active) -->
+          <div id="photo-camera-live-controls" class="hidden" style="display:grid; grid-template-columns:2fr 1fr; gap:8px;">
+            <button
+              type="button"
+              class="btn-primary"
+              id="btn-photo-take-snap"
+              onclick="captureStudentSnapshot()"
+              style="padding:10px; font-size:0.82rem; background:#059669; font-weight:700;"
+            >
+              📸 <span>Take Snapshot (ഫോട്ടോ എടുക്കുക)</span>
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              onclick="switchStudentCameraFacing()"
+              style="padding:10px; font-size:0.78rem;"
+              title="Flip between front and rear camera"
+            >
+              🔄 <span>Flip (തിരിക്കുക)</span>
+            </button>
+          </div>
+
+          <!-- Post-Capture Save Controls (Hidden until snapshot taken or file chosen) -->
+          <div id="photo-confirm-controls" class="hidden" style="display:grid; grid-template-columns:2fr 1fr; gap:8px;">
+            <button
+              type="button"
+              class="btn-primary"
+              id="btn-photo-save"
+              onclick="handleSaveStudentPhoto()"
+              style="padding:10px; font-size:0.82rem; background:#047857; font-weight:700;"
+            >
+              ✓ <span>Save Profile Photo (സേവ് ചെയ്യുക)</span>
+            </button>
+            <button
+              type="button"
+              class="btn-secondary"
+              id="btn-photo-retake"
+              onclick="retakeStudentPhoto()"
+              style="padding:10px; font-size:0.78rem;"
+            >
+              ↺ <span>Retake (വീണ്ടും)</span>
+            </button>
+          </div>
+
+          <!-- Remove photo button (if student has photo) -->
+          <div id="photo-remove-box" class="hidden" style="text-align:center; margin-top:2px;">
+            <button
+              type="button"
+              id="btn-photo-remove"
+              onclick="handleRemoveStudentPhoto()"
+              style="background:none; border:none; color:#dc2626; font-size:0.75rem; font-weight:600; cursor:pointer; padding:4px 8px; text-decoration:underline;"
+            >
+              🗑️ Remove Current Photo (ഈ ഫോട്ടോ ഒഴിവാക്കുക)
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3238,10 +3422,12 @@
       }
     } catch (e) {}
 
-    // App Language ("bi" = Bilingual, "en" = English, "ml" = Malayalam) & 5-Time Salah Toggle
+    // App Language ("bi" = Bilingual, "en" = English, "ml" = Malayalam), Salah & Shift/Transit Tracking Toggles
     let appLanguage = localStorage.getItem("hifz_app_language") || "bi";
     let enableSalahTracking = localStorage.getItem("hifz_enable_salah") !== "false";
+    let enableShiftTransitTracking = localStorage.getItem("hifz_enable_shift_transit") !== "false";
     let cleanDatabaseMode = localStorage.getItem("hifz_clean_db_mode") === "true";
+    let currentMadrasaId = (localStorage.getItem("hifz_madrasa_id") || "MDR-01").trim().toUpperCase();
 
     // Universal Translation Helper: returns Malayalam when 'ml' is active, English when 'en', Bilingual when 'bi'
     function t(enText, mlText, biText) {
@@ -3500,8 +3686,32 @@
       }
 
       // Panel & Section Visibility
+      const dayShiftTransitBox = document.getElementById("day-shift-transit-box");
+      const salahToggleCard = document.getElementById("cfg-salah-toggle-card");
+      const shiftTransitToggleCard = document.getElementById("cfg-shift-transit-toggle-card");
+      const salahCheckbox = document.getElementById("cfg-enable-salah");
+      const shiftTransitCheckbox = document.getElementById("cfg-enable-shift-transit");
+
+      // 1. Principal Campus Settings Toggle Cards (Residential vs Day Madrasa)
+      if (salahToggleCard) {
+        salahToggleCard.classList.toggle("hidden", campusMode !== "residential");
+      }
+      if (shiftTransitToggleCard) {
+        shiftTransitToggleCard.classList.toggle("hidden", campusMode !== "day");
+      }
+      if (salahCheckbox) {
+        salahCheckbox.checked = Boolean(enableSalahTracking);
+      }
+      if (shiftTransitCheckbox) {
+        shiftTransitCheckbox.checked = Boolean(enableShiftTransitTracking);
+      }
+
+      // 2. Ustadh Verification Desk Panels
       if (dayControls) {
         dayControls.classList.toggle("hidden", campusMode !== "day");
+      }
+      if (dayShiftTransitBox) {
+        dayShiftTransitBox.classList.toggle("hidden", campusMode !== "day" || !enableShiftTransitTracking);
       }
       if (resControls) {
         resControls.classList.toggle("hidden", campusMode !== "residential");
@@ -3535,14 +3745,10 @@
         }
       }
 
+      // 3. Salah Tracking Section on Ustadh Desk: ONLY visible in residential campus mode AND enableSalahTracking
       const salahSection = document.getElementById("salah-tracking-section");
       if (salahSection) {
-        salahSection.classList.toggle("hidden", !enableSalahTracking);
-      }
-
-      const salahCheckbox = document.getElementById("cfg-enable-salah");
-      if (salahCheckbox) {
-        salahCheckbox.checked = Boolean(enableSalahTracking);
+        salahSection.classList.toggle("hidden", campusMode !== "residential" || !enableSalahTracking);
       }
 
       if (teacherSubtitle) {
@@ -3557,9 +3763,14 @@
                   "Record Sabaq, Sabqi, Manzil & Hostel Adab",
                   "സബഖ്, സബ്ഖി, മൻസിൽ, ഹോസ്റ്റൽ അച്ചടക്കം എന്നിവ രേഖപ്പെടുത്തുക"
                 )
-            : t(
+            : enableShiftTransitTracking
+            ? t(
                 "Record Sabaq, Sabqi, Manzil, Day Madrasa Transit/Pickup & Automatic Monthly Akhlaq points",
                 "സബഖ്, സബ്ഖി, മൻസിൽ, യാത്രാ വിവരങ്ങൾ, പ്രതിമാസ അഖ്ലാഖ് പോയിന്റുകൾ എന്നിവ രേഖപ്പെടുത്തുക"
+              )
+            : t(
+                "Record Sabaq, Sabqi, Manzil & Automatic Monthly Akhlaq points",
+                "സബഖ്, സബ്ഖി, മൻസിൽ, പ്രതിമാസ അഖ്ലാഖ് പോയിന്റുകൾ എന്നിവ രേഖപ്പെടുത്തുക"
               );
       }
 
@@ -3764,6 +3975,9 @@
       "🕌 Enable 5-Time Jama'at Salah Tracking": "🕌 5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന സജീവമാക്കുക",
       "When turned OFF, hides 5-Time Jama'at fields from Ustadh Desk, Parent Portal & Report Card":
         "ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും നമസ്കാര വിവരങ്ങൾ മറയ്ക്കപ്പെടും",
+      "🌅 Enable Morning / Evening Shift & Transit Tracking": "🌅 രാവിലെ / വൈകുന്നേരം ഷിഫ്റ്റ് & യാത്രാ സമയം പരിശോധന സജീവമാക്കുക",
+      "Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal & Report Card":
+        "ഡേ സ്കൂൾ: ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും ഷിഫ്റ്റും യാത്രാ സമയ വിവരങ്ങളും മറയ്ക്കപ്പെടും",
       "College Name": "സ്ഥാപനത്തിന്റെ പേര്",
       "Location / Subtitle": "സ്ഥലം / ഉപശീർഷകം",
       "Academic Term": "അധ്യയന വർഷം / ടേം",
@@ -3850,7 +4064,25 @@
       "School Exam Notice": "സ്കൂൾ പരീക്ഷാ അറിയിപ്പ്",
       "Sick Leave Notice": "അസുഖ അവധി അറിയിപ്പ്",
       "Medical Leave": "മെഡിക്കൽ അവധി",
-      "Leave Request": "അവധി അപേക്ഷ"
+      "Leave Request": "അവധി അപേക്ഷ",
+      "📷 Student Profile Photo (പ്രൊഫൈൽ ഫോട്ടോ)": "📷 വിദ്യാർത്ഥിയുടെ പ്രൊഫൈൽ ഫോട്ടോ",
+      "Capture using camera or choose an image file": "ക്യാമറ ഉപയോഗിച്ച് ഫോട്ടോ എടുക്കുക അല്ലെങ്കിൽ ഫയൽ തിരഞ്ഞെടുക്കുക",
+      "No Photo Recorded": "ഫോട്ടോ ലഭ്യമല്ല",
+      "Use camera or choose an image file below": "ക്യാമറ ഉപയോഗിക്കുക അല്ലെങ്കിൽ താഴെ ഫയൽ തിരഞ്ഞെടുക്കുക",
+      "LIVE CAMERA": "ലൈവ് ക്യാമറ",
+      "Use Camera (ക്യാമറ)": "ക്യാമറ ഉപയോഗിക്കുക",
+      "Choose File (ഫയൽ)": "ഫയൽ തിരഞ്ഞെടുക്കുക",
+      "Take Snapshot (ഫോട്ടോ എടുക്കുക)": "ഫോട്ടോ എടുക്കുക",
+      "Flip (തിരിക്കുക)": "തിരിക്കുക",
+      "Save Profile Photo (സേവ് ചെയ്യുക)": "പ്രൊഫൈൽ ഫോട്ടോ സേവ് ചെയ്യുക",
+      "Retake (വീണ്ടും)": "വീണ്ടും എടുക്കുക",
+      "🗑️ Remove Current Photo (ഈ ഫോട്ടോ ഒഴിവാക്കുക)": "🗑️ ഫോട്ടോ ഒഴിവാക്കുക",
+      "Capture / Update Photo (ഫോട്ടോ മാറ്റുക)": "ഫോട്ടോ എടുക്കുക / മാറ്റുക",
+      "Capture / Update Photo": "ഫോട്ടോ എടുക്കുക / മാറ്റുക",
+      "Student Profile Dossier": "വിദ്യാർത്ഥി പ്രൊഫൈൽ രേഖകൾ",
+      "Student Profile Identity & Photo Banner": "വിദ്യാർത്ഥി പ്രൊഫൈൽ വിവരങ്ങൾ",
+      "Click to capture or update photo": "ഫോട്ടോ മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക",
+      "Photo": "ഫോട്ടോ"
     };
 
     const MALAYALAM_PLACEHOLDER_MAP = {
@@ -4060,6 +4292,26 @@
           en: "No new notifications",
           ml: "പുതിയ അറിയിപ്പുകൾ ഇല്ല",
           bi: "പുതിയ അറിയിപ്പുകൾ ഇല്ല (No new notifications)"
+        },
+        "lbl-cfg-salah-title": {
+          en: "🕌 Enable 5-Time Jama'at Salah Tracking",
+          ml: "🕌 5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന സജീവമാക്കുക",
+          bi: "🕌 Enable 5-Time Jama'at Salah Tracking (5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന)"
+        },
+        "lbl-cfg-salah-sub": {
+          en: "When turned OFF, hides 5-Time Jama'at fields from Ustadh Desk, Parent Portal & Report Card",
+          ml: "ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും നമസ്കാര വിവരങ്ങൾ മറയ്ക്കപ്പെടും",
+          bi: "When turned OFF, hides 5-Time Jama'at fields from Ustadh Desk, Parent Portal & Report Card"
+        },
+        "lbl-cfg-shift-transit-title": {
+          en: "🌅 Enable Morning / Evening Shift & Transit Tracking",
+          ml: "🌅 രാവിലെ / വൈകുന്നേരം ഷിഫ്റ്റ് & യാത്രാ സമയം പരിശോധന സജീവമാക്കുക",
+          bi: "🌅 Enable Morning / Evening Shift & Transit Tracking (രാവിലെ / വൈകുന്നേരം ഷിഫ്റ്റ് & യാത്രാ സമയം പരിശോധന സജീവമാക്കുക)"
+        },
+        "lbl-cfg-shift-transit-sub": {
+          en: "Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal & Report Card",
+          ml: "ഡേ സ്കൂൾ: ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും ഷിഫ്റ്റും യാത്രാ സമയ വിവരങ്ങളും മറയ്ക്കപ്പെടും",
+          bi: "Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal & Report Card"
         }
       };
 
@@ -4155,6 +4407,23 @@
           t(
             `5-Time Jama'at Salah Tracking turned ${enableSalahTracking ? "ON" : "OFF"}`,
             `5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന ${enableSalahTracking ? "സജീവമാക്കി" : "ഓഫ് ചെയ്തു"}`
+          )
+        );
+      }
+    };
+
+    window.handleShiftTransitTrackingToggle = async function(enabled) {
+      enableShiftTransitTracking = Boolean(enabled);
+      try {
+        localStorage.setItem("hifz_enable_shift_transit", String(enableShiftTransitTracking));
+      } catch (e) {}
+      applyCampusModeUI();
+      await syncCampusConfigToFirestore();
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `Morning/Evening Shift & Transit Tracking turned ${enableShiftTransitTracking ? "ON" : "OFF"}`,
+            `ഷിഫ്റ്റ് & യാത്രാ പരിശോധന ${enableShiftTransitTracking ? "സജീവമാക്കി" : "ഓഫ് ചെയ്തു"}`
           )
         );
       }
@@ -4294,18 +4563,31 @@
     }
 
     async function syncCampusConfigToFirestore() {
+      // Demo Mode edits must be saved strictly to localStorage and NEVER overwrite cloud settings on other phones
+      if (!cleanDatabaseMode) return;
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          const cfgPayload = {
+            madrasaId: currentMadrasaId || "MDR-01",
+            appLanguage,
+            enableSalahTracking,
+            enableShiftTransitTracking,
+            customTraits,
+            cleanDatabaseMode,
+            ownerId: "portal-session",
+            updatedAt: nowTs
+          };
+          // Save to scoped doc for this madrasa
+          await window.fSetDoc(
+            window.fDoc(window.fDb, "settings", `campus_config_${currentMadrasaId || "MDR-01"}`),
+            cfgPayload,
+            { merge: true }
+          );
+          // Also sync to campus_config
           await window.fSetDoc(
             window.fDoc(window.fDb, "settings", "campus_config"),
-            {
-              appLanguage,
-              enableSalahTracking,
-              customTraits,
-              cleanDatabaseMode,
-              ownerId: "portal-session",
-              updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
-            },
+            cfgPayload,
             { merge: true }
           );
         }
@@ -4579,19 +4861,27 @@
     window.toggleCampusModeQuick = async function() {
       const newMode = campusMode === "day" ? "residential" : "day";
       campusMode = newMode;
+      try { localStorage.setItem("hifz_campus_mode", campusMode); } catch (e) {}
       applyCampusModeUI();
+
+      if (!cleanDatabaseMode) {
+        if (window.showToast) {
+          window.showToast("Campus mode switched to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + " (Local)!");
+        }
+        return;
+      }
 
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
-          await window.fSetDoc(
-            window.fDoc(window.fDb, "settings", "general"),
-            {
-              mode: newMode,
-              ownerId: "portal-session",
-              updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
-            },
-            { merge: true }
-          );
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          const payload = {
+            madrasaId: currentMadrasaId || "MDR-01",
+            mode: newMode,
+            ownerId: "portal-session",
+            updatedAt: nowTs
+          };
+          await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${currentMadrasaId || "MDR-01"}`), payload, { merge: true });
+          await window.fSetDoc(window.fDoc(window.fDb, "settings", "general"), payload, { merge: true });
         }
         if (window.showToast) {
           window.showToast("Campus mode switched to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + "!");
@@ -4606,19 +4896,27 @@
       if (!select) return;
       const newMode = select.value === "residential" ? "residential" : "day";
       campusMode = newMode;
+      try { localStorage.setItem("hifz_campus_mode", campusMode); } catch (e) {}
       applyCampusModeUI();
+
+      if (!cleanDatabaseMode) {
+        if (window.showToast) {
+          window.showToast("Campus mode set to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + " (Local)!");
+        }
+        return;
+      }
 
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
-          await window.fSetDoc(
-            window.fDoc(window.fDb, "settings", "general"),
-            {
-              mode: newMode,
-              ownerId: "portal-session",
-              updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
-            },
-            { merge: true }
-          );
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          const payload = {
+            madrasaId: currentMadrasaId || "MDR-01",
+            mode: newMode,
+            ownerId: "portal-session",
+            updatedAt: nowTs
+          };
+          await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${currentMadrasaId || "MDR-01"}`), payload, { merge: true });
+          await window.fSetDoc(window.fDoc(window.fDb, "settings", "general"), payload, { merge: true });
         }
         if (window.showToast) {
           window.showToast("Campus mode set to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + "!");
@@ -5172,6 +5470,311 @@
       }
     };
 
+    // Student Profile Photo Helpers & Camera Capture Controller
+    function getStudentPhotoAvatar(std, size = 48, className = "") {
+      const s = Number(size) || 48;
+      if (std && std.photoUrl) {
+        return `<img src="${std.photoUrl}" alt="${(std.name || 'Student').replace(/"/g, '&quot;')}" class="${className}" style="width:${s}px; height:${s}px; border-radius:50%; object-fit:cover; border:2px solid #059669; box-shadow:0 1px 3px rgba(0,0,0,0.12); flex-shrink:0; background:#f0fdf4;" />`;
+      }
+      const initials = std && std.name
+        ? std.name.split(" ").filter(Boolean).map(n => n[0]).slice(0, 2).join("").toUpperCase()
+        : "ST";
+      const fontSize = Math.max(10, Math.round(s * 0.38));
+      return `<div class="${className}" style="width:${s}px; height:${s}px; border-radius:50%; background:linear-gradient(135deg, #064e3b, #047857); color:#ffffff; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:${fontSize}px; border:2px solid #a7f3d0; box-shadow:0 1px 3px rgba(0,0,0,0.12); flex-shrink:0;">${initials}</div>`;
+    }
+
+    let currentPhotoStudentId = null;
+    let currentCapturedPhotoDataUrl = null;
+    let activeCameraStream = null;
+    let currentCameraFacingMode = "user";
+
+    window.openStudentPhotoModal = function(studentId) {
+      if (!studentId) {
+        const tSel = document.getElementById("t-student-select");
+        studentId = (tSel && tSel.value) ? tSel.value : (currentParentStudentId || (globalStudents[0] ? globalStudents[0].studentId : ""));
+      }
+      const std = globalStudents.find((s) => s.studentId === studentId) || globalStudents[0];
+      if (!std) {
+        if (window.showToast) window.showToast(t("Please enroll a student first.", "വിദ്യാർത്ഥികളെ ചേർത്ത ശേഷം ഫോട്ടോ മാറ്റുക."));
+        return;
+      }
+
+      currentPhotoStudentId = std.studentId;
+      currentCapturedPhotoDataUrl = null;
+      stopActiveCameraStream();
+
+      const modal = document.getElementById("student-photo-modal");
+      const titleEl = document.getElementById("photo-modal-title");
+      const subEl = document.getElementById("photo-modal-subtitle");
+      if (titleEl) {
+        titleEl.innerText = `📷 ${std.name} (${std.studentId})`;
+      }
+      if (subEl) {
+        subEl.innerText = t(
+          `Halqa: ${std.batch} · Ustadh: ${std.ustadhName || 'Assigned Preceptor'}`,
+          `ഹൽഖ: ${std.batch} · ഉസ്താദ്: ${std.ustadhName || 'അധ്യാപകൻ'}`
+        );
+      }
+
+      resetModalPhotoView(std);
+      if (modal) modal.classList.remove("hidden");
+    };
+
+    function resetModalPhotoView(std) {
+      const video = document.getElementById("photo-modal-video");
+      const img = document.getElementById("photo-modal-img");
+      const placeholder = document.getElementById("photo-modal-placeholder");
+      const camBadge = document.getElementById("photo-modal-cam-badge");
+      const sourceBtns = document.getElementById("photo-source-buttons");
+      const liveCtrls = document.getElementById("photo-camera-live-controls");
+      const confirmCtrls = document.getElementById("photo-confirm-controls");
+      const removeBox = document.getElementById("photo-remove-box");
+
+      if (video) video.style.display = "none";
+      if (camBadge) camBadge.classList.add("hidden");
+      if (liveCtrls) liveCtrls.classList.add("hidden");
+      if (confirmCtrls) confirmCtrls.classList.add("hidden");
+      if (sourceBtns) sourceBtns.classList.remove("hidden");
+
+      if (std && std.photoUrl) {
+        if (img) {
+          img.src = std.photoUrl;
+          img.style.display = "block";
+        }
+        if (placeholder) placeholder.style.display = "none";
+        if (removeBox) removeBox.classList.remove("hidden");
+      } else {
+        if (img) img.style.display = "none";
+        if (placeholder) placeholder.style.display = "block";
+        if (removeBox) removeBox.classList.add("hidden");
+      }
+    }
+
+    window.closeStudentPhotoModal = function() {
+      stopActiveCameraStream();
+      currentPhotoStudentId = null;
+      currentCapturedPhotoDataUrl = null;
+      const modal = document.getElementById("student-photo-modal");
+      if (modal) modal.classList.add("hidden");
+    };
+
+    window.stopActiveCameraStream = function() {
+      if (activeCameraStream) {
+        try {
+          activeCameraStream.getTracks().forEach((track) => track.stop());
+        } catch (e) {}
+        activeCameraStream = null;
+      }
+    };
+
+    window.startStudentCamera = async function() {
+      stopActiveCameraStream();
+      try {
+        const constraints = {
+          video: {
+            facingMode: currentCameraFacingMode,
+            width: { ideal: 640 },
+            height: { ideal: 640 }
+          },
+          audio: false
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        activeCameraStream = stream;
+
+        const video = document.getElementById("photo-modal-video");
+        const img = document.getElementById("photo-modal-img");
+        const placeholder = document.getElementById("photo-modal-placeholder");
+        const camBadge = document.getElementById("photo-modal-cam-badge");
+        const sourceBtns = document.getElementById("photo-source-buttons");
+        const liveCtrls = document.getElementById("photo-camera-live-controls");
+        const confirmCtrls = document.getElementById("photo-confirm-controls");
+        const removeBox = document.getElementById("photo-remove-box");
+
+        if (video) {
+          video.srcObject = stream;
+          video.style.display = "block";
+        }
+        if (img) img.style.display = "none";
+        if (placeholder) placeholder.style.display = "none";
+        if (camBadge) camBadge.classList.remove("hidden");
+        if (sourceBtns) sourceBtns.classList.add("hidden");
+        if (liveCtrls) liveCtrls.classList.remove("hidden");
+        if (confirmCtrls) confirmCtrls.classList.add("hidden");
+        if (removeBox) removeBox.classList.add("hidden");
+      } catch (err) {
+        console.warn("Camera access note:", err);
+        const msg = t(
+          "Camera access unavailable. Please grant camera permission or select a file from your device.",
+          "ക്യാമറ തുറക്കാൻ കഴിഞ്ഞില്ല. ക്യാമറ അനുമതി നൽകുക അല്ലെങ്കിൽ ഫയൽ തിരഞ്ഞെടുക്കുക."
+        );
+        if (window.showToast) window.showToast(msg);
+        const fileInp = document.getElementById("photo-modal-file-input");
+        if (fileInp) fileInp.click();
+      }
+    };
+
+    window.switchStudentCameraFacing = function() {
+      currentCameraFacingMode = currentCameraFacingMode === "user" ? "environment" : "user";
+      startStudentCamera();
+    };
+
+    window.captureStudentSnapshot = function() {
+      const video = document.getElementById("photo-modal-video");
+      const canvas = document.getElementById("photo-modal-canvas");
+      if (!video || !canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      const size = 200;
+      canvas.width = size;
+      canvas.height = size;
+
+      const vw = video.videoWidth || 480;
+      const vh = video.videoHeight || 480;
+      const minDim = Math.min(vw, vh);
+      const sx = (vw - minDim) / 2;
+      const sy = (vh - minDim) / 2;
+
+      ctx.drawImage(video, sx, sy, minDim, minDim, 0, 0, size, size);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      currentCapturedPhotoDataUrl = dataUrl;
+
+      stopActiveCameraStream();
+      displayCapturedPhoto(dataUrl);
+    };
+
+    window.handleStudentPhotoFileSelected = function(event) {
+      const file = event.target?.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const rawUrl = e.target.result;
+        const tempImg = new Image();
+        tempImg.onload = function() {
+          const canvas = document.getElementById("photo-modal-canvas");
+          if (!canvas) return;
+          const ctx = canvas.getContext("2d");
+          const size = 200;
+          canvas.width = size;
+          canvas.height = size;
+
+          const iw = tempImg.naturalWidth || tempImg.width;
+          const ih = tempImg.naturalHeight || tempImg.height;
+          const minDim = Math.min(iw, ih);
+          const sx = (iw - minDim) / 2;
+          const sy = (ih - minDim) / 2;
+
+          ctx.drawImage(tempImg, sx, sy, minDim, minDim, 0, 0, size, size);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          currentCapturedPhotoDataUrl = dataUrl;
+
+          stopActiveCameraStream();
+          displayCapturedPhoto(dataUrl);
+        };
+        tempImg.src = rawUrl;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = "";
+    };
+
+    function displayCapturedPhoto(dataUrl) {
+      const video = document.getElementById("photo-modal-video");
+      const img = document.getElementById("photo-modal-img");
+      const placeholder = document.getElementById("photo-modal-placeholder");
+      const camBadge = document.getElementById("photo-modal-cam-badge");
+      const sourceBtns = document.getElementById("photo-source-buttons");
+      const liveCtrls = document.getElementById("photo-camera-live-controls");
+      const confirmCtrls = document.getElementById("photo-confirm-controls");
+      const removeBox = document.getElementById("photo-remove-box");
+
+      if (video) video.style.display = "none";
+      if (placeholder) placeholder.style.display = "none";
+      if (camBadge) camBadge.classList.add("hidden");
+      if (liveCtrls) liveCtrls.classList.add("hidden");
+      if (sourceBtns) sourceBtns.classList.add("hidden");
+      if (removeBox) removeBox.classList.add("hidden");
+
+      if (img) {
+        img.src = dataUrl;
+        img.style.display = "block";
+      }
+      if (confirmCtrls) confirmCtrls.classList.remove("hidden");
+    }
+
+    window.retakeStudentPhoto = function() {
+      currentCapturedPhotoDataUrl = null;
+      const std = globalStudents.find((s) => s.studentId === currentPhotoStudentId);
+      resetModalPhotoView(std);
+    };
+
+    window.handleSaveStudentPhoto = async function() {
+      if (!currentPhotoStudentId || !currentCapturedPhotoDataUrl) return;
+      const std = globalStudents.find((s) => s.studentId === currentPhotoStudentId);
+      if (!std) return;
+
+      std.photoUrl = currentCapturedPhotoDataUrl;
+      saveLiveCollectionsToLocal();
+      renderAllViews();
+
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `✓ Profile photo updated for ${std.name}!`,
+            `✓ ${std.name} ന്റെ പ്രൊഫൈൽ ഫോട്ടോ സേവ് ചെയ്തു!`
+          )
+        );
+      }
+
+      // Background Firestore update
+      try {
+        if (window.fDb && window.fUpdateDoc && window.fDoc) {
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          window.fUpdateDoc(window.fDoc(window.fDb, "students", std.studentId), {
+            photoUrl: std.photoUrl,
+            updatedAt: nowTs
+          }).catch((err) => console.warn("Photo sync to students collection note:", err));
+
+          if (currentMadrasaId && window.fSetDoc) {
+            window.fSetDoc(
+              window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId}`),
+              { students: globalStudents, updatedAt: nowTs },
+              { merge: true }
+            ).catch(() => {});
+          }
+        }
+      } catch (e) {
+        console.warn("Photo sync note:", e);
+      }
+
+      closeStudentPhotoModal();
+    };
+
+    window.handleRemoveStudentPhoto = async function() {
+      if (!currentPhotoStudentId) return;
+      const std = globalStudents.find((s) => s.studentId === currentPhotoStudentId);
+      if (!std) return;
+
+      delete std.photoUrl;
+      saveLiveCollectionsToLocal();
+      renderAllViews();
+
+      if (window.showToast) {
+        window.showToast(t(`Photo removed for ${std.name}`, `${std.name} ന്റെ ഫോട്ടോ ഒഴിവാക്കി`));
+      }
+
+      try {
+        if (window.fDb && window.fUpdateDoc && window.fDoc) {
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          window.fUpdateDoc(window.fDoc(window.fDb, "students", std.studentId), {
+            photoUrl: "",
+            updatedAt: nowTs
+          }).catch(() => {});
+        }
+      } catch (e) {}
+
+      closeStudentPhotoModal();
+    };
+
     function getAttendanceTagClass(att) {
       if (att === "Absent") return "tag-absent";
       if (att && att.includes("Sick Bay")) return "tag-sick";
@@ -5555,42 +6158,116 @@
 
     // Enroll New Student
     window.handleAddStudent = async function(e) {
-      e.preventDefault();
-      const studentId = document.getElementById("new-std-id").value.trim().toUpperCase();
+      if (e && typeof e.preventDefault === "function") e.preventDefault();
+      
+      const rawId = (document.getElementById("new-std-id")?.value || "").trim().toUpperCase();
+      const studentId = rawId ? rawId.replace(/[^a-zA-Z0-9_-]/g, "") : ("STD-" + Math.floor(100 + Math.random() * 900));
+      const rawName = (document.getElementById("new-std-name")?.value || "").trim();
+      if (!rawName) {
+        if (window.showToast) window.showToast(t("Please enter student name", "വിദ്യാർത്ഥിയുടെ പേര് നൽകുക"));
+        return;
+      }
+      const batch = (document.getElementById("new-std-batch")?.value || "Halqa General").trim();
+      const ustadhName = (document.getElementById("new-std-ustadh")?.value || (globalTeachers[0]?.name || "Ustadh")).trim();
+      const juzCompleted = Number(document.getElementById("new-std-juz")?.value) || 0;
+      const currentJuz = Number(document.getElementById("new-std-cur-juz")?.value) || 1;
+      const currentSurah = (document.getElementById("new-std-surah")?.value || "Al-Fatiha").trim();
+      const guardianName = (document.getElementById("new-std-guardian")?.value || "Guardian").trim();
+      const guardianPhone = (document.getElementById("new-std-phone")?.value || "+91 98470 00000").trim();
+      const pin = (document.getElementById("new-std-pin")?.value || "1234").trim();
+
       const studentObj = {
+        id: studentId,
         studentId,
-        name: document.getElementById("new-std-name").value.trim(),
-        batch: document.getElementById("new-std-batch").value.trim(),
-        ustadhName: document.getElementById("new-std-ustadh").value.trim() || "Ustadh",
-        juzCompleted: Number(document.getElementById("new-std-juz").value) || 0,
-        currentJuz: Number(document.getElementById("new-std-cur-juz").value) || 1,
-        currentSurah: document.getElementById("new-std-surah").value.trim(),
-        guardianName: document.getElementById("new-std-guardian").value.trim(),
-        guardianPhone: document.getElementById("new-std-phone").value.trim(),
-        pin: document.getElementById("new-std-pin").value.trim() || "1234"
+        name: rawName,
+        batch,
+        ustadhName,
+        juzCompleted,
+        currentJuz,
+        currentSurah,
+        guardianName,
+        guardianPhone,
+        pin,
+        madrasaId: currentMadrasaId || "MDR-01"
       };
 
+      // 1. Immediately update live state and local storage
+      globalStudents = [...globalStudents.filter((s) => s.studentId !== studentId), studentObj];
+      currentParentStudentId = studentObj.studentId;
+      saveLiveCollectionsToLocal();
+      populateStudentSelectors();
+      renderAllViews();
+      updateDbResetStatusBanner();
+
+      if (e && e.target && typeof e.target.reset === "function") {
+        e.target.reset();
+      } else {
+        const elId = document.getElementById("new-std-id"); if (elId) elId.value = "";
+        const elName = document.getElementById("new-std-name"); if (elName) elName.value = "";
+        const elBatch = document.getElementById("new-std-batch"); if (elBatch) elBatch.value = "";
+        const elSurah = document.getElementById("new-std-surah"); if (elSurah) elSurah.value = "";
+        const elGuardian = document.getElementById("new-std-guardian"); if (elGuardian) elGuardian.value = "";
+        const elPhone = document.getElementById("new-std-phone"); if (elPhone) elPhone.value = "";
+        const elPin = document.getElementById("new-std-pin"); if (elPin) elPin.value = "1234";
+      }
+
+      switchPrincipalTab("portfolios");
+      if (window.showToast) {
+        window.showToast(t(`✓ പുതിയ വിദ്യാർത്ഥിയെ വിജയകരമായി ചേർത്തു / Enrolled ${studentObj.name} (${studentObj.studentId})!`, `✓ പുതിയ വിദ്യാർത്ഥിയെ വിജയകരമായി ചേർത്തു: ${studentObj.name} (${studentObj.studentId})`));
+      }
+
+      // 2. Background Firestore synchronization inside a resilient try/catch block
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
-          await window.fSetDoc(window.fDoc(window.fDb, "students", studentId), {
-            ...studentObj,
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          const firestoreStudentPayload = {
+            id: studentId,
+            studentId,
+            name: rawName,
+            batch,
+            ustadhName,
+            juzCompleted,
+            currentJuz,
+            currentSurah,
+            guardianName,
+            guardianPhone,
+            pin,
+            madrasaId: currentMadrasaId || "MDR-01",
             ownerId: "portal-session",
-            createdAt: window.fTimestamp(),
-            updatedAt: window.fTimestamp()
+            createdAt: nowTs,
+            updatedAt: nowTs
+          };
+          window.fSetDoc(window.fDoc(window.fDb, "students", studentId), firestoreStudentPayload).catch((colErr) => {
+            console.warn("Primary students collection sync note:", colErr);
+          });
+
+          const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId || "MDR-01"}`);
+          window.fSetDoc(campusDataRef, {
+            madrasaId: currentMadrasaId || "MDR-01",
+            students: globalStudents.map((s) => ({
+              studentId: s.studentId,
+              name: s.name,
+              batch: s.batch,
+              ustadhName: s.ustadhName,
+              juzCompleted: s.juzCompleted,
+              currentJuz: s.currentJuz,
+              currentSurah: s.currentSurah,
+              guardianName: s.guardianName,
+              guardianPhone: s.guardianPhone,
+              pin: s.pin,
+              photoUrl: s.photoUrl || ""
+            })),
+            ownerId: "portal-session",
+            updatedAt: nowTs
+          }, { merge: true }).catch((backupErr) => {
+            console.warn("Settings campus_data students backup note:", backupErr);
           });
         }
-        globalStudents = [...globalStudents.filter((s) => s.studentId !== studentId), studentObj];
-        currentParentStudentId = studentObj.studentId;
-        saveLiveCollectionsToLocal();
-        populateStudentSelectors();
-        renderAllViews();
-        e.target.reset();
-        switchPrincipalTab("portfolios");
-        if (window.showToast) window.showToast(t(`✓ Enrolled ${studentObj.name} (${studentObj.studentId})!`, `✓ ${studentObj.name} (${studentObj.studentId}) നെ ചേർത്തു!`));
       } catch (err) {
-        if (window.showToast) window.showToast("Enrollment Error: " + err.message);
+        console.warn("Background student sync note:", err);
       }
     };
+    window.addStudent = window.handleAddStudent;
 
     // Delete Enrolled Student
     window.handleDeleteStudent = async function(studentId, studentName) {
@@ -5600,10 +6277,25 @@
         saveLiveCollectionsToLocal();
         populateStudentSelectors();
         renderAllViews();
-        if (window.fDb && window.fDeleteDoc && window.fDoc) {
-          await window.fDeleteDoc(window.fDoc(window.fDb, "students", studentId));
+        updateDbResetStatusBanner();
+        if (window.showToast) {
+          window.showToast(t(`Removed student ${studentName} (${studentId})`, `${studentName} (${studentId}) നെ ഒഴിവാക്കി`));
         }
-        if (window.showToast) window.showToast(t(`Removed student ${studentName} (${studentId})`, `${studentName} (${studentId}) നെ ഒഴിവാക്കി`));
+
+        if (window.fDb && window.fDoc) {
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          if (window.fDeleteDoc) {
+            window.fDeleteDoc(window.fDoc(window.fDb, "students", studentId)).catch((e) => console.warn("Delete student doc note:", e));
+          }
+          if (window.fSetDoc) {
+            const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId || "MDR-01"}`);
+            window.fSetDoc(campusDataRef, {
+              students: globalStudents,
+              ownerId: "portal-session",
+              updatedAt: nowTs
+            }, { merge: true }).catch((e) => console.warn("Delete student backup note:", e));
+          }
+        }
       } catch (err) {
         console.warn("Delete student note:", err);
       }
@@ -5611,14 +6303,20 @@
 
     // Register New Ustadh / Teacher
     window.handleAddTeacher = async function(e) {
-      e.preventDefault();
-      const rawName = document.getElementById("new-tch-name").value.trim();
+      if (e && typeof e.preventDefault === "function") e.preventDefault();
+
+      const rawName = (document.getElementById("new-tch-name")?.value || "").trim();
+      if (!rawName) {
+        if (window.showToast) window.showToast(t("Please enter Ustadh name", "ഉസ്താദിന്റെ പേര് നൽകുക"));
+        return;
+      }
       const formattedName = rawName.toLowerCase().startsWith("ustadh") ? rawName : "Ustadh " + rawName;
-      const username = document.getElementById("new-tch-username").value.trim().toLowerCase();
-      const pin = document.getElementById("new-tch-pin").value.trim() || "1234";
-      const batch = document.getElementById("new-tch-batch").value.trim();
-      const phone = document.getElementById("new-tch-phone").value.trim();
-      const teacherId = "TCH-" + username.replace(/[^a-zA-Z0-9]/g, "");
+      const rawUser = (document.getElementById("new-tch-username")?.value || "").trim().toLowerCase();
+      const username = rawUser ? rawUser.replace(/[^a-zA-Z0-9_-]/g, "") : ("ustadh_" + Date.now().toString().slice(-4));
+      const pin = (document.getElementById("new-tch-pin")?.value || "1234").trim();
+      const batch = (document.getElementById("new-tch-batch")?.value || "Halqa General").trim();
+      const phone = (document.getElementById("new-tch-phone")?.value || "+91 98470 00000").trim();
+      const teacherId = "TCH-" + (username.replace(/[^a-zA-Z0-9]/g, "") || Date.now().toString().slice(-6));
 
       const teacherObj = {
         id: teacherId,
@@ -5627,29 +6325,75 @@
         batch,
         phone,
         username,
-        pin
+        pin,
+        madrasaId: currentMadrasaId || "MDR-01"
       };
 
+      // 1. Immediately save to local state, localStorage, and update directory UI first
+      globalTeachers = [...globalTeachers.filter((tr) => (tr.username || "").toLowerCase() !== username.toLowerCase() && (tr.teacherId || tr.id) !== teacherId), teacherObj];
+      saveLiveCollectionsToLocal();
+      populateStudentSelectors();
+      renderPrincipalTeachersDirectory();
+      updateDbResetStatusBanner();
+
+      if (e && e.target && typeof e.target.reset === "function") {
+        e.target.reset();
+      } else {
+        const elName = document.getElementById("new-tch-name"); if (elName) elName.value = "";
+        const elBatch = document.getElementById("new-tch-batch"); if (elBatch) elBatch.value = "";
+        const elPhone = document.getElementById("new-tch-phone"); if (elPhone) elPhone.value = "";
+        const elUser = document.getElementById("new-tch-username"); if (elUser) elUser.value = "";
+        const elPin = document.getElementById("new-tch-pin"); if (elPin) elPin.value = "1234";
+      }
+
+      // Display green success toast immediately with credentials
+      if (window.showToast) {
+        window.showToast(t(`✓ പുതിയ ഉസ്താദിനെ വിജയകരമായി ചേർത്തു / Ustadh added successfully: ${formattedName} (ID: ${username})`, `✓ പുതിയ ഉസ്താദിനെ വിജയകരമായി ചേർത്തു: ${formattedName} (${username})`));
+      }
+
+      // 2. Background Firestore synchronization inside a resilient try/catch block
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
-          await window.fSetDoc(window.fDoc(window.fDb, "teachers", teacherId), {
-            ...teacherObj,
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          const firestoreTeacherPayload = {
+            id: teacherId,
+            teacherId,
+            name: formattedName,
+            batch,
+            phone,
+            username,
+            pin,
+            madrasaId: currentMadrasaId || "MDR-01",
             ownerId: "portal-session",
-            createdAt: window.fTimestamp(),
-            updatedAt: window.fTimestamp()
+            createdAt: nowTs,
+            updatedAt: nowTs
+          };
+          window.fSetDoc(window.fDoc(window.fDb, "teachers", teacherId), firestoreTeacherPayload).catch((colErr) => {
+            console.warn("Primary teachers collection sync note:", colErr);
+          });
+
+          const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId || "MDR-01"}`);
+          window.fSetDoc(campusDataRef, {
+            madrasaId: currentMadrasaId || "MDR-01",
+            teachers: globalTeachers.map((t) => ({
+              teacherId: t.teacherId || t.id,
+              name: t.name,
+              batch: t.batch,
+              phone: t.phone,
+              username: t.username,
+              pin: t.pin
+            })),
+            ownerId: "portal-session",
+            updatedAt: nowTs
+          }, { merge: true }).catch((backupErr) => {
+            console.warn("Settings campus_data teachers backup note:", backupErr);
           });
         }
-        globalTeachers = [...globalTeachers.filter((tr) => tr.username !== username && tr.teacherId !== teacherId), teacherObj];
-        saveLiveCollectionsToLocal();
-        populateStudentSelectors();
-        renderPrincipalTeachersDirectory();
-        updateDbResetStatusBanner();
-        e.target.reset();
-        showToast(t("✓ Ustadh registered & credentials synced!", "✓ ഉസ്താദിനെ രജിസ്റ്റർ ചെയ്തു!"));
       } catch (err) {
-        if (window.showToast) window.showToast("Teacher Registration Error: " + err.message);
+        console.warn("Background teacher sync note:", err);
       }
     };
+    window.addUstadh = window.handleAddTeacher;
 
     // Delete Registered Teacher
     window.handleDeleteTeacher = async function(teacherId, teacherName) {
@@ -5659,12 +6403,26 @@
         populateStudentSelectors();
         renderPrincipalTeachersDirectory();
         updateDbResetStatusBanner();
-        if (window.fDb && window.fDeleteDoc && window.fDoc) {
-          await window.fDeleteDoc(window.fDoc(window.fDb, "teachers", teacherId));
+        if (window.showToast) {
+          window.showToast(t(`Removed ${teacherName}`, `${teacherName} നെ ഒഴിവാക്കി`));
         }
-        showToast(t(`Removed ${teacherName}`, `${teacherName} നെ ഒഴിവാക്കി`));
+
+        if (window.fDb && window.fDoc) {
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          if (window.fDeleteDoc) {
+            window.fDeleteDoc(window.fDoc(window.fDb, "teachers", teacherId)).catch((e) => console.warn("Delete teacher doc note:", e));
+          }
+          if (window.fSetDoc) {
+            const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId || "MDR-01"}`);
+            window.fSetDoc(campusDataRef, {
+              teachers: globalTeachers,
+              ownerId: "portal-session",
+              updatedAt: nowTs
+            }, { merge: true }).catch((e) => console.warn("Delete teacher backup note:", e));
+          }
+        }
       } catch (err) {
-        if (window.showToast) window.showToast("Error removing teacher: " + err.message);
+        console.warn("Delete teacher note:", err);
       }
     };
 
@@ -5683,16 +6441,17 @@
 
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
-          await window.fSetDoc(window.fDoc(window.fDb, "notices", newId), {
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          window.fSetDoc(window.fDoc(window.fDb, "notices", newId), {
             title: noticeObj.title,
             content: noticeObj.content,
             audience: noticeObj.audience,
             dateStr: noticeObj.dateStr,
             authorName: noticeObj.authorName,
             ownerId: "portal-session",
-            createdAt: window.fTimestamp(),
-            updatedAt: window.fTimestamp()
-          });
+            createdAt: nowTs,
+            updatedAt: nowTs
+          }).catch((err) => console.warn("Notice sync note:", err));
         }
         globalNotices = [noticeObj, ...globalNotices];
         saveLiveCollectionsToLocal();
@@ -5719,6 +6478,15 @@
       if (salahCb) {
         enableSalahTracking = Boolean(salahCb.checked);
       }
+      const shiftTransitCb = document.getElementById("cfg-enable-shift-transit");
+      if (shiftTransitCb) {
+        enableShiftTransitTracking = Boolean(shiftTransitCb.checked);
+      }
+
+      const madrasaIdInp = document.getElementById("cfg-madrasa-id");
+      if (madrasaIdInp && madrasaIdInp.value) {
+        currentMadrasaId = madrasaIdInp.value.trim().toUpperCase() || "MDR-01";
+      }
 
       const name = (document.getElementById("cfg-college-name")?.value || "Asry Academy").trim();
       const sub = (document.getElementById("cfg-college-sub")?.value || "Bendichal · Al-Furqan Hifz Campus").trim();
@@ -5726,9 +6494,14 @@
 
       campusMode = mode === "residential" ? "residential" : "day";
       try {
+        localStorage.setItem("hifz_madrasa_id", currentMadrasaId);
         localStorage.setItem("hifz_campus_mode", campusMode);
         localStorage.setItem("hifz_app_language", appLanguage);
         localStorage.setItem("hifz_enable_salah", String(enableSalahTracking));
+        localStorage.setItem("hifz_enable_shift_transit", String(enableShiftTransitTracking));
+        localStorage.setItem("hifz_college_name", name);
+        localStorage.setItem("hifz_college_sub", sub);
+        localStorage.setItem("hifz_academic_term", academicTerm);
       } catch (err) {}
 
       const nameEl = document.getElementById("college-name-display");
@@ -5739,27 +6512,39 @@
       if (termEl) termEl.innerText = academicTerm;
       applyCampusModeUI();
 
+      // Demo Mode: edits must stay strictly on this device and NEVER overwrite cloud documents
+      if (!cleanDatabaseMode) {
+        if (window.showToast) {
+          window.showToast(t("✓ Settings saved locally on this phone (Demo Mode)", "✓ ക്രമീകരണങ്ങൾ ഈ ഫോണിൽ സേവ് ചെയ്തു (ഡെമോ മോഡ്)"));
+        }
+        return;
+      }
+
+      // Live Production Mode: sync to Firestore scoped by madrasaId
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
           const payload = {
+            madrasaId: currentMadrasaId,
             mode: campusMode,
             name,
             sub,
             academicTerm,
             akhlaqAlertThreshold: 75,
             ownerId: "portal-session",
-            updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+            updatedAt: nowTs
           };
+          await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${currentMadrasaId}`), payload, { merge: true });
           await window.fSetDoc(window.fDoc(window.fDb, "settings", "general"), payload, { merge: true });
           await syncCampusConfigToFirestore();
         }
         if (window.showToast) {
-          window.showToast(t("Campus settings saved & synced!", "ക്യാമ്പസ് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു!"));
+          window.showToast(t("✓ Campus settings saved & synced!", "✓ ക്യാമ്പസ് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു!"));
         }
       } catch (err) {
         console.warn("Settings save note:", err);
         if (window.showToast) {
-          window.showToast(t("Campus settings saved locally!", "ക്യാമ്പസ് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു!"));
+          window.showToast(t("✓ Campus settings saved locally!", "✓ ക്യാമ്പസ് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു!"));
         }
       }
     };
@@ -7525,10 +8310,19 @@
       const isLatestAbsent = latestCleanAtt === "Absent";
 
       container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
-          <div>
-            <h3 style="font-size:1rem; font-weight:700; color:var(--text);">${std.name} <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">(${std.studentId})</span></h3>
-            <p style="font-size:0.76rem; color:var(--text-muted); margin-top:2px;">${t("Halqa", "ഹൽഖ")}: ${std.batch} · ${std.ustadhName}</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="position:relative; cursor:pointer;" onclick="openStudentPhotoModal('${std.studentId}')" title="${t('Click to capture or update photo', 'ഫോട്ടോ മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക')}">
+              ${getStudentPhotoAvatar(std, 52)}
+              <span style="position:absolute; bottom:-3px; right:-3px; background:#064e3b; color:#ffffff; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.65rem; border:2px solid #ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.25);">📷</span>
+            </div>
+            <div>
+              <h3 style="font-size:1rem; font-weight:700; color:var(--text); margin:0;">${std.name} <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">(${std.studentId})</span></h3>
+              <p style="font-size:0.76rem; color:var(--text-muted); margin:2px 0 0;">${t("Halqa", "ഹൽഖ")}: ${std.batch} · ${std.ustadhName}</p>
+              <button type="button" onclick="openStudentPhotoModal('${std.studentId}')" style="background:none; border:none; padding:0; color:#047857; font-size:0.72rem; font-weight:700; cursor:pointer; text-decoration:underline; margin-top:2px; display:inline-flex; align-items:center; gap:3px;">
+                📷 ${t("Capture / Update Photo", "ഫോട്ടോ എടുക്കുക / മാറ്റുക")}
+              </button>
+            </div>
           </div>
           <div style="text-align:right;">
             <span class="tag ${akhlaq.tagClass}">${t("Akhlaq", "അഖ്ലാഖ്")}: ${akhlaq.letter} (${akhlaq.score}%)</span>
@@ -7947,14 +8741,22 @@
               return `
                 <div class="student-card">
                   <div class="student-card-header" onclick="document.getElementById('dossier-${std.studentId}').classList.toggle('active')">
-                    <div>
-                      <strong style="font-size:0.95rem;">${std.name}</strong>
-                      <span style="font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted);">(${std.studentId})</span>
-                      <div style="font-size:0.76rem; color:#047857; font-weight:600; margin-top:2px;">
-                        ${t("Juz Completed", "പൂർത്തിയാക്കിയ ജുസ്അ്")}: ${std.juzCompleted} / 30 · ${t("Active Surah", "നിലവിലെ സൂറത്ത്")}: ${std.currentSurah} · ${t("Halqa", "ഹൽഖ")}: ${std.batch}
+                    <div style="display:flex; align-items:center; gap:12px;">
+                      <div style="position:relative; flex-shrink:0;">
+                        ${getStudentPhotoAvatar(std, 44)}
+                      </div>
+                      <div>
+                        <strong style="font-size:0.95rem;">${std.name}</strong>
+                        <span style="font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted);">(${std.studentId})</span>
+                        <div style="font-size:0.76rem; color:#047857; font-weight:600; margin-top:2px;">
+                          ${t("Juz Completed", "പൂർത്തിയാക്കിയ ജുസ്അ്")}: ${std.juzCompleted} / 30 · ${t("Active Surah", "നിലവിലെ സൂറത്ത്")}: ${std.currentSurah} · ${t("Halqa", "ഹൽഖ")}: ${std.batch}
+                        </div>
                       </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                      <button type="button" class="btn-secondary" style="padding:4px 9px; font-size:0.73rem; border-color:#059669; color:#064e3b; font-weight:700; display:inline-flex; align-items:center; gap:4px;" onclick="event.stopPropagation(); openStudentPhotoModal('${std.studentId}')">
+                        📷 ${t("Photo", "ഫോട്ടോ")}
+                      </button>
                       ${campusMode === "day" && latest && latest.parentHomeVerified ? `<span class="tag tag-home-verified">${t("✓ Parent Verified Home", "✓ വീട്ടിൽ വെച്ച് കേട്ടു")}</span>` : ""}
                       <span class="tag ${akhlaq.tagClass}">${t("Akhlaq", "അഖ്ലാഖ്")}: ${akhlaq.letter} (${akhlaq.score}%)</span>
                       <button type="button" class="btn-secondary" style="background:#064e3b; color:#ffffff; border-color:#064e3b;" onclick="event.stopPropagation(); openReportCardModal('${std.studentId}')">
@@ -7966,6 +8768,24 @@
                     </div>
                   </div>
                   <div class="student-body" id="dossier-${std.studentId}">
+                    <!-- Student Profile Identity & Photo Banner -->
+                    <div style="background:#ffffff; border:1px solid #bbf7d0; border-radius:10px; padding:12px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                      <div style="display:flex; align-items:center; gap:14px;">
+                        <div style="position:relative; cursor:pointer;" onclick="openStudentPhotoModal('${std.studentId}')" title="${t('Click to capture or update photo', 'ഫോട്ടോ മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക')}">
+                          ${getStudentPhotoAvatar(std, 60)}
+                          <span style="position:absolute; bottom:-3px; right:-3px; background:#064e3b; color:#ffffff; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.7rem; border:2px solid #ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.25);">📷</span>
+                        </div>
+                        <div>
+                          <div style="font-size:0.72rem; color:#047857; font-weight:700; text-transform:uppercase; letter-spacing:0.02em;">${t("Student Profile Dossier", "വിദ്യാർത്ഥി പ്രൊഫൈൽ")}</div>
+                          <h4 style="font-size:0.95rem; font-weight:700; margin:2px 0; color:#0f172a;">${std.name} (${std.studentId})</h4>
+                          <div style="font-size:0.76rem; color:#64748b;">${t("Halqa", "ഹൽഖ")}: ${std.batch} · ${t("Assigned Preceptor:", "ഉസ്താദ്:")} ${std.ustadhName || "Ustadh Ahmad"}</div>
+                        </div>
+                      </div>
+                      <button type="button" class="btn-secondary" style="padding:6px 12px; font-size:0.76rem; font-weight:700; border-color:#059669; color:#064e3b; display:inline-flex; align-items:center; gap:5px;" onclick="openStudentPhotoModal('${std.studentId}')">
+                        📷 ${t("Capture / Update Photo", "ഫോട്ടോ എടുക്കുക / മാറ്റുക")}
+                      </button>
+                    </div>
+
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:12px;">
                       <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border);">
                         <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">${t("AUTOMATIC MONTHLY AKHLAQ GRADE", "പ്രതിമാസ അഖ്ലാഖ് ഗ്രേഡ്")}</div>
@@ -7974,7 +8794,7 @@
                         ${akhlaq.topTags ? `<div style="font-size:0.74rem; color:var(--text-muted); margin-top:4px;"><strong>${t("Logged Tags:", "രേഖപ്പെടുത്തിയ സ്വഭാവഗുണങ്ങൾ:")}</strong> ${akhlaq.topTags}</div>` : ""}
                       </div>
                       <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid var(--border);">
-                        <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">${campusMode === "residential" ? t("RESIDENTIAL HOSTEL & GUARDIAN DOSSIER", "ഹോസ്റ്റൽ & രക്ഷാകർതൃ വിവരങ്ങൾ") : t("DAY MADRASA TRANSIT & GUARDIAN DOSSIER", "യാത്രാ & രക്ഷാകർതൃ വിവരങ്ങൾ")}</div>
+                        <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">${campusMode === "residential" ? t("RESIDENTIAL HOSTEL & GUARDIAN DOSSIER", "ഹോസ്റ്റൽ & രക്ഷാകർതൃ വിവരങ്ങൾ") : (enableShiftTransitTracking ? t("DAY MADRASA TRANSIT & GUARDIAN DOSSIER", "യാത്രാ & രക്ഷാകർതൃ വിവരങ്ങൾ") : t("DAY MADRASA & GUARDIAN DOSSIER", "ഡേ മദ്രസ & രക്ഷാകർതൃ വിവരങ്ങൾ"))}</div>
                         <div style="font-size:0.82rem; margin-top:4px;"><strong>${t("Guardian:", "രക്ഷിതാവ്:")}</strong> ${std.guardianName} (${std.guardianPhone}) · <strong>${t("Parent PIN:", "രക്ഷിതാവിന്റെ പിൻ:")}</strong> <code>${std.pin || "1234"}</code></div>
                         <div style="font-size:0.82rem; margin-top:2px;">
                           ${
@@ -7982,7 +8802,9 @@
                               ? enableSalahTracking
                                 ? `<strong>${t("5-Time Salah Status:", "5 വഖ്ത് നമസ്കാര നില:")}</strong> ${latest && latest.attendanceStatus === "Absent" ? t("Absent in last session", "കഴിഞ്ഞ സെഷനിൽ ആബ്സെന്റ്") : t("All 5 in Jama'at ✓", "5 വഖ്ത്തും ജമാഅത്തായി ✓")}`
                                 : `<strong>${t("Hostel Mode:", "ഹോസ്റ്റൽ മോഡ്:")}</strong> ${t("Residential Campus Active", "റെസിഡൻഷ്യൽ ക്യാമ്പസ് സജീവം")}`
-                              : `<strong>${t("Commute & Departure:", "യാത്ര & ഇറങ്ങിയ സമയം:")}</strong> ${latest ? (latest.commuteMode || "Parent Pickup") + (latest.departureTime ? " · " + t("Left at ", "ഇറങ്ങിയത്: ") + latest.departureTime : " · " + t("On Campus", "ക്യാമ്പസിലുണ്ട്")) : "—"}`
+                              : enableShiftTransitTracking
+                                ? `<strong>${t("Commute & Departure:", "യാത്ര & ഇറങ്ങിയ സമയം:")}</strong> ${latest ? (latest.commuteMode || "Parent Pickup") + (latest.departureTime ? " · " + t("Left at ", "ഇറങ്ങിയത്: ") + latest.departureTime : " · " + t("On Campus", "ക്യാമ്പസിലുണ്ട്")) : "—"}`
+                                : `<strong>${t("Campus Mode:", "ക്യാമ്പസ് മോഡ്:")}</strong> ${t("Day Madrasa Active", "ഡേ മദ്രസ സജീവം")}`
                           }
                         </div>
                         <div style="font-size:0.82rem; margin-top:2px;"><strong>${t("Attendance:", "ഹാജർ:")}</strong> ${present} / ${logs.length} ${t("Sessions", "സെഷനുകൾ")} (${rate}%)</div>
@@ -8036,6 +8858,10 @@
       }
 
       if (nameEl) nameEl.innerText = std.name;
+      const avatarEl = document.getElementById("p-child-avatar");
+      if (avatarEl) {
+        avatarEl.innerHTML = getStudentPhotoAvatar(std, 48);
+      }
       if (metaEl) {
         metaEl.innerText = t(
           `Admission ID: ${std.studentId} · ${std.batch} · Assigned Ustadh: ${std.ustadhName}`,
@@ -8108,7 +8934,8 @@
               : std.currentSurah + " (Daily Home Revision)";
           const isVerified = Boolean(latestLog && latestLog.parentHomeVerified);
 
-          dayCardsContainer.innerHTML = `
+          const transitCardHtml = enableShiftTransitTracking
+            ? `
             <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:14px;">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
                 <span style="font-size:0.74rem; font-weight:700; color:#92400e;">${t("REAL-TIME CAMPUS TRANSIT & PICKUP STATUS", "ക്യാമ്പസ് യാത്രാ & പിക്ക്-അപ്പ് വിവരങ്ങൾ")}</span>
@@ -8122,11 +8949,14 @@
               <div style="font-size:0.78rem; color:#92400e;">
                 <strong>${t("Commute Mode:", "യാത്രാ രീതി:")}</strong> ${commute} · <strong>${t("Shift:", "ഷിഫ്റ്റ്:")}</strong> ${shift}
               </div>
-            </div>
+            </div>`
+            : "";
 
+          dayCardsContainer.innerHTML = `
+            ${transitCardHtml}
             <div style="background:${isVerified ? "#f0fdf4" : "#ffffff"}; border:1px solid ${
               isVerified ? "#86efac" : "#cbd5e1"
-            }; border-radius:10px; padding:14px;">
+            }; border-radius:10px; padding:14px; ${enableShiftTransitTracking ? "" : "grid-column: 1 / -1;"}">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
                 <span style="font-size:0.74rem; font-weight:700; color:#065f46;">${t("HOME REVISION TARGET (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം)", "വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം")}</span>
                 ${
@@ -8296,7 +9126,7 @@
                 <div style="display:flex; align-items:center; gap:8px;">
                   <span id="p-log-arrow-${idx}" style="font-size:0.75rem; color:#64748b; transition:transform 0.2s ease;">▸</span>
                   <strong>${r.dateStr}</strong>
-                  <span style="font-size:0.72rem; color:var(--text-muted);">· ${campusMode === "residential" ? t("Residential Session", "റെസിഡൻഷ്യൽ സെഷൻ") : (r.shift || t("Morning Shift", "രാവിലത്തെ ഷിഫ്റ്റ്"))}</span>
+                  <span style="font-size:0.72rem; color:var(--text-muted);">· ${campusMode === "residential" ? t("Residential Session", "റെസിഡൻഷ്യൽ സെഷൻ") : (enableShiftTransitTracking ? (r.shift || t("Morning Shift", "രാവിലത്തെ ഷിഫ്റ്റ്")) : t("Daily Session", "പ്രതിദിന സെഷൻ"))}</span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                   ${
@@ -8305,7 +9135,9 @@
                         ? enableSalahTracking
                           ? `<span class="tag tag-present" style="font-size:0.67rem; padding:1px 6px;">${Array.isArray(r.salahTracking) && r.salahTracking.length > 0 ? r.salahTracking.length + "/5 " + t("Salah", "നമസ്കാരം") : "5/5 " + t("Jama'at", "ജമാഅത്ത്")}</span>`
                           : ""
-                        : (r.departureTime ? `<span class="tag tag-present" style="font-size:0.67rem; padding:1px 6px;">${t("Left at", "ഇറങ്ങിയത്:")} ${r.departureTime}</span>` : "")
+                        : enableShiftTransitTracking && r.departureTime
+                        ? `<span class="tag tag-present" style="font-size:0.67rem; padding:1px 6px;">${t("Left at", "ഇറങ്ങിയത്:")} ${r.departureTime}</span>`
+                        : ""
                       : ""
                   }
                   <span class="tag ${getAttendanceTagClass(displayAtt)}" style="font-size:0.67rem; padding:1px 6px;">${formatAttendanceDisplay(displayAtt)}</span>
@@ -8692,12 +9524,24 @@
             <p style="font-size:0.78rem; color:#475569; margin:0;">${collegeSub} — ${t("Official 1-Page Monthly Hifz & Akhlaq Performance Dossier", "പ്രതിമാസ ഹിഫ്ള് & അഖ്ലാഖ് പ്രോഗ്രസ് റിപ്പോർട്ട് കാർഡ്")}</p>
           </div>
 
-          <!-- 1. Student Information Dossier Strip -->
-          <div class="report-meta-strip">
-            <div><strong>${t("Student:", "വിദ്യാർത്ഥി:")}</strong> ${std.name} <span style="font-family:'JetBrains Mono', monospace; color:#475569;">(${std.studentId})</span></div>
-            <div><strong>${t("Halqa:", "ഹൽഖ:")}</strong> ${std.batch}</div>
-            <div><strong>${t("Assigned Preceptor:", "ഉസ്താദ്:")}</strong> ${std.ustadhName || "Ustadh Ahmad"}</div>
-            <div><strong>${t("Academic Term:", "അക്കാദമിക് ടേം:")}</strong> ${academicTerm}</div>
+          <!-- 1. Student Information Dossier Strip with Passport Photo -->
+          <div class="report-meta-strip" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:46px; height:52px; border-radius:6px; overflow:hidden; border:1.5px solid #064e3b; background:#f0fdf4; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                ${std.photoUrl
+                  ? `<img src="${std.photoUrl}" alt="${std.name}" style="width:100%; height:100%; object-fit:cover;" />`
+                  : `<span style="font-size:0.62rem; font-weight:700; color:#047857; text-align:center; padding:2px;">PHOTO</span>`
+                }
+              </div>
+              <div>
+                <div><strong>${t("Student:", "വിദ്യാർത്ഥി:")}</strong> ${std.name} <span style="font-family:'JetBrains Mono', monospace; color:#475569;">(${std.studentId})</span></div>
+                <div style="font-size:0.75rem; color:#334155; margin-top:2px;"><strong>${t("Halqa:", "ഹൽഖ:")}</strong> ${std.batch}</div>
+              </div>
+            </div>
+            <div>
+              <div><strong>${t("Assigned Preceptor:", "ഉസ്താദ്:")}</strong> ${std.ustadhName || "Ustadh Ahmad"}</div>
+              <div style="font-size:0.75rem; color:#334155; margin-top:2px;"><strong>${t("Academic Term:", "അക്കാദമിക് ടേം:")}</strong> ${academicTerm}</div>
+            </div>
           </div>
 
           <!-- 2. 4-Column Monthly Metrics Strip -->
@@ -8730,7 +9574,7 @@
               <div style="font-family:'JetBrains Mono', monospace; font-size:0.95rem; font-weight:700; color:#047857; margin-top:2px;">
                 ${attRate}% (${daysPresent}/${totalSessions})
               </div>
-              <div style="font-size:0.7rem; color:#475569;">${daysPresent} ${t("Present", "ഹാജർ")} · ${campusMode === "residential" ? t("Residential", "റെസിഡൻഷ്യൽ") : t("Day Shift", "ഡേ ഷിഫ്റ്റ്")}</div>
+              <div style="font-size:0.7rem; color:#475569;">${daysPresent} ${t("Present", "ഹാജർ")} · ${campusMode === "residential" ? t("Residential", "റെസിഡൻഷ്യൽ") : (enableShiftTransitTracking ? t("Day Shift", "ഡേ ഷിഫ്റ്റ്") : t("Day School", "ഡേ സ്കൂൾ"))}</div>
             </div>
           </div>
 
@@ -8924,13 +9768,16 @@
       const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
       let isInitialFirestoreSyncDone = false;
 
-      // Listen to Settings
+      // Listen to Settings (Scoped by madrasaId with Demo Mode cross-phone isolation)
       try {
         window.fOnSnapshot(
           window.fDoc(window.fDb, "settings", "general"),
           (docSnap) => {
+            // Demo Mode edits must NEVER be overwritten by other phones via cloud
+            if (!cleanDatabaseMode) return;
             if (docSnap && docSnap.exists()) {
               const d = docSnap.data();
+              if (d.madrasaId && d.madrasaId !== currentMadrasaId) return;
               if (d.mode) {
                 campusMode = d.mode === "residential" ? "residential" : "day";
                 applyCampusModeUI();
@@ -8959,15 +9806,53 @@
             console.warn("Settings listener note:", err);
           }
         );
+
+        // Also listen to this specific madrasa's scoped general settings document
+        if (currentMadrasaId) {
+          window.fOnSnapshot(
+            window.fDoc(window.fDb, "settings", `general_${currentMadrasaId}`),
+            (docSnap) => {
+              if (!cleanDatabaseMode) return;
+              if (docSnap && docSnap.exists()) {
+                const d = docSnap.data();
+                if (d.mode) {
+                  campusMode = d.mode === "residential" ? "residential" : "day";
+                  applyCampusModeUI();
+                }
+                if (d.name) {
+                  const nameEl = document.getElementById("college-name-display");
+                  if (nameEl) nameEl.innerText = d.name;
+                  const cfgName = document.getElementById("cfg-college-name");
+                  if (cfgName) cfgName.value = d.name;
+                }
+                if (d.sub) {
+                  const subEl = document.getElementById("college-sub-display");
+                  if (subEl) subEl.innerText = d.sub;
+                  const cfgSub = document.getElementById("cfg-college-sub");
+                  if (cfgSub) cfgSub.value = d.sub;
+                }
+                if (d.academicTerm) {
+                  const termEl = document.getElementById("academic-term-display");
+                  if (termEl) termEl.innerText = d.academicTerm;
+                  const cfgTerm = document.getElementById("cfg-academic-term");
+                  if (cfgTerm) cfgTerm.value = d.academicTerm;
+                }
+              }
+            },
+            () => {}
+          );
+        }
       } catch (e) {}
 
-      // Listen to Campus Config (Language, Salah Toggle, Custom Akhlaq Traits, Clean DB Mode)
+      // Listen to Campus Config (Language, Salah Toggle, Custom Akhlaq Traits)
       try {
         window.fOnSnapshot(
           window.fDoc(window.fDb, "settings", "campus_config"),
           (docSnap) => {
+            if (!cleanDatabaseMode) return;
             if (docSnap && docSnap.exists()) {
               const cfg = docSnap.data();
+              if (cfg.madrasaId && cfg.madrasaId !== currentMadrasaId) return;
               if (cfg.appLanguage) {
                 appLanguage = cfg.appLanguage;
                 try { localStorage.setItem("hifz_app_language", appLanguage); } catch (e) {}
@@ -8976,19 +9861,63 @@
                 enableSalahTracking = cfg.enableSalahTracking;
                 try { localStorage.setItem("hifz_enable_salah", String(enableSalahTracking)); } catch (e) {}
               }
+              if (typeof cfg.enableShiftTransitTracking === "boolean") {
+                enableShiftTransitTracking = cfg.enableShiftTransitTracking;
+                try { localStorage.setItem("hifz_enable_shift_transit", String(enableShiftTransitTracking)); } catch (e) {}
+              }
               if (Array.isArray(cfg.customTraits) && cfg.customTraits.length > 0) {
                 customTraits = cfg.customTraits;
                 try { localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits)); } catch (e) {}
-              }
-              if (typeof cfg.cleanDatabaseMode === "boolean") {
-                cleanDatabaseMode = cfg.cleanDatabaseMode;
-                try { localStorage.setItem("hifz_clean_db_mode", String(cleanDatabaseMode)); } catch (e) {}
               }
               applyCampusModeUI();
             }
           },
           () => {}
         );
+
+        // Also listen to settings/campus_data_${madrasaId} backup for teachers & students
+        if (currentMadrasaId) {
+          window.fOnSnapshot(
+            window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId}`),
+            (docSnap) => {
+              if (isClearingDatabase || !cleanDatabaseMode) return;
+              if (docSnap && docSnap.exists()) {
+                const d = docSnap.data();
+                if (Array.isArray(d.teachers) && d.teachers.length > 0) {
+                  const existingUsernames = new Set(globalTeachers.map((t) => (t.username || t.teacherId || "").toLowerCase()));
+                  let updated = false;
+                  d.teachers.forEach((t) => {
+                    if (t.username && !existingUsernames.has(t.username.toLowerCase())) {
+                      globalTeachers.push(t);
+                      updated = true;
+                    }
+                  });
+                  if (updated) {
+                    saveLiveCollectionsToLocal();
+                    renderPrincipalTeachersDirectory();
+                    populateStudentSelectors();
+                  }
+                }
+                if (Array.isArray(d.students) && d.students.length > 0) {
+                  const existingStdIds = new Set(globalStudents.map((s) => s.studentId));
+                  let updated = false;
+                  d.students.forEach((s) => {
+                    if (s.studentId && !existingStdIds.has(s.studentId)) {
+                      globalStudents.push(s);
+                      updated = true;
+                    }
+                  });
+                  if (updated) {
+                    saveLiveCollectionsToLocal();
+                    populateStudentSelectors();
+                    renderAllViews();
+                  }
+                }
+              }
+            },
+            () => {}
+          );
+        }
       } catch (e) {}
 
       // Listen to Principal Auth Credentials
@@ -9201,6 +10130,35 @@
 
     // Initialize UI on DOM Ready
     window.addEventListener("DOMContentLoaded", () => {
+      // Restore locally stored campus identity & madrasaId
+      const savedMadrasaId = localStorage.getItem("hifz_madrasa_id");
+      if (savedMadrasaId) {
+        currentMadrasaId = savedMadrasaId.trim().toUpperCase();
+        const cfgMadrasa = document.getElementById("cfg-madrasa-id");
+        if (cfgMadrasa) cfgMadrasa.value = currentMadrasaId;
+      }
+      const savedCollegeName = localStorage.getItem("hifz_college_name");
+      if (savedCollegeName) {
+        const nameEl = document.getElementById("college-name-display");
+        if (nameEl) nameEl.innerText = savedCollegeName;
+        const cfgName = document.getElementById("cfg-college-name");
+        if (cfgName) cfgName.value = savedCollegeName;
+      }
+      const savedCollegeSub = localStorage.getItem("hifz_college_sub");
+      if (savedCollegeSub) {
+        const subEl = document.getElementById("college-sub-display");
+        if (subEl) subEl.innerText = savedCollegeSub;
+        const cfgSub = document.getElementById("cfg-college-sub");
+        if (cfgSub) cfgSub.value = savedCollegeSub;
+      }
+      const savedAcademicTerm = localStorage.getItem("hifz_academic_term");
+      if (savedAcademicTerm) {
+        const termEl = document.getElementById("academic-term-display");
+        if (termEl) termEl.innerText = savedAcademicTerm;
+        const cfgTerm = document.getElementById("cfg-academic-term");
+        if (cfgTerm) cfgTerm.value = savedAcademicTerm;
+      }
+
       populateStudentSelectors();
       renderPrincipalTeachersDirectory();
       applyCampusModeUI();

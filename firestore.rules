@@ -62,8 +62,11 @@ service cloud.firestore {
       data.keys().hasOnly([
         'studentId', 'name', 'batch', 'ustadhName', 'juzCompleted',
         'currentJuz', 'currentSurah', 'guardianName', 'guardianPhone',
-        'pin', 'ownerId', 'createdAt', 'updatedAt'
+        'pin', 'ownerId', 'createdAt', 'updatedAt', 'id', 'madrasaId', 'photoUrl'
       ]) &&
+      (!('id' in data) || (data.id is string && data.id.size() >= 1 && data.id.size() <= 64)) &&
+      (!('madrasaId' in data) || (data.madrasaId is string && data.madrasaId.size() >= 1 && data.madrasaId.size() <= 64)) &&
+      (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() <= 100000)) &&
       data.studentId is string && data.studentId.size() >= 2 && data.studentId.size() <= 32 && data.studentId.matches('^[a-zA-Z0-9_\\-]+$') &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
       data.batch is string && data.batch.size() >= 1 && data.batch.size() <= 60 &&
@@ -224,8 +227,10 @@ service cloud.firestore {
       ]) &&
       data.keys().hasOnly([
         'teacherId', 'name', 'batch', 'phone', 'username', 'pin',
-        'ownerId', 'createdAt', 'updatedAt'
+        'ownerId', 'createdAt', 'updatedAt', 'id', 'madrasaId'
       ]) &&
+      (!('id' in data) || (data.id is string && data.id.size() >= 1 && data.id.size() <= 64)) &&
+      (!('madrasaId' in data) || (data.madrasaId is string && data.madrasaId.size() >= 1 && data.madrasaId.size() <= 64)) &&
       data.teacherId is string && data.teacherId.size() >= 2 && data.teacherId.size() <= 64 && data.teacherId.matches('^[a-zA-Z0-9_\\-]+$') &&
       data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
       data.batch is string && data.batch.size() >= 1 && data.batch.size() <= 80 &&
@@ -242,16 +247,17 @@ service cloud.firestore {
       allow get: if isValidId(studentId) && canAccessOwner(existing().ownerId);
       allow list: if canAccessOwner(resource.data.ownerId);
       allow create: if isValidId(studentId) && isValidStudent(incoming()) &&
-        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+        (incoming().createdAt == request.time || incoming().createdAt is timestamp) &&
+        (incoming().updatedAt == request.time || incoming().updatedAt is timestamp);
       allow update: if isValidId(studentId) && isValidStudent(incoming()) &&
         incoming().ownerId == existing().ownerId &&
         incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time && (
+        (incoming().updatedAt == request.time || incoming().updatedAt is timestamp) && (
           isAdmin() ||
           (canAccessOwner(existing().ownerId) &&
             incoming().diff(existing()).affectedKeys().hasOnly([
               'name', 'batch', 'ustadhName', 'juzCompleted', 'currentJuz',
-              'currentSurah', 'guardianName', 'guardianPhone', 'pin', 'updatedAt'
+              'currentSurah', 'guardianName', 'guardianPhone', 'pin', 'updatedAt', 'id', 'madrasaId', 'photoUrl'
             ]))
         );
       allow delete: if isValidId(studentId) && canAccessOwner(existing().ownerId);
@@ -261,15 +267,16 @@ service cloud.firestore {
       allow get: if isValidId(teacherId) && canAccessOwner(existing().ownerId);
       allow list: if canAccessOwner(resource.data.ownerId);
       allow create: if isValidId(teacherId) && isValidTeacher(incoming()) &&
-        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+        (incoming().createdAt == request.time || incoming().createdAt is timestamp) &&
+        (incoming().updatedAt == request.time || incoming().updatedAt is timestamp);
       allow update: if isValidId(teacherId) && isValidTeacher(incoming()) &&
         incoming().ownerId == existing().ownerId &&
         incoming().createdAt == existing().createdAt &&
-        incoming().updatedAt == request.time && (
+        (incoming().updatedAt == request.time || incoming().updatedAt is timestamp) && (
           isAdmin() ||
           (canAccessOwner(existing().ownerId) &&
             incoming().diff(existing()).affectedKeys().hasOnly([
-              'name', 'batch', 'phone', 'username', 'pin', 'updatedAt'
+              'name', 'batch', 'phone', 'username', 'pin', 'updatedAt', 'id', 'madrasaId'
             ]))
         );
       allow delete: if isValidId(teacherId) && canAccessOwner(existing().ownerId);

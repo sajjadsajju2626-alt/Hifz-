@@ -62,6 +62,11 @@
           "minLength": 4,
           "maxLength": 16
         },
+        "photoUrl": {
+          "type": "string",
+          "description": "Student profile photo base64 data URI or image URL",
+          "maxLength": 100000
+        },
         "ownerId": {
           "type": "string",
           "description": "UID of the authenticated user who created the record",
