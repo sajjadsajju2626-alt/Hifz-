@@ -1260,11 +1260,51 @@
     }
 
     /* Visual Analytics & SVG Chart Grids */
+    .analytics-header-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .analytics-header-text {
+      flex: 1 1 240px;
+      min-width: 0;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    .analytics-header-badges {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    #parent-analytics-card {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
     .analytics-chart-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-top: 10px;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+    .analytics-chart-card {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 14px 14px 20px 14px !important;
+      box-sizing: border-box !important;
+    }
+    .analytics-summary-footer {
+      line-height: 1.6 !important;
+      padding-bottom: 2px;
     }
     .report-mini-chart-card {
       display: flex;
@@ -1297,8 +1337,11 @@
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
+        overflow-y: visible !important;
+        height: auto !important;
+        max-height: none !important;
         box-sizing: border-box !important;
-        padding: 10px !important;
+        padding: 12px !important;
       }
       #parent-day-college-cards,
       #parent-summary-strip {
@@ -1312,19 +1355,42 @@
       .juz-cell {
         font-size: 0.7rem !important;
       }
+      .analytics-header-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+      }
+      .analytics-header-text {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        word-break: keep-all !important;
+        overflow-wrap: break-word !important;
+      }
+      .analytics-header-badges {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 8px !important;
+      }
       .analytics-chart-grid {
         grid-template-columns: minmax(0, 1fr) !important;
         width: 100% !important;
         max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
         box-sizing: border-box !important;
         gap: 12px !important;
       }
       .analytics-chart-card {
         width: 100% !important;
         max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
         box-sizing: border-box !important;
-        padding: 12px !important;
-        overflow: hidden !important;
+        padding: 14px 14px 20px 14px !important;
+        overflow: visible !important;
       }
       .donut-ring-wrapper {
         width: 85px !important;
@@ -1625,65 +1691,38 @@
             </p>
           </div>
 
-          <!-- Role Selector Tabs -->
-          <div class="auth-role-tabs">
-            <button
-              type="button"
-              class="auth-role-btn active"
-              id="role-tab-teacher"
-              onclick="selectAuthRole('teacher')"
-            >
-              👨‍🏫 Ustadh / Teacher
-            </button>
-            <button
-              type="button"
-              class="auth-role-btn"
-              id="role-tab-principal"
-              onclick="selectAuthRole('principal')"
-            >
-              🏛️ Principal / Admin
-            </button>
-            <button
-              type="button"
-              class="auth-role-btn"
-              id="role-tab-parent"
-              onclick="selectAuthRole('parent')"
-            >
-              👨‍👩‍👦 Parent (രക്ഷിതാവ്)
-            </button>
-          </div>
-
+          <!-- Unified Portal Sign-In with Automatic Role Detection -->
           <div id="auth-alert-banner" class="status-banner error hidden" role="alert">
             <span id="auth-alert-text"></span>
           </div>
 
           <form id="auth-portal-form" onsubmit="handleAuthSubmit(event)">
             <div class="form-group">
-              <label for="auth-username" id="auth-username-label">Ustadh Username</label>
+              <label for="auth-username" id="auth-username-label">Login ID / Admission No. (ലോഗിൻ ഐഡി)</label>
               <input
                 type="text"
                 id="auth-username"
                 value=""
-                placeholder="Enter username or Admission ID"
+                placeholder="Enter User ID or Student ID (ഐഡി നൽകുക)"
                 required
                 autocomplete="username"
               />
             </div>
 
             <div class="form-group">
-              <label for="auth-password" id="auth-password-label">Password / PIN</label>
+              <label for="auth-password" id="auth-password-label">Password / PIN (പാസ്വേഡ് / പിൻ)</label>
               <input
                 type="password"
                 id="auth-password"
                 value=""
-                placeholder="Enter password or PIN"
+                placeholder="Enter Password or PIN (പാസ്വേഡ് നൽകുക)"
                 required
                 autocomplete="current-password"
               />
             </div>
 
             <button type="submit" class="btn-primary" id="btn-auth-submit" style="margin-top: 1rem;">
-              Sign In to Portal
+              Sign In to Portal (പോർട്ടലിൽ പ്രവേശിക്കുക)
             </button>
           </form>
 
@@ -2687,7 +2726,7 @@
           <div style="display:flex; align-items:center; gap:12px;">
             <div id="p-child-avatar"></div>
             <div>
-              <h2 class="card-title"><span id="p-portal-title-prefix">Parent Progress Portal:</span> <span id="p-child-name">Zaid Mansoor</span></h2>
+              <h2 class="card-title" style="margin:0;"><span id="p-child-name" style="font-weight:700;">Zaid Mansoor</span></h2>
               <p class="card-subtitle" id="p-child-meta">Admission ID: STD-101 · Halqa Al-Fajr (Senior)</p>
             </div>
           </div>
@@ -2782,7 +2821,7 @@
             <h3 class="card-title">Monthly Akhlaq &amp; Campus Circulars</h3>
           </div>
           <div id="parent-akhlaq-card" style="margin-bottom:1rem;"></div>
-          <h4 style="font-size:0.82rem; font-weight:700; color:var(--text-secondary); margin-bottom:8px;">Official Campus Notices</h4>
+          <h4 id="parent-notices-heading" style="font-size:0.86rem; font-weight:700; color:#92400e; margin-bottom:10px; display:flex; align-items:center; gap:6px;">📢 Official Campus Notices</h4>
           <div id="parent-notices-feed"></div>
         </div>
 
@@ -3375,14 +3414,51 @@
       }
     } catch (e) {}
 
+    function isHostelDisciplineTag(lbl) {
+      if (!lbl) return false;
+      const s = String(lbl);
+      return s.includes("ഹോസ്റ്റൽ") || s.toLowerCase().includes("hostel");
+    }
+
     function getDefaultPositiveTraitLabels() {
       const pos = customTraits
         .filter((tr) => tr && Number(tr.points) >= 0)
         .map((tr) => String(tr.label).trim())
         .filter(Boolean);
-      return pos.length > 0
+      const list = pos.length > 0
         ? pos
         : ["അദബ് / മര്യാദ", "ഏകാഗ്രത", "ശുചിത്വം", "കൃത്യനിഷ്ഠ", "ഹോസ്റ്റൽ അച്ചടക്കം"];
+      const activeMode = (typeof campusMode === "string" && campusMode) ? campusMode : (localStorage.getItem("hifz_campus_mode") || "day");
+      if (activeMode === "day") {
+        return list.filter((lbl) => !isHostelDisciplineTag(lbl));
+      }
+      return list;
+    }
+
+    function getLogSortTimestamp(log) {
+      if (!log) return 0;
+      if (log.isoDate && /^\d{4}-\d{2}-\d{2}/.test(log.isoDate)) {
+        const ts = Date.parse(log.isoDate);
+        if (!Number.isNaN(ts)) return ts;
+      }
+      if (log.dateStr && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(String(log.dateStr).trim())) {
+        const [dd, mm, yyyy] = String(log.dateStr).trim().split("/");
+        const iso = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+        const ts = Date.parse(iso);
+        if (!Number.isNaN(ts)) return ts;
+      }
+      return 0;
+    }
+
+    function sortLogsChronologicallyDesc(logs) {
+      return [...(logs || [])].sort((a, b) => {
+        const tB = getLogSortTimestamp(b);
+        const tA = getLogSortTimestamp(a);
+        if (tB !== tA) return tB - tA;
+        const numB = parseInt(String((b && b.id) || "").replace(/\D/g, ""), 10) || 0;
+        const numA = parseInt(String((a && a.id) || "").replace(/\D/g, ""), 10) || 0;
+        return numB - numA;
+      });
     }
 
     const NEGATIVE_TAG_SET = new Set([
@@ -3446,7 +3522,7 @@
     let dailyAkhlaqDelta = dailyAkhlaqTags.length * 2;
     let globalStudents = cleanDatabaseMode ? [] : [...INITIAL_STUDENTS];
     let globalTeachers = cleanDatabaseMode ? [] : [...INITIAL_TEACHERS];
-    let globalLogs = cleanDatabaseMode ? [] : [...INITIAL_LOGS];
+    let globalLogs = cleanDatabaseMode ? [] : sortLogsChronologicallyDesc(INITIAL_LOGS);
     let globalSchedules = cleanDatabaseMode ? [] : [...INITIAL_SCHEDULES];
     let globalNotices = cleanDatabaseMode ? [] : [...INITIAL_NOTICES];
     let currentParentStudentId = "STD-101";
@@ -3488,7 +3564,7 @@
       const savedLogs = localStorage.getItem("hifz_live_logs");
       if (savedLogs) {
         const parsed = JSON.parse(savedLogs);
-        if (Array.isArray(parsed)) globalLogs = parsed;
+        if (Array.isArray(parsed)) globalLogs = sortLogsChronologicallyDesc(parsed);
       }
       const savedSchedules = localStorage.getItem("hifz_live_schedules");
       if (savedSchedules) {
@@ -3530,19 +3606,27 @@
 
     window.handleQuickDemoLogin = function(role) {
       if (cleanDatabaseMode) return;
-      selectAuthRole(role);
       const uInp = document.getElementById("auth-username");
       const pInp = document.getElementById("auth-password");
-      if (role === "parent") {
-        if (uInp) uInp.value = "STD-101";
-        if (pInp) pInp.value = "1234";
-        loginWithCredentials("parent", "STD-101", "1234");
-      } else {
+      if (role === "principal") {
+        const adminUser = (principalAuth && principalAuth.username ? principalAuth.username : "admin").trim();
+        const adminPass = (principalAuth && principalAuth.password ? principalAuth.password : "admin786").trim();
+        if (uInp) uInp.value = adminUser;
+        if (pInp) pInp.value = adminPass;
+        window.loginWithAutoRole(adminUser, adminPass);
+      } else if (role === "teacher") {
         const demoTeacherUser = (globalTeachers[0] && globalTeachers[0].username) ? globalTeachers[0].username : "ustadh";
         const demoTeacherPin = (globalTeachers[0] && globalTeachers[0].pin) ? globalTeachers[0].pin : "1234";
         if (uInp) uInp.value = demoTeacherUser;
         if (pInp) pInp.value = demoTeacherPin;
-        loginWithCredentials("teacher", demoTeacherUser, demoTeacherPin);
+        window.loginWithAutoRole(demoTeacherUser, demoTeacherPin);
+      } else if (role === "parent") {
+        const demoStudent = globalStudents[0] || { studentId: "STD-101", pin: "1234" };
+        const demoId = demoStudent.studentId || "STD-101";
+        const demoPin = demoStudent.pin || "1234";
+        if (uInp) uInp.value = demoId;
+        if (pInp) pInp.value = demoPin;
+        window.loginWithAutoRole(demoId, demoPin);
       }
     };
 
@@ -3656,9 +3740,32 @@
       if (inp) inp.value = currentHostelAdab.join(", ");
     };
 
+    function updateCampusBadgeUI() {
+      const badge = document.getElementById("campus-badge");
+      if (!badge) return;
+      const isPrincipal = Boolean(currentUser && currentUser.role === "principal");
+      if (isPrincipal) {
+        badge.innerText =
+          campusMode === "day"
+            ? t("Day College / Day Madrasa (Switch Mode)", "ഡേ കോളേജ് / ഡേ മദ്രസ (മോഡ് മാറ്റുക)")
+            : t("Residential Campus (Switch Mode)", "റെസിഡൻഷ്യൽ ക്യാമ്പസ് (മോഡ് മാറ്റുക)");
+        badge.style.cursor = "pointer";
+        badge.style.pointerEvents = "auto";
+        badge.title = t("Click to switch between Day College and Residential Campus mode", "ക്യാമ്പസ് മോഡ് മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക");
+      } else {
+        badge.innerText =
+          campusMode === "day"
+            ? t("Day College / Day Madrasa", "ഡേ കോളേജ് / ഡേ മദ്രസ")
+            : t("Residential Campus", "റെസിഡൻഷ്യൽ ക്യാമ്പസ്");
+        badge.style.cursor = "default";
+        badge.style.pointerEvents = "none";
+        badge.removeAttribute("title");
+      }
+      badge.classList.toggle("residential", campusMode === "residential");
+    }
+
     // Apply Campus Mode ("day" vs "residential")
     function applyCampusModeUI() {
-      const badge = document.getElementById("campus-badge");
       const teacherSubtitle = document.getElementById("teacher-desk-subtitle");
       const dayControls = document.getElementById("day-college-controls");
       const resControls = document.getElementById("residential-campus-controls");
@@ -3671,13 +3778,7 @@
       const btnLate = document.getElementById("btn-att-late");
       const btnEarly = document.getElementById("btn-att-early");
 
-      if (badge) {
-        badge.innerText =
-          campusMode === "day"
-            ? t("Day College / Day Madrasa (Switch Mode)", "ഡേ കോളേജ് / ഡേ മദ്രസ (മോഡ് മാറ്റുക)")
-            : t("Residential Campus (Switch Mode)", "റെസിഡൻഷ്യൽ ക്യാമ്പസ് (മോഡ് മാറ്റുക)");
-        badge.classList.toggle("residential", campusMode === "residential");
-      }
+      updateCampusBadgeUI();
       if (cfgStatusText) {
         cfgStatusText.innerText =
           campusMode === "day"
@@ -4014,12 +4115,11 @@
         "↺ ഡെമോ മോഡ് പുനഃസ്ഥാപിക്കുക",
       "↺ Restore Demo Data (ഡെമോ വിവരങ്ങൾ പുനഃസ്ഥാപിക്കുക)":
         "↺ ഡെമോ മോഡ് പുനഃസ്ഥാപിക്കുക",
-      "Parent Progress Portal:": "രക്ഷിതാക്കളുടെ പ്രോഗ്രസ് പോർട്ടൽ:",
       "Print Monthly Report Card": "പ്രതിമാസ റിപ്പോർട്ട് കാർഡ് പ്രിന്റ് ചെയ്യുക",
       "30-Juz Qur'an Memorization Map": "30-ജുസ്അ് ഖുർആൻ മനഃപാഠ മാപ്പ്",
       "Completed Juz are highlighted in emerald green; current active Juz is highlighted in amber gold.":
         "പൂർത്തിയാക്കിയ ജുസ്ഉകൾ പച്ച നിറത്തിലും നിലവിലെ ജുസ്അ് സ്വർണ്ണ നിറത്തിലും കാണിച്ചിരിക്കുന്നു.",
-      "Parent Quick Actions (രക്ഷിതാക്കളുടെ ശ്രദ്ധയ്ക്ക്)": "രക്ഷിതാക്കളുടെ ശ്രദ്ധയ്ക്ക് (Quick Actions)",
+      "Parent Quick Actions (രക്ഷിതാക്കളുടെ ശ്രദ്ധയ്ക്ക്)": "രക്ഷിതാക്കളുടെ ശ്രദ്ധയ്ക്ക്",
       "Direct communication with campus & Halqa preceptor": "ക്യാമ്പസുമായും ഹൽഖ ഉസ്താദുമായും നേരിട്ട് ബന്ധപ്പെടാൻ",
       "📅 Notify Tomorrow's Leave / School Exam (അവധി / പരീക്ഷ) ▾": "📅 നാളത്തെ അവധി / സ്കൂൾ പരീക്ഷ അറിയിക്കുക ▾",
       "💬 WhatsApp Halqa Ustadh": "💬 ഹൽഖ ഉസ്താദിന് വാട്സ്ആപ്പ് സന്ദേശം അയക്കുക",
@@ -4029,7 +4129,8 @@
       "Cancel": "റദ്ദാക്കുക",
       "Submit Notification to Ustadh": "ഉസ്താദിന് അറിയിപ്പ് അയക്കുക",
       "Monthly Akhlaq & Campus Circulars": "പ്രതിമാസ അഖ്ലാഖും ക്യാമ്പസ് അറിയിപ്പുകളും",
-      "Official Campus Notices": "ഔദ്യോഗിക ക്യാമ്പസ് അറിയിപ്പുകൾ",
+      "📢 Official Campus Notices": "📢 ഔദ്യോഗിക ക്യാമ്പസ് അറിയിപ്പുകൾ",
+      "Official Campus Notices": "📢 ഔദ്യോഗിക ക്യാമ്പസ് അറിയിപ്പുകൾ",
       "Daily Hifz & Akhlaq Verification Feed": "ദൈനംദിന ഹിഫ്സ് & അഖ്ലാഖ് വിവരങ്ങൾ",
       "Tap to view daily session logs, Sabaq grades & home sign-offs":
         "ദൈനംദിന ക്ലാസ്സ് വിവരങ്ങളും സബഖ് ഗ്രേഡുകളും കാണാൻ ഇവിടെ ക്ലിക്ക് ചെയ്യുക",
@@ -4082,10 +4183,26 @@
       "Student Profile Dossier": "വിദ്യാർത്ഥി പ്രൊഫൈൽ രേഖകൾ",
       "Student Profile Identity & Photo Banner": "വിദ്യാർത്ഥി പ്രൊഫൈൽ വിവരങ്ങൾ",
       "Click to capture or update photo": "ഫോട്ടോ മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക",
-      "Photo": "ഫോട്ടോ"
+      "Photo": "ഫോട്ടോ",
+      "Login ID / Admission No. (ലോഗിൻ ഐഡി)": "ലോഗിൻ ഐഡി / അഡ്മിഷൻ നമ്പർ",
+      "Login ID / Admission No.": "ലോഗിൻ ഐഡി / അഡ്മിഷൻ നമ്പർ",
+      "Password / PIN (പാസ്വേഡ് / പിൻ)": "പാസ്‌വേഡ് / പിൻ നമ്പർ",
+      "Sign In to Portal (പോർട്ടലിൽ പ്രവേശിക്കുക)": "പോർട്ടലിലേക്ക് പ്രവേശിക്കുക",
+      "Invalid Login ID or Password": "തെറ്റായ ഐഡി അല്ലെങ്കിൽ പാസ്വേഡ്",
+      "തെറ്റായ ഐഡി അല്ലെങ്കിൽ പാസ്വേഡ് / Invalid Login ID or Password": "തെറ്റായ ഐഡി അല്ലെങ്കിൽ പാസ്വേഡ്",
+      "Asry Academy · Bendichal · Al-Furqan Hifz Campus · Day Madrasa Transit, Parent Home Sign-Off & Auto-Akhlaq System":
+        "അസ്‌രി അക്കാദമി · ബെണ്ടിച്ചാൽ · അൽ-ഫുർഖാൻ ഹിഫ്സ് ക്യാമ്പസ് · ഡേ മദ്രസ യാത്രാ വിവരങ്ങൾ, ഹോം റിവിഷൻ ഡിജിറ്റൽ ഒപ്പ് & ഓട്ടോ-അഖ്ലാഖ് സിസ്റ്റം",
+      "Day Madrasa Transit & Parent Home-Revision Digital Sign-Off":
+        "ഡേ മദ്രസ യാത്രാ വിവരങ്ങളും വീട്ടിലെ ആവർത്തന ഡിജിറ്റൽ ഒപ്പും",
+      "Parents of Day Madrasa students can now view live campus departure timestamps ('Left campus at 9:35 AM') and tap 'Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു)' after listening to their child's daily Home Revision target.":
+        "ഡേ മദ്രസ വിദ്യാർത്ഥികളുടെ രക്ഷിതാക്കൾക്ക് ഇപ്പോൾ കുട്ടി ക്യാമ്പസിൽ നിന്ന് പുറപ്പെട്ട സമയം തത്സമയം കാണാനും, വീട്ടിൽ വെച്ച് ഓതേണ്ട പാഠഭാഗം കേട്ട ശേഷം '✓ വീട്ടിൽ വെച്ച് കേട്ടു' എന്ന് ഡിജിറ്റലായി സാക്ഷ്യപ്പെടുത്താനും സാധിക്കും.",
+      "Bendichal · Al-Furqan Hifz Campus": "ബെണ്ടിച്ചാൽ · അൽ-ഫുർഖാൻ ഹിഫ്സ് ക്യാമ്പസ്",
+      "1448 AH · Rabi Al-Thani Term": "1448 ഹിജ്റ · റബീഉൽ ആഖിർ ടേം"
     };
 
     const MALAYALAM_PLACEHOLDER_MAP = {
+      "Enter User ID or Student ID (ഐഡി നൽകുക)": "യൂസർ ഐഡി അല്ലെങ്കിൽ അഡ്മിഷൻ നമ്പർ നൽകുക",
+      "Enter Password or PIN (പാസ്വേഡ് നൽകുക)": "പാസ്‌വേഡ് അല്ലെങ്കിൽ പിൻ നൽകുക",
       "പുതിയ നല്ല സ്വഭാവം ചേർക്കുക... (Add positive trait...)": "പുതിയ നല്ല സ്വഭാവം ചേർക്കുക...",
       "പുതിയ പോരായ്മ ചേർക്കുക... (Add area of concern...)": "പുതിയ പോരായ്മ ചേർക്കുക...",
       "Enter username or Admission ID": "യൂസർനെയിം അല്ലെങ്കിൽ അഡ്മിഷൻ നമ്പർ നൽകുക",
@@ -4127,8 +4244,8 @@
       const selectors = "h1, h2, h3, h4, p, label, button, th, option, small, span, div, a";
       document.querySelectorAll(selectors).forEach((el) => {
         if (el.children.length > 0) return;
-        // Never overwrite dynamic header buttons or notification drawer elements
-        if (el.id === "btn-header-auth" || el.id === "header-notif-badge" || el.closest("#header-notif-container")) return;
+        // Never overwrite dynamic header buttons, campus badge, or notification drawer elements
+        if (el.id === "btn-header-auth" || el.id === "campus-badge" || el.id === "header-notif-badge" || el.closest("#header-notif-container")) return;
         const currentText = (el.innerText || "").trim();
         if (!currentText) return;
         if (el.dataset.origI18nText === undefined) {
@@ -4157,6 +4274,7 @@
       if (typeof window.updateHeaderAuthButton === "function") {
         window.updateHeaderAuthButton();
       }
+      updateCampusBadgeUI();
     }
 
     // Dynamic App Language Switcher ("en" | "ml" | "bi")
@@ -4273,10 +4391,10 @@
           ml: "സജീവ സെഷൻ:",
           bi: "Active Session:"
         },
-        "p-portal-title-prefix": {
-          en: "Parent Progress Portal:",
-          ml: "രക്ഷിതാക്കളുടെ പ്രോഗ്രസ് പോർട്ടൽ:",
-          bi: "Parent Progress Portal:"
+        "parent-notices-heading": {
+          en: "📢 Official Campus Notices",
+          ml: "📢 ഔദ്യോഗിക ക്യാമ്പസ് അറിയിപ്പുകൾ",
+          bi: "📢 Official Campus Notices"
         },
         "notif-drawer-title": {
           en: "Notifications",
@@ -4352,13 +4470,7 @@
         navAnalytics.innerHTML = `${labelText} (<span id="nav-alert-count">${countVal}</span>)`;
       }
 
-      const badge = document.getElementById("campus-badge");
-      if (badge) {
-        badge.innerText =
-          campusMode === "day"
-            ? t("Day College / Day Madrasa (Switch Mode)", "ഡേ കോളേജ് / ഡേ മദ്രസ (മോഡ് മാറ്റുക)")
-            : t("Residential Campus (Switch Mode)", "റെസിഡൻഷ്യൽ ക്യാമ്പസ് (മോഡ് മാറ്റുക)");
-      }
+      updateCampusBadgeUI();
 
       translateStaticDOMElements(lang);
       updateSessionHeader();
@@ -4833,7 +4945,7 @@
       cleanDatabaseMode = false;
       globalStudents = [...INITIAL_STUDENTS];
       globalTeachers = [...INITIAL_TEACHERS];
-      globalLogs = [...INITIAL_LOGS];
+      globalLogs = sortLogsChronologicallyDesc([...INITIAL_LOGS]);
       globalSchedules = [...INITIAL_SCHEDULES];
       globalNotices = [...INITIAL_NOTICES];
       currentParentStudentId = "STD-101";
@@ -4857,12 +4969,15 @@
       }
     };
 
-    // 1-Tap Campus Mode Switcher with Real-Time Firestore Persistence
+    // 1-Tap Campus Mode Switcher with Real-Time Firestore Persistence (Principal Only)
     window.toggleCampusModeQuick = async function() {
+      if (!currentUser || currentUser.role !== "principal") return;
       const newMode = campusMode === "day" ? "residential" : "day";
       campusMode = newMode;
       try { localStorage.setItem("hifz_campus_mode", campusMode); } catch (e) {}
+      dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
       applyCampusModeUI();
+      renderAllViews();
 
       if (!cleanDatabaseMode) {
         if (window.showToast) {
@@ -4897,7 +5012,9 @@
       const newMode = select.value === "residential" ? "residential" : "day";
       campusMode = newMode;
       try { localStorage.setItem("hifz_campus_mode", campusMode); } catch (e) {}
+      dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
       applyCampusModeUI();
+      renderAllViews();
 
       if (!cleanDatabaseMode) {
         if (window.showToast) {
@@ -5793,6 +5910,7 @@
       // Pre-populate all active default positive traits so students have them by default
       const defaultPos = getDefaultPositiveTraitLabels();
       defaultPos.forEach((pTag) => {
+        if (campusMode === "day" && isHostelDisciplineTag(pTag)) return;
         positiveCounts[pTag] = 1;
         tagCounts[pTag] = 1;
       });
@@ -5805,6 +5923,7 @@
           l.akhlaqTags.forEach((rawTag) => {
             const tag = String(rawTag).trim();
             if (!tag) return;
+            if (campusMode === "day" && isHostelDisciplineTag(tag)) return;
             tagCounts[tag] = (tagCounts[tag] || 0) + 1;
             if (NEGATIVE_TAG_SET.has(tag)) {
               negativeCounts[tag] = (negativeCounts[tag] || 0) + 1;
@@ -5835,9 +5954,13 @@
         tagClass = "tag-akhlaq-a";
       }
 
-      const cleanPositiveTags = Object.keys(positiveCounts);
+      const cleanPositiveTags = Object.keys(positiveCounts).filter(
+        (tg) => !(campusMode === "day" && isHostelDisciplineTag(tg))
+      );
       const cleanNegativeTags = Object.keys(negativeCounts);
-      const allCleanTags = Object.keys(tagCounts);
+      const allCleanTags = Object.keys(tagCounts).filter(
+        (tg) => !(campusMode === "day" && isHostelDisciplineTag(tg))
+      );
 
       const topTags = allCleanTags.join(", ");
       let autoReasonSummary = t(
@@ -6030,7 +6153,7 @@
         }
 
         const localEntry = normalizeLog(firestorePayload, newLogId);
-        globalLogs = [localEntry, ...globalLogs.filter((l) => l.id !== newLogId)];
+        globalLogs = sortLogsChronologicallyDesc([localEntry, ...globalLogs.filter((l) => l.id !== newLogId)]);
         saveLiveCollectionsToLocal();
 
         renderAllViews();
@@ -6691,51 +6814,79 @@
       }
     };
 
+    window.updateUnifiedAuthFormLabels = function() {
+      const userLabel = document.getElementById("auth-username-label");
+      const userInput = document.getElementById("auth-username");
+      const passLabel = document.getElementById("auth-password-label");
+      const passInput = document.getElementById("auth-password");
+      const submitBtn = document.getElementById("btn-auth-submit");
+
+      if (userLabel) {
+        userLabel.innerText = t(
+          "Login ID / Admission No. (ലോഗിൻ ഐഡി)",
+          "ലോഗിൻ ഐഡി / അഡ്മിഷൻ നമ്പർ",
+          "Login ID / Admission No. (ലോഗിൻ ഐഡി)"
+        );
+      }
+      if (userInput) {
+        userInput.placeholder = t(
+          "Enter User ID or Student ID (ഐഡി നൽകുക)",
+          "യൂസർ ഐഡി അല്ലെങ്കിൽ അഡ്മിഷൻ നമ്പർ നൽകുക",
+          "Enter User ID or Student ID (ഐഡി നൽകുക)"
+        );
+      }
+      if (passLabel) {
+        passLabel.innerText = t(
+          "Password / PIN (പാസ്വേഡ് / പിൻ)",
+          "പാസ്‌വേഡ് / പിൻ നമ്പർ",
+          "Password / PIN (പാസ്വേഡ് / പിൻ)"
+        );
+      }
+      if (passInput) {
+        passInput.placeholder = t(
+          "Enter Password or PIN (പാസ്വേഡ് നൽകുക)",
+          "പാസ്‌വേഡ് അല്ലെങ്കിൽ പിൻ നൽകുക",
+          "Enter Password or PIN (പാസ്വേഡ് നൽകുക)"
+        );
+      }
+      if (submitBtn) {
+        submitBtn.innerText = t(
+          "Sign In to Portal (പോർട്ടലിൽ പ്രവേശിക്കുക)",
+          "പോർട്ടലിലേക്ക് പ്രവേശിക്കുക",
+          "Sign In to Portal (പോർട്ടലിൽ പ്രവേശിക്കുക)"
+        );
+      }
+    };
+
     // Role Selection on Portal Sign In Screen (Supports Demo Credentials Helper until Principal Clears Demo Data)
     window.selectAuthRole = function(role, preserveInputs) {
-      currentAuthRole = role;
+      currentAuthRole = role || "teacher";
       document.getElementById("role-tab-teacher")?.classList.toggle("active", role === "teacher");
       document.getElementById("role-tab-principal")?.classList.toggle("active", role === "principal");
       document.getElementById("role-tab-parent")?.classList.toggle("active", role === "parent");
 
-      const userLabel = document.getElementById("auth-username-label");
-      const userInput = document.getElementById("auth-username");
-      const passInput = document.getElementById("auth-password");
       const banner = document.getElementById("auth-alert-banner");
       if (banner) banner.classList.add("hidden");
 
       updateAuthDemoHelperUI();
+      updateUnifiedAuthFormLabels();
 
-      if (!preserveInputs) {
-        if (!cleanDatabaseMode && role === "principal") {
+      const userInput = document.getElementById("auth-username");
+      const passInput = document.getElementById("auth-password");
+      if (!preserveInputs && !cleanDatabaseMode) {
+        if (role === "principal") {
           if (userInput) userInput.value = (principalAuth && principalAuth.username) ? principalAuth.username : "admin";
           if (passInput) passInput.value = (principalAuth && principalAuth.password) ? principalAuth.password : "admin786";
-        } else if (!cleanDatabaseMode && role === "teacher") {
+        } else if (role === "teacher") {
           const demoTeacherUser = (globalTeachers[0] && globalTeachers[0].username) ? globalTeachers[0].username : "ustadh";
           const demoTeacherPin = (globalTeachers[0] && globalTeachers[0].pin) ? globalTeachers[0].pin : "1234";
           if (userInput) userInput.value = demoTeacherUser;
           if (passInput) passInput.value = demoTeacherPin;
-        } else if (!cleanDatabaseMode && role === "parent") {
-          if (userInput) userInput.value = "STD-101";
-          if (passInput) passInput.value = "1234";
-        } else {
-          if (userInput) userInput.value = "";
-          if (passInput) passInput.value = "";
+        } else if (role === "parent") {
+          const demoStudent = globalStudents[0] || { studentId: "STD-101", pin: "1234" };
+          if (userInput) userInput.value = demoStudent.studentId || "STD-101";
+          if (passInput) passInput.value = demoStudent.pin || "1234";
         }
-      }
-
-      if (role === "parent") {
-        if (userLabel) userLabel.innerText = t("Student Admission ID or Guardian Phone (അഡ്മിഷൻ നമ്പർ)", "വിദ്യാർത്ഥി അഡ്മിഷൻ നമ്പർ / രക്ഷിതാവിന്റെ ഫോൺ");
-        if (userInput) userInput.placeholder = t("Enter Student Admission ID (e.g. STD-101) or Phone", "അഡ്മിഷൻ നമ്പർ അല്ലെങ്കിൽ ഫോൺ നമ്പർ നൽകുക");
-        if (passInput) passInput.placeholder = t("Enter Parent Portal PIN", "രക്ഷിതാവിന്റെ പിൻ നമ്പർ (PIN) നൽകുക");
-      } else if (role === "principal") {
-        if (userLabel) userLabel.innerText = t("Principal Login ID", "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി");
-        if (userInput) userInput.placeholder = t("Enter Principal Login ID", "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി നൽകുക");
-        if (passInput) passInput.placeholder = t("Enter Principal Password", "പ്രിൻസിപ്പൽ പാസ്‌വേഡ് നൽകുക");
-      } else {
-        if (userLabel) userLabel.innerText = t("Ustadh Username", "ഉസ്താദ് യൂസർനെയിം");
-        if (userInput) userInput.placeholder = t("Enter Ustadh Username", "ഉസ്താദ് യൂസർനെയിം നൽകുക");
-        if (passInput) passInput.placeholder = t("Enter Ustadh Password / PIN", "ഉസ്താദ് പാസ്‌വേഡ് / പിൻ നൽകുക");
       }
     };
 
@@ -7532,14 +7683,14 @@
       const u = (document.getElementById("auth-username")?.value || "").trim();
       const p = (document.getElementById("auth-password")?.value || "").trim();
 
-      const res = loginWithCredentials(currentAuthRole, u, p);
+      const res = window.loginWithAutoRole(u, p);
       if (!res.success) {
         showAuthAlert(res.message);
       }
     };
 
-    // Credential Verification & Session Storage (Demo + Live Mode Support)
-    window.loginWithCredentials = function(role, username, password) {
+    // Automatic Role-Detection Authentication & Session Management
+    window.loginWithAutoRole = function(username, password) {
       const u = (username || "").trim();
       const p = (password || "").trim();
 
@@ -7547,8 +7698,9 @@
         return {
           success: false,
           message: t(
-            "Please enter both your Username / ID and Password / PIN.",
-            "ദയവായി യൂസർനെയിമും പാസ്‌വേഡും / പിൻ നമ്പറും നൽകുക."
+            "Please enter both your Login ID / Admission No. and Password / PIN.",
+            "ദയവായി ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക.",
+            "Please enter both Login ID and Password / PIN (ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക)"
           )
         };
       }
@@ -7556,56 +7708,39 @@
       const expectedAdminUser = (principalAuth && principalAuth.username ? principalAuth.username : "admin").trim();
       const expectedAdminPass = (principalAuth && principalAuth.password ? principalAuth.password : "admin786").trim();
 
-      // 1. Principal Authentication
-      if (role === "principal" || u.toLowerCase() === expectedAdminUser.toLowerCase()) {
-        if (u.toLowerCase() === expectedAdminUser.toLowerCase() && p === expectedAdminPass) {
-          currentUser = {
-            role: "principal",
-            username: expectedAdminUser,
-            name: "Principal Admin",
-            loginTime: new Date().toISOString()
-          };
-          try {
-            localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
-          } catch (err) {}
-          applyAuthenticatedState("principal");
-          return { success: true };
-        }
-        if (role === "principal") {
-          return {
-            success: false,
-            message: t(
-              "Invalid Principal Login ID or Password. Please verify your credentials.",
-              "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി അല്ലെങ്കിൽ പാസ്‌വേഡ് തെറ്റാണ്."
-            )
-          };
-        }
+      // 1. Check Principal Credentials (default admin / admin786 or custom Principal account)
+      if (u.toLowerCase() === expectedAdminUser.toLowerCase() && p === expectedAdminPass) {
+        currentUser = {
+          role: "principal",
+          username: expectedAdminUser,
+          name: "Principal Admin",
+          loginTime: new Date().toISOString()
+        };
+        try {
+          localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
+        } catch (err) {}
+        applyAuthenticatedState("principal");
+        return { success: true, role: "principal" };
       }
 
-      // 2. Ustadh / Teacher Authentication
-      if (role === "teacher") {
-        const lowerU = u.toLowerCase();
-        const matchedTeacher = globalTeachers.find((tr) => {
-          const tUser = (tr.username || "").toLowerCase();
-          if (tUser === lowerU) return true;
-          if (!cleanDatabaseMode && (lowerU === "ustadh" || lowerU === "ustadh1") && (tUser === "ustadh" || tUser === "ustadh1")) {
-            return true;
-          }
-          return false;
-        });
-        if (!matchedTeacher) {
-          return {
-            success: false,
-            message: t(
-              "Ustadh account not found. Please check your username or ask the Principal to register your Ustadh profile.",
-              "ഉസ്താദ് അക്കൗണ്ട് കണ്ടെത്താനായില്ല. യൂസർനെയിം പരിശോധിക്കുക അല്ലെങ്കിൽ പ്രിൻസിപ്പലുമായി ബന്ധപ്പെടുക."
-            )
-          };
+      // 2. Check Ustadh / Teacher Credentials
+      const lowerU = u.toLowerCase();
+      const matchedTeacher = globalTeachers.find((tr) => {
+        const tUser = (tr.username || tr.teacherId || "").toLowerCase();
+        if (tUser && tUser === lowerU) return true;
+        if (!cleanDatabaseMode && (lowerU === "ustadh" || lowerU === "ustadh1") && (tUser === "ustadh" || tUser === "ustadh1")) {
+          return true;
         }
-        if (p === String(matchedTeacher.pin || "").trim()) {
+        return false;
+      });
+
+      if (matchedTeacher) {
+        const teacherPass = String(matchedTeacher.pin || matchedTeacher.password || "").trim();
+        if (p === teacherPass) {
           currentUser = {
             role: "teacher",
-            username: matchedTeacher.username,
+            username: matchedTeacher.username || matchedTeacher.teacherId,
+            teacherId: matchedTeacher.teacherId || matchedTeacher.id,
             name: matchedTeacher.name,
             loginTime: new Date().toISOString()
           };
@@ -7613,59 +7748,57 @@
             localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
           } catch (err) {}
           applyAuthenticatedState("teacher");
-          return { success: true };
+          return { success: true, role: "teacher" };
         }
-        return {
-          success: false,
-          message: t(`Incorrect PIN/Password for ${matchedTeacher.name}.`, `${matchedTeacher.name} ന്റെ പാസ്‌വേഡ് / പിൻ തെറ്റാണ്.`)
-        };
       }
 
-      // 3. Parent Authentication
-      if (role === "parent") {
-        const cleanInputPhone = u.replace(/[^0-9]/g, "");
-        const found = globalStudents.find((s) => {
-          const idMatch = (s.studentId || "").toUpperCase() === u.toUpperCase();
-          const phoneMatch =
-            cleanInputPhone.length >= 6 &&
-            (s.guardianPhone || "").replace(/[^0-9]/g, "").endsWith(cleanInputPhone);
-          return idMatch || phoneMatch;
-        });
+      // 3. Check Parent / Student Credentials (Student Admission ID or Guardian Phone)
+      const cleanInputPhone = u.replace(/[^0-9]/g, "");
+      const matchedStudent = globalStudents.find((s) => {
+        const idMatch = (s.studentId || "").toUpperCase() === u.toUpperCase();
+        const sPhone = (s.guardianPhone || "").replace(/[^0-9]/g, "");
+        const phoneMatch =
+          cleanInputPhone.length >= 6 &&
+          (sPhone.endsWith(cleanInputPhone) || cleanInputPhone.endsWith(sPhone) || sPhone === cleanInputPhone);
+        return idMatch || phoneMatch;
+      });
 
-        if (!found) {
-          return {
-            success: false,
-            message: t(
-              "Student Admission ID or Guardian Phone not found. Please check with the Madrasa office.",
-              "വിദ്യാർത്ഥി അഡ്മിഷൻ നമ്പർ അല്ലെങ്കിൽ ഫോൺ നമ്പർ കണ്ടെത്താനായില്ല."
-            )
-          };
-        }
-        if (p === String(found.pin || "").trim()) {
+      if (matchedStudent) {
+        const studentPin = String(matchedStudent.pin || "").trim();
+        if (p === studentPin) {
           currentUser = {
             role: "parent",
-            username: found.studentId,
-            studentId: found.studentId,
-            name: "Parent of " + found.name,
+            username: matchedStudent.studentId,
+            studentId: matchedStudent.studentId,
+            name: "Parent of " + matchedStudent.name,
             loginTime: new Date().toISOString()
           };
-          currentParentStudentId = found.studentId;
+          currentParentStudentId = matchedStudent.studentId;
           try {
             localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
           } catch (err) {}
           applyAuthenticatedState("parent");
-          return { success: true };
+          return { success: true, role: "parent" };
         }
-        return {
-          success: false,
-          message: t(
-            `Incorrect Parent Portal PIN for ${found.name} (${found.studentId}).`,
-            `${found.name} (${found.studentId}) ന്റെ പിൻ നമ്പർ തെറ്റാണ്.`
-          )
-        };
       }
 
-      return { success: false, message: t("Invalid role or credentials specified.", "ലോഗിൻ വിവരങ്ങൾ തെറ്റാണ്.") };
+      // 4. Invalid Credentials (None match)
+      return {
+        success: false,
+        message: t(
+          "Invalid Login ID or Password.",
+          "തെറ്റായ ഐഡി അല്ലെങ്കിൽ പാസ്വേഡ്",
+          "തെറ്റായ ഐഡി അല്ലെങ്കിൽ പാസ്വേഡ് / Invalid Login ID or Password"
+        )
+      };
+    };
+
+    // Backward-compatible alias for modal or legacy callers
+    window.loginWithCredentials = function(role, username, password) {
+      if (!password && username) {
+        return window.loginWithAutoRole(role, username);
+      }
+      return window.loginWithAutoRole(username, password);
     };
 
     // Logout and Return to Clean Initial Sign In View
@@ -7840,6 +7973,7 @@
       if (sessPrefix) {
         sessPrefix.innerText = t("Active Session:", "സജീവ സെഷൻ:");
       }
+      updateCampusBadgeUI();
       if (!currentUser) {
         if (lbl) lbl.innerText = t("Guest · Not Signed In", "അതിഥി · ലോഗിൻ ചെയ്തിട്ടില്ല");
         if (vBadge) vBadge.innerText = t("Verifier: Not Signed In", "പരിശോധകൻ: ലോഗിൻ ചെയ്തിട്ടില്ല");
@@ -7906,10 +8040,15 @@
         }
 
         if (pSel) {
+          const isParentRole = Boolean(currentUser && currentUser.role === "parent");
+          pSel.style.display = isParentRole ? "none" : "";
           pSel.innerHTML = globalStudents
             .map((s) => `<option value="${s.studentId}">${s.name} (${s.studentId})</option>`)
             .join("");
-          if (globalStudents.some((s) => s.studentId === prevP)) {
+          if (isParentRole && currentUser.studentId && globalStudents.some((s) => s.studentId === currentUser.studentId)) {
+            currentParentStudentId = currentUser.studentId;
+            pSel.value = currentParentStudentId;
+          } else if (globalStudents.some((s) => s.studentId === prevP)) {
             pSel.value = prevP;
           } else {
             currentParentStudentId = globalStudents[0].studentId;
@@ -8823,15 +8962,19 @@
         if (globalNotices.length === 0) {
           noticesEl.innerHTML = `<p style="color:var(--text-muted); font-size:0.84rem; padding:12px 0; text-align:center;">${t("No official campus notices published yet.", "അറിയിപ്പുകൾ ഒന്നും പ്രസിദ്ധീകരിച്ചിട്ടില്ല.")}</p>`;
         } else {
+          const newBadgeText = appLanguage === "en" ? "NEW" : appLanguage === "ml" ? "പുതിയ അറിയിപ്പ്" : "പുതിയ അറിയിപ്പ് / NEW";
           noticesEl.innerHTML = globalNotices
             .map(
               (n) => `
-            <div class="feed-item">
-              <div class="feed-header">
-                <strong>${n.title}</strong>
-                <span style="font-family:var(--font-mono); font-size:0.74rem; color:var(--text-muted);">${n.dateStr}</span>
+            <div class="feed-item" style="background:#fffbeb; border:1px solid #fde68a; border-left:4px solid #d97706; border-radius:10px; padding:14px 16px; margin-bottom:10px;">
+              <div class="feed-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+                <strong style="color:#78350f; font-size:0.86rem;">${formatNoticeTitle(n.title)}</strong>
+                <div style="display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
+                  <span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:999px;">${newBadgeText}</span>
+                  <span style="font-family:var(--font-mono); font-size:0.74rem; font-weight:600; color:#92400e;">${n.dateStr}</span>
+                </div>
               </div>
-              <p style="font-size:0.82rem; color:var(--text-secondary); line-height:1.45;">${n.content}</p>
+              <p style="font-size:0.82rem; color:#78350f; line-height:1.5; margin:0;">${formatNoticeContent(n.content)}</p>
             </div>
           `
             )
@@ -8840,8 +8983,175 @@
       }
     }
 
+    // Helper formatters for Malayalam / English Parent Portal display
+    function formatShiftDisplay(shiftStr) {
+      const s = String(shiftStr || "").trim();
+      if (!s) return t("Morning Shift (Before School)", "രാവിലെ ഷിഫ്റ്റ് (സ്കൂളിന് മുമ്പ്)");
+      if (s === "Morning Shift (Before School)" || s.toLowerCase().includes("morning shift")) {
+        return t("Morning Shift (Before School)", "രാവിലെ ഷിഫ്റ്റ് (സ്കൂളിന് മുമ്പ്)");
+      }
+      if (s === "Evening Shift (After School)" || s.toLowerCase().includes("evening shift")) {
+        return t("Evening Shift (After School)", "വൈകുന്നേരം ഷിഫ്റ്റ് (സ്കൂളിന് ശേഷം)");
+      }
+      if (s === "Full Day / Residential" || s.toLowerCase().includes("residential")) {
+        return t("Residential Session", "റെസിഡൻഷ്യൽ സെഷൻ");
+      }
+      return s;
+    }
+
+    function formatCommuteDisplay(commuteStr) {
+      const c = String(commuteStr || "").trim();
+      if (!c || c === "Parent Pickup" || c.toLowerCase().includes("parent pickup")) {
+        return t("Parent Pickup", "രക്ഷിതാവ് നേരിട്ട്");
+      }
+      if (c.toLowerCase().includes("madrasa van") || c.toLowerCase().includes("campus bus")) {
+        return t("Madrasa Van / Campus Bus", "മദ്രസ വാൻ / ബസ്");
+      }
+      if (c.toLowerCase().includes("walking") || c.toLowerCase().includes("bicycle")) {
+        return t("Walking / Bicycle (Nearby)", "നടന്ന് / സൈക്കിൾ");
+      }
+      if (c.toLowerCase().includes("auto") || c.toLowerCase().includes("public")) {
+        return t("Auto / Public Transport", "ഓട്ടോ / പൊതുഗതാഗതം");
+      }
+      if (c.toLowerCase().includes("residential")) {
+        return t("Residential Hostel", "റെസിഡൻഷ്യൽ ഹോസ്റ്റൽ");
+      }
+      return c;
+    }
+
+    function formatSurahDisplay(surahStr) {
+      const raw = String(surahStr || "").trim();
+      if (!raw) return "";
+      let out = raw.replace(/\)\s*\)/g, ")");
+      if (appLanguage === "ml") {
+        out = out
+          .replace(/Surah Al-Kahf/gi, "സൂറത്തുൽ കഹ്ഫ്")
+          .replace(/Surah Ya-Sin/gi, "സൂറത്ത് യാസീൻ")
+          .replace(/Surah Al-Mulk/gi, "സൂറത്തുൽ മുൽക്ക്")
+          .replace(/Surah Ar-Rahman/gi, "സൂറത്തുൽ റഹ്മാൻ")
+          .replace(/Surah Al-Waqi'ah/gi, "സൂറത്തുൽ വാഖിഅ")
+          .replace(/Surah Al-Baqarah/gi, "സൂറത്തുൽ ബഖറ")
+          .replace(/Surah Maryam/gi, "സൂറത്ത് മർയം")
+          .replace(/Surah Ta-Ha/gi, "സൂറത്ത് ത്വാഹാ")
+          .replace(/\((\d+)\s*-\s*(\d+)\)/g, "($1–$2)");
+      }
+      return out;
+    }
+
+    function formatHomeTargetDisplay(targetStr) {
+      const raw = String(targetStr || "").trim();
+      if (!raw) return "";
+      if (raw === "Light 1/4 Juz Revision (School Exam Balance Mode)" || raw.includes("Light 1/4 Juz Revision")) {
+        return t(
+          "Light 1/4 Juz Revision (School Exam Balance Mode)",
+          "ലഘു ആവർത്തനം: 1/4 ജുസ്അ് (സ്കൂൾ പരീക്ഷാ ക്രമീകരണം)"
+        );
+      }
+      let out = formatSurahDisplay(raw);
+      if (appLanguage === "ml") {
+        out = out
+          .replace(/\(Daily Home Revision\)/gi, "(പ്രതിദിന വീട്ടിലെ ആവർത്തനം)")
+          .replace(/\bJuz\b/gi, "ജുസ്അ്")
+          .replace(/\(1\/2 Juz\)/gi, "(1/2 ജുസ്അ്)")
+          .replace(/\(1 Full Juz\)/gi, "(1 പൂർണ്ണ ജുസ്അ്)");
+      }
+      return out;
+    }
+
+    function formatShortGradeDisplay(gradeStr) {
+      const g = String(gradeStr || "").trim();
+      const lower = g.toLowerCase();
+      if (lower.includes("mumtaz") || lower.includes("ممتاز")) {
+        return t("Mumtaz", "മുംതാസ്");
+      }
+      if (lower.includes("jiddan") || lower.includes("جداً")) {
+        return t("Jayyid Jiddan", "ജയ്യിദ് ജിദ്ദൻ");
+      }
+      if (lower.includes("jayyid") || lower.includes("جيد")) {
+        return t("Jayyid", "ജയ്യിദ്");
+      }
+      if (lower.includes("exempted")) {
+        return t("Exempted", "ഒഴിവാക്കി");
+      }
+      if (lower.includes("sick bay")) {
+        return t("Medical Leave", "സിക്ക് ലീവ്");
+      }
+      if (lower.includes("not recited")) {
+        return t("Not Recited", "ഓതിയിട്ടില്ല");
+      }
+      if (lower.includes("repeat") || lower.includes("revision")) {
+        return t("Needs Revision", "ആവർത്തനം വേണം");
+      }
+      return g.split(" ")[0] || g;
+    }
+
+    function formatFullGradeDisplay(gradeStr) {
+      const g = String(gradeStr || "").replace(/\)\s*\)/g, ")").trim();
+      const lower = g.toLowerCase();
+      if (lower.includes("mumtaz") || lower.includes("ممتاز")) {
+        return t("Mumtaz (ممتاز - Excellent)", "മുംതാസ് (ممتاز - മികച്ചത്)");
+      }
+      if (lower.includes("jiddan") || lower.includes("جداً")) {
+        return t("Jayyid Jiddan (جيد جداً - Very Good)", "ജയ്യിദ് ജിദ്ദൻ (جيد جداً - വളരെ നല്ലത്)");
+      }
+      if (lower.includes("jayyid") || lower.includes("جيد")) {
+        return t("Jayyid (جيد - Good)", "ജയ്യിദ് (جيد - നല്ലത്)");
+      }
+      if (lower.includes("exempted")) {
+        return t("Exempted (School Exam Mode)", "ഒഴിവാക്കി (സ്കൂൾ പരീക്ഷാ മോഡ്)");
+      }
+      if (lower.includes("sick bay")) {
+        return t("Sick Bay Leave", "സിക്ക് ലീവ്");
+      }
+      if (lower.includes("not recited")) {
+        return t("Not Recited", "ഓതിയിട്ടില്ല");
+      }
+      if (lower.includes("repeat") || lower.includes("revision")) {
+        return t("Needs Revision", "ആവർത്തനം ആവശ്യമാണ്");
+      }
+      return g;
+    }
+
+    function formatNoticeTitle(titleStr) {
+      const raw = String(titleStr || "").trim();
+      if (
+        raw === "Day Madrasa Transit & Parent Home-Revision Digital Sign-Off" ||
+        raw.includes("Day Madrasa Transit & Parent Home-Revision")
+      ) {
+        return t(
+          "Day Madrasa Transit & Parent Home-Revision Digital Sign-Off",
+          "ഡേ മദ്രസ യാത്രാ സമയവും വീട്ടിലെ ആവർത്തന സാക്ഷ്യപ്പെടുത്തലും"
+        );
+      }
+      return raw;
+    }
+
+    function formatNoticeContent(contentStr) {
+      const raw = String(contentStr || "").trim();
+      if (raw.includes("Parents can now view real-time campus departure times")) {
+        return t(
+          raw,
+          "വിദ്യാർത്ഥികൾ ക്യാമ്പസിൽ നിന്ന് ഇറങ്ങുന്ന സമയവും യാത്രാ വിവരങ്ങളും രക്ഷിതാക്കൾക്ക് തത്സമയം കാണാനും, വീട്ടിൽ വെച്ച് ഹിഫ്ള് ആവർത്തനം കേട്ട ശേഷം ഒറ്റ ക്ലിക്കിൽ ഡിജിറ്റൽ ഒപ്പ് രേഖപ്പെടുത്താനും സാധിക്കുന്നതാണ്."
+        );
+      }
+      return raw;
+    }
+
     // Render Parent Progress View (including Real-Time Departure Status & 1-Tap Home Revision Sign-Off)
     function renderParentPortal() {
+      const pSel = document.getElementById("parent-student-switcher");
+      const isParentRole = Boolean(currentUser && currentUser.role === "parent");
+      if (isParentRole && currentUser.studentId) {
+        currentParentStudentId = currentUser.studentId;
+      }
+      if (pSel) {
+        pSel.style.display = isParentRole ? "none" : "";
+        if (pSel.value !== currentParentStudentId) {
+          pSel.value = currentParentStudentId;
+        }
+      }
+      updateCampusBadgeUI();
+
       const std = globalStudents.find((s) => s.studentId === currentParentStudentId) || globalStudents[0];
       const nameEl = document.getElementById("p-child-name");
       const metaEl = document.getElementById("p-child-meta");
@@ -8869,7 +9179,7 @@
         );
       }
 
-      const stdLogs = globalLogs.filter((l) => l.studentId === std.studentId);
+      const stdLogs = sortLogsChronologicallyDesc(globalLogs.filter((l) => l.studentId === std.studentId));
       const latestLog = stdLogs[0] || null;
       const present = stdLogs.filter((l) => l.attendanceStatus !== "Absent").length;
       const attRate = stdLogs.length > 0 ? Math.round((present / stdLogs.length) * 100) : 100;
@@ -8926,12 +9236,13 @@
           `;
         } else {
           const depTime = latestLog && latestLog.departureTime ? latestLog.departureTime : "";
-          const commute = latestLog && latestLog.commuteMode ? latestLog.commuteMode : "Parent Pickup";
-          const shift = latestLog && latestLog.shift ? latestLog.shift : "Morning Shift (Before School)";
-          const homeTarget =
+          const commute = formatCommuteDisplay(latestLog && latestLog.commuteMode ? latestLog.commuteMode : "Parent Pickup");
+          const shift = formatShiftDisplay(latestLog && latestLog.shift ? latestLog.shift : "Morning Shift (Before School)");
+          const homeTarget = formatHomeTargetDisplay(
             latestLog && latestLog.homeRevisionTarget
               ? latestLog.homeRevisionTarget
-              : std.currentSurah + " (Daily Home Revision)";
+              : std.currentSurah + " (Daily Home Revision)"
+          );
           const isVerified = Boolean(latestLog && latestLog.parentHomeVerified);
 
           const transitCardHtml = enableShiftTransitTracking
@@ -8989,11 +9300,12 @@
 
       const summaryStrip = document.getElementById("parent-summary-strip");
       if (summaryStrip) {
+        const cleanCurrentSurah = formatSurahDisplay(std.currentSurah);
         summaryStrip.innerHTML = `
           <div style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px;">
             <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">${t("COMPLETED JUZ", "പൂർത്തിയാക്കിയ ജുസ്അ്")}</div>
             <div style="font-family:var(--font-mono); font-size:1.35rem; font-weight:700; color:var(--primary); margin-top:2px;">${std.juzCompleted} / 30 ${t("Juz", "ജുസ്അ്")}</div>
-            <div style="font-size:0.74rem; color:var(--text-secondary);">${t("Active: Juz", "നിലവിലെ ജുസ്അ്:")} ${std.currentJuz} (${std.currentSurah})</div>
+            <div style="font-size:0.74rem; color:var(--text-secondary);">${t("Active: Juz", "നിലവിലെ ജുസ്അ്:")} ${std.currentJuz}${cleanCurrentSurah ? " · " + cleanCurrentSurah : ""}</div>
           </div>
           <div style="background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:12px;">
             <div style="font-size:0.74rem; color:var(--text-muted); font-weight:700;">${t("ATTENDANCE RATE", "ഹാജർ നിലവാരം")}</div>
@@ -9052,9 +9364,10 @@
       // Monthly Akhlaq Breakdown Card Polish
       const akhlaqCard = document.getElementById("parent-akhlaq-card");
       if (akhlaqCard) {
-        const posTags = akhlaq.cleanPositiveTags && akhlaq.cleanPositiveTags.length > 0
+        const rawPosTags = akhlaq.cleanPositiveTags && akhlaq.cleanPositiveTags.length > 0
           ? akhlaq.cleanPositiveTags
           : getDefaultPositiveTraitLabels();
+        const posTags = rawPosTags.filter((tg) => !(campusMode === "day" && isHostelDisciplineTag(tg)));
         const negTags = akhlaq.score >= 100 ? [] : (akhlaq.cleanNegativeTags || []);
 
         akhlaqCard.innerHTML = `
@@ -9078,18 +9391,33 @@
       }
 
       // Campus Notices
+      const pNoticesHeading = document.getElementById("parent-notices-heading");
+      if (pNoticesHeading) {
+        pNoticesHeading.innerText = t("📢 Official Campus Notices", "📢 ഔദ്യോഗിക ക്യാമ്പസ് അറിയിപ്പുകൾ");
+      }
       const pNotices = document.getElementById("parent-notices-feed");
       if (pNotices) {
-        pNotices.innerHTML = globalNotices
-          .map(
-            (n) => `
-          <div class="feed-item">
-            <div class="feed-header"><strong>${n.title}</strong> <span>${n.dateStr}</span></div>
-            <p style="font-size:0.78rem; color:var(--text-secondary);">${n.content}</p>
+        if (globalNotices.length === 0) {
+          pNotices.innerHTML = `<p style="color:var(--text-muted); font-size:0.82rem; padding:8px 0;">${t("No official campus notices published yet.", "അറിയിപ്പുകൾ ഒന്നും പ്രസിദ്ധീകരിച്ചിട്ടില്ല.")}</p>`;
+        } else {
+          const newBadgeText = appLanguage === "en" ? "NEW" : appLanguage === "ml" ? "പുതിയ അറിയിപ്പ്" : "പുതിയ അറിയിപ്പ് / NEW";
+          pNotices.innerHTML = globalNotices
+            .map(
+              (n) => `
+          <div class="feed-item" style="background:#fffbeb; border:1px solid #fde68a; border-left:4px solid #d97706; border-radius:10px; padding:14px 16px; margin-bottom:10px; box-shadow:0 1px 3px rgba(217, 119, 6, 0.08);">
+            <div class="feed-header" style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+              <strong style="font-size:0.88rem; color:#78350f; line-height:1.35;">${formatNoticeTitle(n.title)}</strong>
+              <div style="display:inline-flex; align-items:center; gap:6px; flex-shrink:0;">
+                <span style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:999px; letter-spacing:0.02em;">${newBadgeText}</span>
+                <span style="font-family:var(--font-mono); font-size:0.74rem; font-weight:600; color:#92400e;">${n.dateStr}</span>
+              </div>
+            </div>
+            <p style="font-size:0.8rem; color:#78350f; line-height:1.5; margin:0;">${formatNoticeContent(n.content)}</p>
           </div>
         `
-          )
-          .join("");
+            )
+            .join("");
+        }
       }
 
       // Parent Verification Feed: Collapsible & Interactive
@@ -9105,15 +9433,20 @@
         } else {
           pFeed.innerHTML = stdLogs
             .map((r, idx) => {
-              const cleanSabaqGrade = (r.sabaqGrade || "Not Recited").replace(/\)\s*\)/g, ")");
-              const cleanSabqiGrade = (r.sabqiGrade || "Needs Revision").replace(/\)\s*\)/g, ")");
-              const cleanManzilGrade = (r.manzilGrade || "Needs Revision").replace(/\)\s*\)/g, ")");
+              const cleanSabaqGrade = formatFullGradeDisplay(r.sabaqGrade || "Not Recited");
+              const cleanSabqiGrade = formatFullGradeDisplay(r.sabqiGrade || "Needs Revision");
+              const cleanManzilGrade = formatFullGradeDisplay(r.manzilGrade || "Needs Revision");
+              const shortSabaqBadge = formatShortGradeDisplay(r.sabaqGrade || "Not Recited");
               const isVerified = Boolean(r.parentHomeVerified);
 
               let displayAtt = r.attendanceStatus || r.attendance || "Present";
               if (campusMode === "residential" && (displayAtt.includes("Late") || displayAtt.includes("Early"))) {
                 displayAtt = "Present";
               }
+
+              const shiftLabel = campusMode === "residential"
+                ? t("Residential Session", "റെസിഡൻഷ്യൽ സെഷൻ")
+                : (enableShiftTransitTracking ? formatShiftDisplay(r.shift) : t("Daily Session", "പ്രതിദിന സെഷൻ"));
 
               return `
             <div class="feed-item" style="border:1px solid #e2e8f0; border-radius:8px; margin-bottom:8px; padding:0; overflow:hidden; background:#ffffff;">
@@ -9126,7 +9459,7 @@
                 <div style="display:flex; align-items:center; gap:8px;">
                   <span id="p-log-arrow-${idx}" style="font-size:0.75rem; color:#64748b; transition:transform 0.2s ease;">▸</span>
                   <strong>${r.dateStr}</strong>
-                  <span style="font-size:0.72rem; color:var(--text-muted);">· ${campusMode === "residential" ? t("Residential Session", "റെസിഡൻഷ്യൽ സെഷൻ") : (enableShiftTransitTracking ? (r.shift || t("Morning Shift", "രാവിലത്തെ ഷിഫ്റ്റ്")) : t("Daily Session", "പ്രതിദിന സെഷൻ"))}</span>
+                  <span style="font-size:0.72rem; color:var(--text-muted);">· ${shiftLabel}</span>
                 </div>
                 <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                   ${
@@ -9141,7 +9474,7 @@
                       : ""
                   }
                   <span class="tag ${getAttendanceTagClass(displayAtt)}" style="font-size:0.67rem; padding:1px 6px;">${formatAttendanceDisplay(displayAtt)}</span>
-                  ${displayAtt !== "Absent" ? `<span class="tag tag-mumtaz" style="font-size:0.67rem; padding:1px 6px;">${cleanSabaqGrade.split(" ")[0]}</span>` : ""}
+                  ${displayAtt !== "Absent" ? `<span class="tag tag-mumtaz" style="font-size:0.67rem; padding:1px 6px;">${shortSabaqBadge}</span>` : ""}
                 </div>
               </div>
 
@@ -9150,16 +9483,16 @@
                   displayAtt !== "Absent"
                     ? `
                   <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.55;">
-                    <div><strong>${t("Sabaq (New Lesson):", "സബഖ് (പുതിയ പാഠം):")}</strong> ${r.sabaqTarget} <span class="tag tag-mumtaz" style="font-size:0.68rem; padding:1px 6px;">${cleanSabaqGrade}</span></div>
-                    <div style="margin-top:2px;"><strong>${t("Sabqi (Recent):", "സബ്ഖി (സമീപകാല ജുസ്അ്):")}</strong> ${r.sabqiTarget} <span style="font-size:0.75rem; color:#065f46; font-weight:600;">[${cleanSabqiGrade}]</span></div>
-                    <div style="margin-top:2px;"><strong>${t("Manzil (Old Juz):", "മൻസിൽ (പഴയ ജുസ്അ്):")}</strong> ${r.manzilTarget} <span style="font-size:0.75rem; color:#1e40af; font-weight:600;">[${cleanManzilGrade}]</span></div>
+                    <div><strong>${t("Sabaq (New Lesson):", "സബഖ് (പുതിയ പാഠം):")}</strong> ${formatSurahDisplay(r.sabaqTarget)} <span class="tag tag-mumtaz" style="font-size:0.68rem; padding:1px 6px;">${cleanSabaqGrade}</span></div>
+                    <div style="margin-top:2px;"><strong>${t("Sabqi (Recent):", "സബ്ഖി (സമീപകാല ജുസ്അ്):")}</strong> ${formatHomeTargetDisplay(r.sabqiTarget)} <span style="font-size:0.75rem; color:#065f46; font-weight:600;">[${cleanSabqiGrade}]</span></div>
+                    <div style="margin-top:2px;"><strong>${t("Manzil (Old Juz):", "മൻസിൽ (പഴയ ജുസ്അ്):")}</strong> ${formatHomeTargetDisplay(r.manzilTarget)} <span style="font-size:0.75rem; color:#1e40af; font-weight:600;">[${cleanManzilGrade}]</span></div>
                     
                     ${
                       campusMode === "day" && r.homeRevisionTarget
                         ? `
                       <div style="margin-top:8px; padding:6px 10px; background:${isVerified ? "#f0fdf4" : "#fffbeb"}; border:1px solid ${isVerified ? "#86efac" : "#fde68a"}; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                         <span style="font-size:0.76rem; color:#065f46;">
-                          <strong>${t("Home Revision:", "വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം:")}</strong> ${r.homeRevisionTarget}
+                          <strong>${t("Home Revision:", "വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം:")}</strong> ${formatHomeTargetDisplay(r.homeRevisionTarget)}
                         </span>
                         ${
                           isVerified
@@ -9298,7 +9631,7 @@
       }).join("");
 
       const svgBarChart = `
-        <svg viewBox="0 0 320 160" width="100%" height="auto" style="display:block; max-height:160px; overflow:visible;" aria-label="Weekly Memorization Pace">
+        <svg viewBox="0 0 320 160" width="100%" height="auto" style="display:block; width:100%; height:auto; max-height:none; overflow:visible;" aria-label="Weekly Memorization Pace">
           <defs>
             <linearGradient id="emeraldBarGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="#10b981" />
@@ -9322,7 +9655,7 @@
       const conicBg = `conic-gradient(#059669 0% ${stop1}%, #2563eb ${stop1}% ${stop2}%, #7c3aed ${stop2}% ${stop3}%, #dc2626 ${stop3}% 100%)`;
 
       const donutAndLegend = `
-        <div class="donut-legend-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:160px; box-sizing:border-box; padding:4px 0; width:100%;">
+        <div class="donut-legend-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:150px; height:auto; max-height:none; overflow:visible; box-sizing:border-box; padding:6px 0; width:100%;">
           <div class="donut-ring-wrapper" style="flex-shrink:0; width:96px; height:96px; border-radius:50%; background:${conicBg}; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
             <div class="donut-ring-inner" style="width:64px; height:64px; border-radius:50%; background:#ffffff; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:inset 0 1px 2px rgba(0,0,0,0.06);">
               <span style="font-family:'JetBrains Mono', monospace; font-size:1.05rem; font-weight:700; color:#059669; line-height:1;">${analytics.mumtazPct}%</span>
@@ -9330,8 +9663,8 @@
             </div>
           </div>
 
-          <div class="donut-legend-content" style="flex:1; min-width:0; width:100%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; margin-bottom:5px;">
+          <div class="donut-legend-content" style="flex:1; min-width:0; width:100%; height:auto; overflow:visible;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; line-height:1.5; margin-bottom:5px;">
               <span style="display:flex; align-items:center; gap:5px; color:#0f172a; font-weight:600;">
                 <span style="width:8px; height:8px; border-radius:2px; background:#059669; display:inline-block; flex-shrink:0;"></span>
                 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t("Mumtaz (ممتاز)", "മുംതാസ് (ممتاز)")}</span>
@@ -9339,7 +9672,7 @@
               <span style="font-family:'JetBrains Mono', monospace; font-weight:700; color:#059669; margin-left:6px;">${analytics.mumtazPct}%</span>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; margin-bottom:5px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; line-height:1.5; margin-bottom:5px;">
               <span style="display:flex; align-items:center; gap:5px; color:#0f172a; font-weight:600;">
                 <span style="width:8px; height:8px; border-radius:2px; background:#2563eb; display:inline-block; flex-shrink:0;"></span>
                 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t("Jayyid Jiddan (جيد جداً)", "ജയ്യിദ് ജിദ്ദൻ (جيد جداً)")}</span>
@@ -9347,7 +9680,7 @@
               <span style="font-family:'JetBrains Mono', monospace; font-weight:600; color:#2563eb; margin-left:6px;">${analytics.jayyidJiddanPct}%</span>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; margin-bottom:5px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; line-height:1.5; margin-bottom:5px;">
               <span style="display:flex; align-items:center; gap:5px; color:#0f172a; font-weight:600;">
                 <span style="width:8px; height:8px; border-radius:2px; background:#7c3aed; display:inline-block; flex-shrink:0;"></span>
                 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t("Jayyid (جيد)", "ജയ്യിദ് (جيد)")}</span>
@@ -9355,7 +9688,7 @@
               <span style="font-family:'JetBrains Mono', monospace; font-weight:600; color:#7c3aed; margin-left:6px;">${analytics.jayyidPct}%</span>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; margin-bottom:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; line-height:1.5; margin-bottom:6px;">
               <span style="display:flex; align-items:center; gap:5px; color:#0f172a; font-weight:600;">
                 <span style="width:8px; height:8px; border-radius:2px; background:#dc2626; display:inline-block; flex-shrink:0;"></span>
                 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t("Needs Revision", "ആവർത്തനം ആവശ്യമാണ്")}</span>
@@ -9363,7 +9696,7 @@
               <span style="font-family:'JetBrains Mono', monospace; font-weight:600; color:#dc2626; margin-left:6px;">${analytics.repeatPct}%</span>
             </div>
 
-            <div style="margin-top:6px; padding-top:6px; border-top:1px dashed #e2e8f0; display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap;">
+            <div style="margin-top:6px; padding-top:6px; border-top:1px dashed #e2e8f0; display:flex; align-items:center; justify-content:space-between; gap:6px; flex-wrap:wrap; line-height:1.6;">
               <span style="font-size:0.72rem; color:#64748b; font-weight:600; white-space:nowrap;">${t("Akhlaq Trajectory:", "അഖ്ലാഖ് നിലവാരം:")}</span>
               <div style="display:flex; align-items:center; gap:6px;">
                 <svg width="60" height="18" viewBox="0 0 60 18" style="display:block; overflow:visible; flex-shrink:0;" aria-hidden="true">
@@ -9379,48 +9712,48 @@
       `;
 
       return `
-        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:12px; margin-top:14px; width:100%; max-width:100%; box-sizing:border-box; overflow-x:hidden;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-            <div style="min-width:0; flex:1;">
-              <h4 style="font-size:0.88rem; font-weight:700; color:#0f172a; margin:0; word-break:break-word;">
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:14px 14px 18px 14px; margin-top:14px; width:100%; max-width:100%; height:auto; max-height:none; box-sizing:border-box; overflow:visible;">
+          <div class="analytics-header-row" style="display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px;">
+            <div class="analytics-header-text" style="flex:1 1 240px; min-width:0; word-break:keep-all; overflow-wrap:break-word;">
+              <h4 style="font-size:0.88rem; font-weight:700; color:#0f172a; margin:0; word-break:keep-all; overflow-wrap:break-word; line-height:1.4;">
                 ${t("Monthly Hifz Pace & Quality Analytics (ഹിഫ്ള് പുരോഗതി & പാരായണ നിലവാരം)", "ഹിഫ്ള് പുരോഗതി & പാരായണ നിലവാരം")}
               </h4>
-              <p style="font-size:0.74rem; color:#64748b; margin:2px 0 0;">
+              <p style="font-size:0.74rem; color:#64748b; margin:3px 0 0; word-break:keep-all; overflow-wrap:break-word; line-height:1.45;">
                 ${t("4-Week Memorization Velocity · Recitation Quality Ratio · Conduct Trajectory", "4 ആഴ്ചയിലെ മനഃപാഠ പുരോഗതി · പാരായണ നിലവാരം · അഖ്ലാഖ് മൂല്യനിർണ്ണയം")}
               </p>
             </div>
-            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-              <span style="font-size:0.72rem; font-weight:700; color:#166534; background:#dcfce7; border:1px solid #bbf7d0; padding:2px 8px; border-radius:6px; white-space:nowrap;">
+            <div class="analytics-header-badges" style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; flex-shrink:0;">
+              <span style="font-size:0.72rem; font-weight:700; color:#166534; background:#dcfce7; border:1px solid #bbf7d0; padding:3px 8px; border-radius:6px; white-space:nowrap;">
                 ${totalWeeklyPages} ${t("Total Pages", "ആകെ പേജുകൾ")}
               </span>
-              <span style="font-size:0.72rem; font-weight:700; color:#0369a1; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 8px; border-radius:6px; white-space:nowrap;">
+              <span style="font-size:0.72rem; font-weight:700; color:#0369a1; background:#e0f2fe; border:1px solid #bae6fd; padding:3px 8px; border-radius:6px; white-space:nowrap;">
                 ${analytics.mumtazPct}% ${t("Mumtaz", "മുംതാസ്")}
               </span>
             </div>
           </div>
 
-          <div class="analytics-chart-grid">
-            <div class="analytics-chart-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03); width:100%; max-width:100%; box-sizing:border-box; overflow:hidden;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
-                <strong style="font-size:0.8rem; color:#0f172a;">${t("Weekly Memorization Pace (ആഴ്ചയിലെ പേജുകൾ)", "ആഴ്ചയിലെ പേജുകൾ (Weekly Memorization Pace)")}</strong>
-                <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; padding:1px 6px; border-radius:4px; flex-shrink:0;">${t("4-Week Pace", "4-ആഴ്ചയിലെ പുരോഗതി")}</span>
+          <div class="analytics-chart-grid" style="height:auto; max-height:none; overflow:visible;">
+            <div class="analytics-chart-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px 14px 20px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.03); width:100%; max-width:100%; height:auto; max-height:none; box-sizing:border-box; overflow:visible;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:6px; line-height:1.5;">
+                <strong style="font-size:0.8rem; color:#0f172a;">${t("Weekly Memorization Pace (ആഴ്ചയിലെ പേജുകൾ)", "ആഴ്ചയിലെ പേജുകൾ")}</strong>
+                <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#ecfdf5; padding:2px 6px; border-radius:4px; flex-shrink:0;">${t("4-Week Pace", "4-ആഴ്ചയിലെ പുരോഗതി")}</span>
               </div>
               ${svgBarChart}
-              <div style="font-size:0.75rem; color:#64748b; margin-top:4px; padding-top:6px; border-top:1px dashed #f1f5f9; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-                <span>${t("Monthly Total:", "മാസത്തെ ആകെ:")} <strong style="color:#064e3b;">${totalWeeklyPages} ${t("Pages", "പേജുകൾ")}</strong></span>
-                <span>${t("Weekly Average:", "ആഴ്ചയിലെ ശരാശരി:")} <strong style="color:#064e3b;">${(totalWeeklyPages / 4).toFixed(1)} ${t("Pages / Wk", "പേജുകൾ / ആഴ്ച")}</strong></span>
+              <div class="analytics-summary-footer" style="font-size:0.76rem; line-height:1.6; color:#64748b; margin-top:8px; padding-top:8px; padding-bottom:4px; border-top:1px dashed #f1f5f9; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                <span style="line-height:1.6;">${t("Monthly Total:", "മാസത്തെ ആകെ:")} <strong style="color:#064e3b;">${totalWeeklyPages} ${t("Pages", "പേജുകൾ")}</strong></span>
+                <span style="line-height:1.6;">${t("Weekly Average:", "ആഴ്ചയിലെ ശരാശരി:")} <strong style="color:#064e3b;">${(totalWeeklyPages / 4).toFixed(1)} ${t("Pages / Wk", "പേജുകൾ / ആഴ്ച")}</strong></span>
               </div>
             </div>
 
-            <div class="analytics-chart-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:12px; box-shadow:0 1px 3px rgba(0,0,0,0.03); width:100%; max-width:100%; box-sizing:border-box; overflow:hidden;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+            <div class="analytics-chart-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:14px 14px 20px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.03); width:100%; max-width:100%; height:auto; max-height:none; box-sizing:border-box; overflow:visible;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap; margin-bottom:6px; line-height:1.5;">
                 <strong style="font-size:0.8rem; color:#0f172a;">${t("Recitation Quality & Akhlaq Breakdown", "പാരായണ നിലവാരവും അഖ്ലാഖ് വിലയിരുത്തലും")}</strong>
-                <span style="font-size:0.68rem; font-weight:700; color:#0284c7; background:#f0f9ff; padding:1px 6px; border-radius:4px; flex-shrink:0;">${t("Quality Index", "ഗുണനിലവാര സൂചിക")}</span>
+                <span style="font-size:0.68rem; font-weight:700; color:#0284c7; background:#f0f9ff; padding:2px 6px; border-radius:4px; flex-shrink:0;">${t("Quality Index", "ഗുണനിലവാര സൂചിക")}</span>
               </div>
               ${donutAndLegend}
-              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#475569; margin-top:4px; padding-top:6px; border-top:1px dashed #f1f5f9; flex-wrap:wrap; gap:6px;">
-                <span>${t("Akhlaq Evaluation:", "അഖ്ലാഖ് മൂല്യനിർണ്ണയം:")} <strong style="color:#064e3b;">${akhlaq.score} / 100 (${akhlaq.letter})</strong></span>
-                <span style="color:#059669; font-weight:700;">${t("✓ Steady Conduct", "✓ മികച്ച സ്വഭാവം")}</span>
+              <div class="analytics-summary-footer" style="display:flex; justify-content:space-between; align-items:center; font-size:0.76rem; line-height:1.6; color:#475569; margin-top:8px; padding-top:8px; padding-bottom:4px; border-top:1px dashed #f1f5f9; flex-wrap:wrap; gap:6px;">
+                <span style="line-height:1.6;">${t("Akhlaq Evaluation:", "അഖ്ലാഖ് മൂല്യനിർണ്ണയം:")} <strong style="color:#064e3b;">${akhlaq.score} / 100 (${akhlaq.letter})</strong></span>
+                <span style="color:#059669; font-weight:700; line-height:1.6;">${t("✓ Steady Conduct", "✓ മികച്ച സ്വഭാവം")}</span>
               </div>
             </div>
           </div>
@@ -9434,7 +9767,7 @@
       if (!std) {
         return `<div style="padding:24px; text-align:center; color:#64748b; font-size:0.9rem;">${t("No student enrolled to generate a monthly report card.", "റിപ്പോർട്ട് കാർഡ് തയ്യാറാക്കാൻ വിദ്യാർത്ഥികളെ ചേർത്തിട്ടില്ല.")}</div>`;
       }
-      const stdLogs = globalLogs.filter((l) => l.studentId === std.studentId);
+      const stdLogs = sortLogsChronologicallyDesc(globalLogs.filter((l) => l.studentId === std.studentId));
       const totalSessions = stdLogs.length;
       const daysPresent = stdLogs.filter(
         (l) => l.attendanceStatus !== "Absent" && l.attendanceStatus !== "Sick Bay / Medical Leave"
@@ -9459,9 +9792,10 @@
       ).length;
       const consistencyRate = workingSessions > 0 ? Math.round((sabaqRecitedCount / workingSessions) * 100) : 100;
 
-      const positiveTraits = (akhlaq.cleanPositiveTags && akhlaq.cleanPositiveTags.length > 0)
+      const rawPositiveTraits = (akhlaq.cleanPositiveTags && akhlaq.cleanPositiveTags.length > 0)
         ? akhlaq.cleanPositiveTags
         : getDefaultPositiveTraitLabels();
+      const positiveTraits = rawPositiveTraits.filter((tg) => !(campusMode === "day" && isHostelDisciplineTag(tg)));
       const negativeTraits = akhlaq.score >= 100 ? [] : (akhlaq.cleanNegativeTags || []);
       const analytics = calculateHifzAnalytics(stdLogs, std);
 
@@ -9984,8 +10318,7 @@
                   return over ? { ...l, ...over } : l;
                 });
             const merged = [...remoteLogs, ...seedFallback];
-            merged.sort((a, b) => String(b.id).localeCompare(String(a.id)));
-            globalLogs = merged;
+            globalLogs = sortLogsChronologicallyDesc(merged);
             saveLiveCollectionsToLocal();
             renderAllViews();
             if (window.updateNotificationsUI) window.updateNotificationsUI();
