@@ -1645,6 +1645,54 @@
     </div>
   </header>
 
+  <!-- DEMO PREVIEW SWITCHER BAR (Shown only when logged in with demo / demo786) -->
+  <div id="demo-preview-switcher-bar" class="hidden no-print" style="background:linear-gradient(90deg, #064e3b 0%, #047857 100%); border-bottom:2px solid #f59e0b; padding:10px 16px; color:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+    <div style="max-width:1280px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span style="background:#fef3c7; color:#92400e; font-size:0.72rem; font-weight:800; padding:3px 9px; border-radius:999px; letter-spacing:0.03em;">
+          🧪 DEMO SANDBOX (ഡെമോ പ്രിവ്യൂ)
+        </span>
+        <span style="font-size:0.78rem; color:#d1fae5; font-weight:600;">
+          നിങ്ങളുടെ യഥാർത്ഥ വിവരങ്ങൾ 100% സുരക്ഷിതമാണ് · Switch between all 3 portals below:
+        </span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <button
+          type="button"
+          id="demo-bar-btn-principal"
+          onclick="switchDemoPreviewPortal('principal')"
+          style="background:#ffffff; color:#064e3b; border:2px solid #fbbf24; border-radius:8px; padding:6px 12px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.15s ease;"
+        >
+          🏛️ പ്രിൻസിപ്പൽ ഡെമോ (Principal View)
+        </button>
+        <button
+          type="button"
+          id="demo-bar-btn-teacher"
+          onclick="switchDemoPreviewPortal('teacher')"
+          style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.35); border-radius:8px; padding:6px 12px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.15s ease;"
+        >
+          👨‍🏫 ഉസ്താദ് ഡെസ്ക് ഡെമോ (Ustadh View)
+        </button>
+        <button
+          type="button"
+          id="demo-bar-btn-parent"
+          onclick="switchDemoPreviewPortal('parent')"
+          style="background:rgba(255,255,255,0.15); color:#ffffff; border:1px solid rgba(255,255,255,0.35); border-radius:8px; padding:6px 12px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.15s ease;"
+        >
+          👨‍👩‍👦 രക്ഷിതാക്കളുടെ പോർട്ടൽ ഡെമോ (Parent View)
+        </button>
+        <button
+          type="button"
+          id="demo-bar-btn-exit"
+          onclick="exitDemoSandbox()"
+          style="background:#dc2626; color:#ffffff; border:1px solid #fca5a5; border-radius:8px; padding:6px 12px; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.15s ease;"
+        >
+          🚪 ഡെമോയിൽ നിന്ന് പുറത്തുകടക്കുക (Exit Demo)
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- CAMPUS CONTEXT BAR -->
   <div class="sub-context-bar no-print">
     <div class="sub-context-inner">
@@ -1696,16 +1744,17 @@
             <span id="auth-alert-text"></span>
           </div>
 
-          <form id="auth-portal-form" onsubmit="handleAuthSubmit(event)">
+          <form id="auth-portal-form" onsubmit="handleAuthSubmit(event)" autocomplete="off">
             <div class="form-group">
               <label for="auth-username" id="auth-username-label">Login ID / Admission No. (ലോഗിൻ ഐഡി)</label>
               <input
                 type="text"
                 id="auth-username"
+                name="portal_login_id_field"
                 value=""
                 placeholder="Enter User ID or Student ID (ഐഡി നൽകുക)"
                 required
-                autocomplete="username"
+                autocomplete="off"
               />
             </div>
 
@@ -1714,10 +1763,11 @@
               <input
                 type="password"
                 id="auth-password"
+                name="portal_login_pin_field"
                 value=""
                 placeholder="Enter Password or PIN (പാസ്വേഡ് നൽകുക)"
                 required
-                autocomplete="current-password"
+                autocomplete="new-password"
               />
             </div>
 
@@ -1725,47 +1775,6 @@
               Sign In to Portal (പോർട്ടലിൽ പ്രവേശിക്കുക)
             </button>
           </form>
-
-          <!-- Demo Sign-In Helper for Principal, Ustadh & Parent (Visible while Demo Mode is active; hidden when Principal clears demo data) -->
-          <div id="auth-demo-helper-box" style="margin-top: 1rem; padding: 10px 12px; background: #f0fdf4; border: 1px dashed #86efac; border-radius: 10px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
-              <span style="font-size:0.75rem; font-weight:700; color:#065f46;" id="demo-helper-title">
-                ⚡ Quick Demo Sign-In (ഡെമോ ലോഗിൻ സഹായി)
-              </span>
-              <span style="font-size:0.68rem; color:#047857; background:#dcfce7; padding:2px 7px; border-radius:99px; font-weight:700;" id="demo-helper-badge">
-                Demo Mode Active
-              </span>
-            </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:7px;">
-              <button
-                type="button"
-                onclick="handleQuickDemoLogin('principal')"
-                style="background:#ffffff; border:1px solid #86efac; border-radius:8px; padding:7px 8px; font-size:0.73rem; color:#064e3b; font-weight:700; cursor:pointer; text-align:left; line-height:1.35;"
-              >
-                <div id="demo-btn-principal-lbl">🏛️ Principal Demo (പ്രിൻസിപ്പൽ ഡെമോ)</div>
-                <div id="demo-btn-principal-creds" style="font-family:var(--font-mono); font-size:0.66rem; color:#047857; font-weight:600; margin-top:2px;">ID: admin · Pass: admin786</div>
-              </button>
-              <button
-                type="button"
-                onclick="handleQuickDemoLogin('teacher')"
-                style="background:#ffffff; border:1px solid #86efac; border-radius:8px; padding:7px 8px; font-size:0.73rem; color:#064e3b; font-weight:700; cursor:pointer; text-align:left; line-height:1.35;"
-              >
-                <div id="demo-btn-ustadh-lbl">👨‍🏫 Ustadh Demo (ഉസ്താദ് ഡെമോ)</div>
-                <div style="font-family:var(--font-mono); font-size:0.66rem; color:#047857; font-weight:600; margin-top:2px;">ID: ustadh · PIN: 1234</div>
-              </button>
-              <button
-                type="button"
-                onclick="handleQuickDemoLogin('parent')"
-                style="background:#ffffff; border:1px solid #86efac; border-radius:8px; padding:7px 8px; font-size:0.73rem; color:#064e3b; font-weight:700; cursor:pointer; text-align:left; line-height:1.35;"
-              >
-                <div id="demo-btn-parent-lbl">👨‍👩‍👦 Parent Demo (രക്ഷിതാവ് ഡെമോ)</div>
-                <div style="font-family:var(--font-mono); font-size:0.66rem; color:#047857; font-weight:600; margin-top:2px;">ID: STD-101 · PIN: 1234</div>
-              </button>
-            </div>
-            <div style="font-size:0.68rem; color:#475569; margin-top:6px; text-align:center;" id="demo-helper-note">
-              Click any role above to auto-fill &amp; sign in immediately, or disable Demo Mode in Principal → Campus Settings.
-            </div>
-          </div>
 
           <div style="margin-top: 1.15rem; padding-top: 0.85rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted); text-align: center;" id="auth-footer-security-note">
             🔒 Live Production Portal · Encrypted via Firestore Database · Role-Based Access Control
@@ -2473,22 +2482,23 @@
             <div class="card" style="margin-bottom:0;">
               <div class="card-header-row">
                 <div>
-                  <h2 class="card-title">Campus, Language &amp; Salah Configuration</h2>
-                  <p class="card-subtitle">Synced to Firestore (<code>settings/campus_config</code>) &amp; local storage</p>
+                  <h2 class="card-title" id="cfg-main-card-title">Campus, Language &amp; Shift Configuration</h2>
+                  <p class="card-subtitle" id="cfg-main-card-sub">Synced to Firestore (settings/campus_config) &amp; local storage</p>
                 </div>
               </div>
               <form onsubmit="handleSaveSettings(event)">
                 <div class="form-group">
                   <label for="cfg-campus-mode">
-                    Campus Mode (Active: <strong id="cfg-mode-status-text" style="color:var(--primary);">Day College / Day Madrasa</strong>)
+                    <span id="lbl-cfg-campus-mode-prefix">Campus Mode (Active:</span> <strong id="cfg-mode-status-text" style="color:var(--primary);">Day College / Day Madrasa</strong>)
                   </label>
                   <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                     <select id="cfg-campus-mode" onchange="handleCampusModeSelectChange()" style="flex:1; min-width:180px;">
-                      <option value="day" selected>Day College / Day Madrasa</option>
-                      <option value="residential">Residential Campus</option>
+                      <option value="day" id="opt-cfg-mode-day" selected>Day College / Day Madrasa</option>
+                      <option value="residential" id="opt-cfg-mode-res">Residential Campus</option>
                     </select>
                     <button
                       type="button"
+                      id="btn-quick-switch-mode"
                       class="btn-secondary"
                       onclick="toggleCampusModeQuick()"
                       style="white-space:nowrap; padding:9px 14px; font-weight:700;"
@@ -2501,11 +2511,11 @@
 
                 <!-- App Language Switcher -->
                 <div class="form-group">
-                  <label for="cfg-app-language">App Display Language (ഭാഷ തിരഞ്ഞെടുക്കുക)</label>
+                  <label for="cfg-app-language" id="lbl-cfg-app-language">App Display Language</label>
                   <select id="cfg-app-language" onchange="handleLanguageChange(this.value)">
-                    <option value="bi" selected>Bilingual (English + മലയാളം)</option>
-                    <option value="en">English Only</option>
-                    <option value="ml">മലയാളം (Malayalam)</option>
+                    <option value="bi" id="opt-cfg-lang-bi" selected>Bilingual (English + മലയാളം)</option>
+                    <option value="en" id="opt-cfg-lang-en">English Only</option>
+                    <option value="ml" id="opt-cfg-lang-ml">മലയാളം മാത്രം (Malayalam Only)</option>
                   </select>
                 </div>
 
@@ -2514,7 +2524,7 @@
                   <label for="cfg-enable-salah" style="margin:0; display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
                     <div>
                       <div style="font-size:0.84rem; font-weight:700; color:#064e3b;" id="lbl-cfg-salah-title">
-                        🕌 Enable 5-Time Jama'at Salah Tracking (5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന)
+                        🕌 Enable 5-Time Jama'at Salah Tracking
                       </div>
                       <div style="font-size:0.73rem; color:#047857; font-weight:500; margin-top:2px;" id="lbl-cfg-salah-sub">
                         Residential Campus: Turn OFF to hide 5-Time Jama'at Salah fields from Ustadh Desk, Parent Portal &amp; Report Card
@@ -2535,7 +2545,7 @@
                   <label for="cfg-enable-shift-transit" style="margin:0; display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
                     <div>
                       <div style="font-size:0.84rem; font-weight:700; color:#92400e;" id="lbl-cfg-shift-transit-title">
-                        🌅 Enable Morning / Evening Shift &amp; Transit Tracking (രാവിലെ / വൈകുന്നേരം ഷിഫ്റ്റ് &amp; യാത്രാ സമയം പരിശോധന സജീവമാക്കുക)
+                        🌅 Enable Morning / Evening Shift &amp; Transit Tracking
                       </div>
                       <div style="font-size:0.73rem; color:#b45309; font-weight:500; margin-top:2px;" id="lbl-cfg-shift-transit-sub">
                         Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal &amp; Report Card
@@ -2555,11 +2565,11 @@
                 <div class="form-group" style="background:#eff6ff; border:1px solid #93c5fd; border-radius:8px; padding:10px 12px;">
                   <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
                     <div>
-                      <div style="font-size:0.84rem; font-weight:700; color:#1e40af;">
-                        🔔 Real-Time Browser Notifications (സിസ്റ്റം അറിയിപ്പുകൾ)
+                      <div style="font-size:0.84rem; font-weight:700; color:#1e40af;" id="lbl-cfg-browser-notif-title">
+                        🔔 Real-Time Browser Notifications
                       </div>
                       <div style="font-size:0.73rem; color:#2563eb; font-weight:500; margin-top:2px;" id="cfg-browser-notif-status-text">
-                        Status: Checking browser permission...
+                        Status: Click Enable to allow notifications
                       </div>
                     </div>
                     <button
@@ -2568,28 +2578,28 @@
                       onclick="handleRequestBrowserNotificationPermission()"
                       style="background:#2563eb; color:#ffffff; border:none; border-radius:6px; padding:6px 12px; font-size:0.75rem; font-weight:700; cursor:pointer; white-space:nowrap;"
                     >
-                      🔔 അനുമതി നൽകുക (Enable)
+                      🔔 Enable
                     </button>
                   </div>
                 </div>
 
                 <div class="form-group" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px;">
-                  <label for="cfg-madrasa-id" style="font-weight:700;">Madrasa Code / ഐഡി (Multi-Campus Isolation)</label>
-                  <div style="font-size:0.73rem; color:#64748b; margin-bottom:6px;">
-                    Unique Madrasa Code to keep this campus data, teachers, and students separate from other institutions (Default: <code>MDR-01</code>)
+                  <label for="cfg-madrasa-id" id="lbl-cfg-madrasa-id" style="font-weight:700;">Madrasa Code / ID (Multi-Campus Isolation)</label>
+                  <div style="font-size:0.73rem; color:#64748b; margin-bottom:6px;" id="lbl-cfg-madrasa-id-sub">
+                    Unique Madrasa Code to keep this campus data, teachers, and students separate from other institutions (Default: MDR-01)
                   </div>
                   <input type="text" id="cfg-madrasa-id" value="MDR-01" placeholder="e.g. MDR-01 or ASRY-01" required style="font-family:monospace; font-weight:700; text-transform:uppercase;" />
                 </div>
                 <div class="form-group">
-                  <label for="cfg-college-name">College Name</label>
+                  <label for="cfg-college-name" id="lbl-cfg-college-name">College Name</label>
                   <input type="text" id="cfg-college-name" value="Asry Academy" required />
                 </div>
                 <div class="form-group">
-                  <label for="cfg-college-sub">Location / Subtitle</label>
+                  <label for="cfg-college-sub" id="lbl-cfg-college-sub">Location / Subtitle</label>
                   <input type="text" id="cfg-college-sub" value="Bendichal · Al-Furqan Hifz Campus" required />
                 </div>
                 <div class="form-group">
-                  <label for="cfg-academic-term">Academic Term</label>
+                  <label for="cfg-academic-term" id="lbl-cfg-academic-term">Academic Term</label>
                   <input type="text" id="cfg-academic-term" value="1448 AH · Rabi Al-Thani Term" required />
                 </div>
                 <button type="submit" class="btn-primary" id="btn-save-settings">
@@ -2602,62 +2612,62 @@
             <div class="card" style="margin-bottom:0;">
               <div class="card-header-row">
                 <div>
-                  <h2 class="card-title">🔐 Principal Account Security</h2>
-                  <p class="card-subtitle">Change Principal Login ID &amp; Password (saved to <code>settings/principal_auth</code>)</p>
+                  <h2 class="card-title" id="cfg-security-card-title">🔐 Principal Account Security</h2>
+                  <p class="card-subtitle" id="cfg-security-card-sub">Change Principal Login ID &amp; Password (saved to settings/principal_auth)</p>
                 </div>
               </div>
               <form onsubmit="handleUpdatePrincipalAuth(event)">
                 <div class="form-group">
-                  <label for="cfg-principal-username">Principal Login ID / Username</label>
+                  <label for="cfg-principal-username" id="lbl-cfg-principal-user">Principal Login ID / Username</label>
                   <input type="text" id="cfg-principal-username" value="admin" placeholder="e.g. admin" required />
                 </div>
                 <div class="form-group">
-                  <label for="cfg-principal-password">New Password / PIN</label>
+                  <label for="cfg-principal-password" id="lbl-cfg-principal-pass">New Password / PIN</label>
                   <input type="password" id="cfg-principal-password" placeholder="Enter new password" required />
                 </div>
                 <div class="form-group">
-                  <label for="cfg-principal-password-confirm">Confirm New Password / PIN</label>
+                  <label for="cfg-principal-password-confirm" id="lbl-cfg-principal-pass-conf">Confirm New Password / PIN</label>
                   <input type="password" id="cfg-principal-password-confirm" placeholder="Re-enter new password" required />
                 </div>
-                <button type="submit" class="btn-primary" style="background:#0f172a;">
+                <button type="submit" id="btn-update-principal-auth" class="btn-primary" style="background:#0f172a;">
                   Update Principal Login Credentials
                 </button>
               </form>
             </div>
           </div>
 
-          <!-- Right Column: Custom Hostel Behaviour & Cleanliness / Akhlaq Traits Manager + Clean DB Reset -->
+          <!-- Right Column: Student / Hostel Behaviour, Cleanliness & Akhlaq Traits Manager + Clean DB Reset -->
           <div style="display:flex; flex-direction:column; gap:1.25rem;">
             <div class="card" style="margin-bottom:0;">
               <div class="card-header-row">
                 <div>
-                  <h2 class="card-title">✨ Hostel Behaviour, Cleanliness &amp; Akhlaq Traits Manager</h2>
-                  <p class="card-subtitle">Add or delete custom positive/negative traits shown as chips on the Ustadh Desk</p>
+                  <h2 class="card-title" id="cfg-traits-card-title">✨ Student Behaviour, Cleanliness &amp; Akhlaq Traits Manager</h2>
+                  <p class="card-subtitle" id="cfg-traits-card-sub">Add or delete custom positive/negative traits shown as chips on the Ustadh Desk</p>
                 </div>
               </div>
 
               <form onsubmit="handleAddCustomTrait(event)" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:14px;">
-                <div style="font-size:0.78rem; font-weight:700; color:#0f172a; margin-bottom:8px;">
+                <div style="font-size:0.78rem; font-weight:700; color:#0f172a; margin-bottom:8px;" id="lbl-add-trait-heading">
                   Add New Behaviour / Cleanliness Tag
                 </div>
                 <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:8px; margin-bottom:10px;">
                   <div>
-                    <label for="new-trait-label" style="font-size:0.72rem;">Trait Label (Malayalam / English)</label>
-                    <input type="text" id="new-trait-label" placeholder="e.g. റൂം ശുചിത്വം / Cleanliness" required />
+                    <label for="new-trait-label" id="lbl-new-trait-label" style="font-size:0.72rem;">Trait Label</label>
+                    <input type="text" id="new-trait-label" placeholder="e.g. Punctuality" required />
                   </div>
                   <div>
-                    <label for="new-trait-points" style="font-size:0.72rem;">Point Value (+ or -)</label>
+                    <label for="new-trait-points" id="lbl-new-trait-points" style="font-size:0.72rem;">Point Value (+ or -)</label>
                     <select id="new-trait-points">
-                      <option value="2">+2 pts (Positive Trait)</option>
-                      <option value="3">+3 pts (Exemplary Trait)</option>
-                      <option value="5">+5 pts (Major Merit)</option>
-                      <option value="-2">-2 pts (Minor Warning)</option>
-                      <option value="-3">-3 pts (Negative Conduct)</option>
-                      <option value="-5">-5 pts (Major Deduction)</option>
+                      <option value="2" id="opt-trait-pts-2">+2 pts (Positive Trait)</option>
+                      <option value="3" id="opt-trait-pts-3">+3 pts (Exemplary Trait)</option>
+                      <option value="5" id="opt-trait-pts-5">+5 pts (Major Merit)</option>
+                      <option value="-2" id="opt-trait-pts-m2">-2 pts (Minor Warning)</option>
+                      <option value="-3" id="opt-trait-pts-m3">-3 pts (Negative Conduct)</option>
+                      <option value="-5" id="opt-trait-pts-m5">-5 pts (Major Deduction)</option>
                     </select>
                   </div>
                 </div>
-                <button type="submit" class="btn-primary" style="padding:8px 12px; font-size:0.8rem;">
+                <button type="submit" id="btn-add-trait-submit" class="btn-primary" style="padding:8px 12px; font-size:0.8rem;">
                   + Add Trait &amp; Sync to Ustadh Desk
                 </button>
               </form>
@@ -2682,36 +2692,40 @@
             <div class="card" style="margin-bottom:0; border:1px solid #fecaca; background:#fff1f2;">
               <div class="card-header-row" style="border-bottom-color:#fecaca;">
                 <div>
-                  <h2 class="card-title" style="color:#991b1b;">🗑️ Live Production Database Reset</h2>
-                  <p class="card-subtitle" style="color:#b91c1c;">
-                    Remove initial sample students (<code>Zaid Mansoor</code>, etc.) and sample logs to start fresh with live academy records
+                  <h2 class="card-title" id="cfg-db-reset-title" style="color:#991b1b;">🗑️ Live Production Database Reset</h2>
+                  <p class="card-subtitle" id="cfg-db-reset-sub" style="color:#b91c1c;">
+                    Remove initial sample students (Zaid Mansoor, etc.) and sample logs to start fresh with live academy records
                   </p>
                 </div>
               </div>
-              <p style="font-size:0.78rem; color:#7f1d1d; line-height:1.5; margin-bottom:10px;">
+              <p id="cfg-db-reset-desc" style="font-size:0.78rem; color:#7f1d1d; line-height:1.5; margin-bottom:10px;">
                 Clicking the button below wipes all pre-loaded sample students, sample Ustadhs, sample logs, and sample schedules from both local storage and Firestore so your campus starts with a clean database. Your Principal login credentials and Campus Settings remain preserved.
               </p>
               <div id="db-reset-status-banner" style="background:#ffffff; border:1px solid #fca5a5; border-radius:8px; padding:8px 12px; font-size:0.78rem; font-weight:700; color:#991b1b; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                 <span>Database Status: Checking records...</span>
               </div>
-              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <div id="btn-clear-sample-data-wrap" style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button
                   type="button"
                   id="btn-clear-sample-data"
                   onclick="handleClearSampleData()"
                   style="background:#dc2626; color:#ffffff; border:none; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; flex:1; min-width:220px;"
                 >
-                  🗑️ Clear Demo Data &amp; Switch to Live Mode (ഡെമോ വിവരങ്ങൾ നീക്കം ചെയ്യുക)
+                  🗑️ Clear Demo Data / Switch to Live Mode
                 </button>
+              </div>
+              <div id="btn-exit-demo-sandbox-wrap" class="hidden" style="display:flex; gap:10px; flex-wrap:wrap;">
                 <button
                   type="button"
-                  id="btn-restore-sample-data"
-                  onclick="handleRestoreSampleData()"
-                  class="btn-secondary"
-                  style="padding:10px 14px; font-size:0.78rem; background:#ffffff;"
+                  id="btn-exit-demo-sandbox-settings"
+                  onclick="exitDemoSandbox()"
+                  style="background:#b45309; color:#ffffff; border:1px solid #92400e; border-radius:8px; padding:10px 16px; font-size:0.82rem; font-weight:700; cursor:pointer; flex:1; min-width:220px;"
                 >
-                  ↺ Re-enable Demo Mode (ഡെമോ മോഡ് പുനഃസ്ഥാപിക്കുക)
+                  🚪 Exit Demo Preview &amp; Return to Live Mode (ഡെമോയിൽ നിന്ന് പുറത്തുകടക്കുക)
                 </button>
+              </div>
+              <div id="demo-mode-info-note" style="margin-top:12px; background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid #2563eb; border-radius:8px; padding:10px 14px; font-size:0.78rem; color:#1e3a8a; line-height:1.55; font-weight:600;">
+                💡 To preview Demo Mode: After logging out, sign in on the login page with ID: <code>demo</code> and Password: <code>demo786</code> to preview the Principal, Ustadh &amp; Parent portals together (your real live data remains 100% safe).
               </div>
             </div>
           </div>
@@ -3381,6 +3395,47 @@
       { label: "അനാവശ്യ സംസാരം", points: -3, isDefault: true }
     ];
 
+    const TRAIT_I18N_MAP = {
+      "അദബ് / മര്യാദ": { en: "Adab / Manners", ml: "അദബ് / മര്യാദ", bi: "അദബ് / മര്യാദ (Adab / Manners)" },
+      "Adab / Manners": { en: "Adab / Manners", ml: "അദബ് / മര്യാദ", bi: "അദബ് / മര്യാദ (Adab / Manners)" },
+      "ഏകാഗ്രത": { en: "Focus & Attention", ml: "ഏകാഗ്രത", bi: "ഏകാഗ്രത (Focus & Attention)" },
+      "Focus & Attention": { en: "Focus & Attention", ml: "ഏകാഗ്രത", bi: "ഏകാഗ്രത (Focus & Attention)" },
+      "ശുചിത്വം": { en: "Cleanliness", ml: "ശുചിത്വം", bi: "ശുചിത്വം (Cleanliness)" },
+      "Cleanliness": { en: "Cleanliness", ml: "ശുചിത്വം", bi: "ശുചിത്വം (Cleanliness)" },
+      "വൃത്തി": { en: "Cleanliness", ml: "വൃത്തി", bi: "വൃത്തി (Cleanliness)" },
+      "കൃത്യനിഷ്ഠ": { en: "Punctuality", ml: "കൃത്യനിഷ്ഠ", bi: "കൃത്യനിഷ്ഠ (Punctuality)" },
+      "Punctuality": { en: "Punctuality", ml: "കൃത്യനിഷ്ഠ", bi: "കൃത്യനിഷ്ഠ (Punctuality)" },
+      "ഹോസ്റ്റൽ അച്ചടക്കം": { en: "Hostel Discipline", ml: "ഹോസ്റ്റൽ അച്ചടക്കം", bi: "ഹോസ്റ്റൽ അച്ചടക്കം (Hostel Discipline)" },
+      "Hostel Discipline": { en: "Hostel Discipline", ml: "ഹോസ്റ്റൽ അച്ചടക്കം", bi: "ഹോസ്റ്റൽ അച്ചടക്കം (Hostel Discipline)" },
+      "സഹായമനസ്സ്": { en: "Helpfulness", ml: "സഹായമനസ്സ്", bi: "സഹായമനസ്സ് (Helpfulness)" },
+      "ശ്രദ്ധക്കുറവ്": { en: "Lack of Focus", ml: "ശ്രദ്ധക്കുറവ്", bi: "ശ്രദ്ധക്കുറവ് (Lack of Focus)" },
+      "Lack of Focus": { en: "Lack of Focus", ml: "ശ്രദ്ധക്കുറവ്", bi: "ശ്രദ്ധക്കുറവ് (Lack of Focus)" },
+      "തർക്കം/വഴക്ക്": { en: "Argument / Misbehaviour", ml: "തർക്കം/വഴക്ക്", bi: "തർക്കം/വഴക്ക് (Argument / Misbehaviour)" },
+      "Argument / Misbehaviour": { en: "Argument / Misbehaviour", ml: "തർക്കം/വഴക്ക്", bi: "തർക്കം/വഴക്ക് (Argument / Misbehaviour)" },
+      "അലസത": { en: "Laziness", ml: "അലസത", bi: "അലസത (Laziness)" },
+      "Laziness": { en: "Laziness", ml: "അലസത", bi: "അലസത (Laziness)" },
+      "അനാവശ്യ സംസാരം": { en: "Unnecessary Talking", ml: "അനാവശ്യ സംസാരം", bi: "അനാവശ്യ സംസാരം (Unnecessary Talking)" },
+      "Unnecessary Talking": { en: "Unnecessary Talking", ml: "അനാവശ്യ സംസാരം", bi: "അനാവശ്യ സംസാരം (Unnecessary Talking)" },
+      "സംസാരിക്കുന്നു": { en: "Unnecessary Talking", ml: "സംസാരിക്കുന്നു", bi: "സംസാരിക്കുന്നു (Unnecessary Talking)" }
+    };
+
+    function formatTraitDisplayLabel(rawLabel) {
+      const clean = String(rawLabel || "").trim();
+      if (!clean) return "";
+      const lang = (typeof appLanguage === "string" && appLanguage) ? appLanguage : "bi";
+      if (TRAIT_I18N_MAP[clean]) {
+        return TRAIT_I18N_MAP[clean][lang] || TRAIT_I18N_MAP[clean].en;
+      }
+      if (clean.includes("/") && lang !== "bi") {
+        const parts = clean.split("/").map((p) => p.trim()).filter(Boolean);
+        const mlPart = parts.find((p) => /[\u0D00-\u0D7F]/.test(p));
+        const enPart = parts.find((p) => !/[\u0D00-\u0D7F]/.test(p));
+        if (lang === "en" && enPart) return enPart;
+        if (lang === "ml" && mlPart) return mlPart;
+      }
+      return clean;
+    }
+
     let removedDefaultTraits = [];
     try {
       const savedRem = localStorage.getItem("hifz_removed_default_traits");
@@ -3502,8 +3557,67 @@
     let appLanguage = localStorage.getItem("hifz_app_language") || "bi";
     let enableSalahTracking = localStorage.getItem("hifz_enable_salah") !== "false";
     let enableShiftTransitTracking = localStorage.getItem("hifz_enable_shift_transit") !== "false";
-    let cleanDatabaseMode = localStorage.getItem("hifz_clean_db_mode") === "true";
     let currentMadrasaId = (localStorage.getItem("hifz_madrasa_id") || "MDR-01").trim().toUpperCase();
+    let demoCleared =
+      localStorage.getItem(`hifz_demo_cleared_${currentMadrasaId}`) === "true" ||
+      localStorage.getItem("hifz_demo_cleared") === "true" ||
+      localStorage.getItem("hifz_clean_db_mode") === "true";
+    let cleanDatabaseMode = demoCleared;
+
+    const SAMPLE_STUDENT_IDS = new Set(["STD-101", "STD-102", "STD-103", "STD-104", "STD-105"]);
+    const SAMPLE_TEACHER_IDS = new Set([
+      "tch-101",
+      "tch-102",
+      "tch-ustadh",
+      "tch-ustadh1",
+      "tch-ustadh2",
+      "ustadh",
+      "ustadh1",
+      "ustadh2"
+    ]);
+    const SAMPLE_LOG_IDS = new Set(["LOG-101", "LOG-102", "LOG-103", "LOG-104", "LOG-105", "LOG-106", "LOG-107"]);
+    const SAMPLE_SCHEDULE_IDS = new Set(["SCH-101", "SCH-102", "SCH-103"]);
+    const SAMPLE_NOTICE_IDS = new Set(["NOT-101"]);
+
+    function isSampleStudent(s) {
+      if (!s) return false;
+      const sid = String(s.studentId || s.id || "").trim().toUpperCase();
+      return SAMPLE_STUDENT_IDS.has(sid);
+    }
+
+    function isSampleTeacher(t) {
+      if (!t) return false;
+      const u = String(t.username || "").trim().toLowerCase();
+      const tid = String(t.teacherId || t.id || "").trim().toLowerCase();
+      return SAMPLE_TEACHER_IDS.has(u) || SAMPLE_TEACHER_IDS.has(tid);
+    }
+
+    function isSampleLog(l) {
+      if (!l) return false;
+      const lid = String(l.id || "").trim().toUpperCase();
+      const sid = String(l.studentId || "").trim().toUpperCase();
+      return SAMPLE_LOG_IDS.has(lid) || SAMPLE_STUDENT_IDS.has(sid);
+    }
+
+    function isSampleSchedule(s) {
+      if (!s) return false;
+      const id = String(s.id || "").trim().toUpperCase();
+      const sid = String(s.studentId || "").trim().toUpperCase();
+      return SAMPLE_SCHEDULE_IDS.has(id) || SAMPLE_STUDENT_IDS.has(sid);
+    }
+
+    function isSampleNotice(n) {
+      if (!n) return false;
+      const id = String(n.id || "").trim().toUpperCase();
+      return SAMPLE_NOTICE_IDS.has(id);
+    }
+
+    function isSampleAlert(a) {
+      if (!a) return false;
+      const id = String(a.id || "").trim();
+      const sid = String(a.studentId || "").trim().toUpperCase();
+      return id === "ALERT-SEED-1" || SAMPLE_STUDENT_IDS.has(sid);
+    }
 
     // Universal Translation Helper: returns Malayalam when 'ml' is active, English when 'en', Bilingual when 'bi'
     function t(enText, mlText, biText) {
@@ -3514,145 +3628,285 @@
 
     // Global State
     let currentUser = null;
+    let isDemoSandbox = false;
     let currentAuthRole = "teacher";
     let campusMode = localStorage.getItem("hifz_campus_mode") || "day";
     let currentShift = "Morning Shift (Before School)";
     let currentAttendance = "Present";
     let dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
     let dailyAkhlaqDelta = dailyAkhlaqTags.length * 2;
-    let globalStudents = cleanDatabaseMode ? [] : [...INITIAL_STUDENTS];
-    let globalTeachers = cleanDatabaseMode ? [] : [...INITIAL_TEACHERS];
-    let globalLogs = cleanDatabaseMode ? [] : sortLogsChronologicallyDesc(INITIAL_LOGS);
-    let globalSchedules = cleanDatabaseMode ? [] : [...INITIAL_SCHEDULES];
-    let globalNotices = cleanDatabaseMode ? [] : [...INITIAL_NOTICES];
-    let currentParentStudentId = "STD-101";
-    let globalParentAlerts = cleanDatabaseMode
-      ? []
-      : [
-          {
-            id: "ALERT-SEED-1",
-            studentId: "STD-103",
-            studentName: "Hamza Tariq",
-            severity: "warning",
-            category: "attendance_risk",
-            title: "Parent Notice: School Exam Mode (സ്കൂൾ പരീക്ഷ)",
-            message: "Hamza Tariq (STD-103) · Tomorrow · Science Board Exam tomorrow — Light home revision requested.",
-            recommendedAction: "School Exam Mode: Lighten Sabaq requirement",
-            status: "open",
-            teacherResponse: "",
-            dateStr: new Date(Date.now() + 86400000).toISOString().split("T")[0],
-            effectiveDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
-            noticeType: "School Exam Mode (സ്കൂൾ പരീക്ഷ)",
-            remarks: "Science Board Exam tomorrow — Light home revision requested.",
-            ownerId: "portal-session",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ];
+    let globalStudents = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_STUDENTS));
+    let globalTeachers = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_TEACHERS));
+    let globalLogs = demoCleared ? [] : sortLogsChronologicallyDesc(JSON.parse(JSON.stringify(INITIAL_LOGS)));
+    let globalSchedules = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_SCHEDULES));
+    let globalNotices = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_NOTICES));
+    let currentParentStudentId = demoCleared ? "" : "STD-101";
+    const INITIAL_PARENT_ALERTS = [
+      {
+        id: "ALERT-SEED-1",
+        studentId: "STD-103",
+        studentName: "Hamza Tariq",
+        severity: "warning",
+        category: "attendance_risk",
+        title: "Parent Notice: School Exam Mode (സ്കൂൾ പരീക്ഷ)",
+        message: "Hamza Tariq (STD-103) · Tomorrow · Science Board Exam tomorrow — Light home revision requested.",
+        recommendedAction: "School Exam Mode: Lighten Sabaq requirement",
+        status: "open",
+        teacherResponse: "",
+        dateStr: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        effectiveDate: new Date(Date.now() + 86400000).toISOString().split("T")[0],
+        noticeType: "School Exam Mode (സ്കൂൾ പരീക്ഷ)",
+        remarks: "Science Board Exam tomorrow — Light home revision requested.",
+        ownerId: "portal-session",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    ];
+    let globalParentAlerts = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_PARENT_ALERTS));
 
-    try {
-      const savedStudents = localStorage.getItem("hifz_live_students");
-      if (savedStudents) {
-        const parsed = JSON.parse(savedStudents);
-        if (Array.isArray(parsed)) globalStudents = parsed;
-      }
-      const savedTeachers = localStorage.getItem("hifz_live_teachers");
-      if (savedTeachers) {
-        const parsed = JSON.parse(savedTeachers);
-        if (Array.isArray(parsed)) globalTeachers = parsed;
-      }
-      const savedLogs = localStorage.getItem("hifz_live_logs");
-      if (savedLogs) {
-        const parsed = JSON.parse(savedLogs);
-        if (Array.isArray(parsed)) globalLogs = sortLogsChronologicallyDesc(parsed);
-      }
-      const savedSchedules = localStorage.getItem("hifz_live_schedules");
-      if (savedSchedules) {
-        const parsed = JSON.parse(savedSchedules);
-        if (Array.isArray(parsed)) globalSchedules = parsed;
-      }
-      const savedNotices = localStorage.getItem("hifz_live_notices");
-      if (savedNotices) {
-        const parsed = JSON.parse(savedNotices);
-        if (Array.isArray(parsed)) globalNotices = parsed;
-      }
-      const storedAlerts = localStorage.getItem("hifz_parent_alerts");
-      if (storedAlerts) {
-        const parsed = JSON.parse(storedAlerts);
-        if (Array.isArray(parsed)) {
-          globalParentAlerts = parsed;
+    function loadLiveCollectionsFromLocal(madrasaId) {
+      const mId = (madrasaId || currentMadrasaId || "MDR-01").trim().toUpperCase();
+      try {
+        const savedCfgRaw = localStorage.getItem(`live_config_${mId}`);
+        let parsedCfg = null;
+        if (savedCfgRaw) {
+          try {
+            parsedCfg = JSON.parse(savedCfgRaw);
+          } catch (e) {}
         }
-      }
-    } catch (e) {}
+        if (
+          localStorage.getItem(`hifz_demo_cleared_${mId}`) === "true" ||
+          localStorage.getItem("hifz_demo_cleared") === "true" ||
+          localStorage.getItem("hifz_clean_db_mode") === "true" ||
+          (parsedCfg && (parsedCfg.demoCleared === true || parsedCfg.cleanDatabaseMode === true))
+        ) {
+          demoCleared = true;
+          cleanDatabaseMode = true;
+          localStorage.setItem(`hifz_demo_cleared_${mId}`, "true");
+          localStorage.setItem("hifz_demo_cleared", "true");
+          localStorage.setItem("hifz_clean_db_mode", "true");
+        }
+
+        const savedStudents = localStorage.getItem(`live_students_${mId}`) || localStorage.getItem("hifz_live_students");
+        if (savedStudents) {
+          const parsed = JSON.parse(savedStudents);
+          if (Array.isArray(parsed)) {
+            globalStudents = demoCleared ? parsed.filter((s) => !isSampleStudent(s)) : parsed;
+          }
+        } else {
+          globalStudents = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_STUDENTS));
+        }
+
+        const savedTeachers = localStorage.getItem(`live_ustadhs_${mId}`) || localStorage.getItem("hifz_live_teachers");
+        if (savedTeachers) {
+          const parsed = JSON.parse(savedTeachers);
+          if (Array.isArray(parsed)) {
+            globalTeachers = demoCleared ? parsed.filter((t) => !isSampleTeacher(t)) : parsed;
+          }
+        } else {
+          globalTeachers = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_TEACHERS));
+        }
+
+        const savedLogs = localStorage.getItem(`live_logs_${mId}`) || localStorage.getItem("hifz_live_logs");
+        if (savedLogs) {
+          const parsed = JSON.parse(savedLogs);
+          if (Array.isArray(parsed)) {
+            const filtered = demoCleared ? parsed.filter((l) => !isSampleLog(l)) : parsed;
+            globalLogs = sortLogsChronologicallyDesc(filtered);
+          }
+        } else {
+          globalLogs = demoCleared ? [] : sortLogsChronologicallyDesc(JSON.parse(JSON.stringify(INITIAL_LOGS)));
+        }
+
+        const savedSchedules = localStorage.getItem(`live_schedules_${mId}`) || localStorage.getItem("hifz_live_schedules");
+        if (savedSchedules) {
+          const parsed = JSON.parse(savedSchedules);
+          if (Array.isArray(parsed)) {
+            globalSchedules = demoCleared ? parsed.filter((s) => !isSampleSchedule(s)) : parsed;
+          }
+        } else {
+          globalSchedules = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_SCHEDULES));
+        }
+
+        const savedNotices = localStorage.getItem(`live_notices_${mId}`) || localStorage.getItem("hifz_live_notices");
+        if (savedNotices) {
+          const parsed = JSON.parse(savedNotices);
+          if (Array.isArray(parsed)) {
+            globalNotices = demoCleared ? parsed.filter((n) => !isSampleNotice(n)) : parsed;
+          }
+        } else {
+          globalNotices = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_NOTICES));
+        }
+
+        const storedAlerts = localStorage.getItem(`live_alerts_${mId}`) || localStorage.getItem("hifz_parent_alerts");
+        if (storedAlerts) {
+          const parsed = JSON.parse(storedAlerts);
+          if (Array.isArray(parsed)) {
+            globalParentAlerts = demoCleared ? parsed.filter((a) => !isSampleAlert(a)) : parsed;
+          }
+        } else {
+          globalParentAlerts = demoCleared ? [] : JSON.parse(JSON.stringify(INITIAL_PARENT_ALERTS));
+        }
+
+        if (parsedCfg && typeof parsedCfg === "object" && parsedCfg.campusMode) {
+          campusMode = parsedCfg.campusMode;
+        } else {
+          campusMode = localStorage.getItem("hifz_campus_mode") || "day";
+        }
+      } catch (e) {}
+    }
+
+    function loadDemoSandboxDataInMemory() {
+      globalStudents = JSON.parse(JSON.stringify(INITIAL_STUDENTS));
+      globalTeachers = JSON.parse(JSON.stringify(INITIAL_TEACHERS));
+      globalLogs = sortLogsChronologicallyDesc(JSON.parse(JSON.stringify(INITIAL_LOGS)));
+      globalSchedules = JSON.parse(JSON.stringify(INITIAL_SCHEDULES));
+      globalNotices = JSON.parse(JSON.stringify(INITIAL_NOTICES));
+      globalParentAlerts = JSON.parse(JSON.stringify(INITIAL_PARENT_ALERTS));
+      currentParentStudentId = "STD-101";
+    }
+
+    loadLiveCollectionsFromLocal(currentMadrasaId);
 
     let isClearingDatabase = false;
 
     function saveLiveCollectionsToLocal() {
+      // STRICT PROTECTION: Never overwrite Live Data in localStorage while inside Demo Sandbox
+      if (isDemoSandbox) return;
+      const mId = (currentMadrasaId || "MDR-01").trim().toUpperCase();
       try {
+        if (demoCleared || cleanDatabaseMode) {
+          demoCleared = true;
+          cleanDatabaseMode = true;
+          localStorage.setItem(`hifz_demo_cleared_${mId}`, "true");
+          localStorage.setItem("hifz_demo_cleared", "true");
+          localStorage.setItem("hifz_clean_db_mode", "true");
+          globalStudents = globalStudents.filter((s) => !isSampleStudent(s));
+          globalTeachers = globalTeachers.filter((t) => !isSampleTeacher(t));
+          globalLogs = globalLogs.filter((l) => !isSampleLog(l));
+          globalSchedules = globalSchedules.filter((s) => !isSampleSchedule(s));
+          globalNotices = globalNotices.filter((n) => !isSampleNotice(n));
+          globalParentAlerts = globalParentAlerts.filter((a) => !isSampleAlert(a));
+        }
+        localStorage.setItem(`live_students_${mId}`, JSON.stringify(globalStudents));
+        localStorage.setItem(`live_ustadhs_${mId}`, JSON.stringify(globalTeachers));
+        localStorage.setItem(`live_logs_${mId}`, JSON.stringify(globalLogs));
+        localStorage.setItem(`live_schedules_${mId}`, JSON.stringify(globalSchedules));
+        localStorage.setItem(`live_notices_${mId}`, JSON.stringify(globalNotices));
+        localStorage.setItem(`live_alerts_${mId}`, JSON.stringify(globalParentAlerts));
+        localStorage.setItem(
+          `live_config_${mId}`,
+          JSON.stringify({
+            madrasaId: mId,
+            campusMode,
+            appLanguage,
+            enableSalahTracking,
+            enableShiftTransitTracking,
+            cleanDatabaseMode: Boolean(demoCleared || cleanDatabaseMode),
+            demoCleared: Boolean(demoCleared || cleanDatabaseMode)
+          })
+        );
         localStorage.setItem("hifz_live_students", JSON.stringify(globalStudents));
         localStorage.setItem("hifz_live_teachers", JSON.stringify(globalTeachers));
         localStorage.setItem("hifz_live_logs", JSON.stringify(globalLogs));
         localStorage.setItem("hifz_live_schedules", JSON.stringify(globalSchedules));
         localStorage.setItem("hifz_live_notices", JSON.stringify(globalNotices));
+        localStorage.setItem("hifz_parent_alerts", JSON.stringify(globalParentAlerts));
       } catch (e) {}
     }
 
     function updateAuthDemoHelperUI() {
       const demoBox = document.getElementById("auth-demo-helper-box");
       if (demoBox) {
-        demoBox.classList.toggle("hidden", Boolean(cleanDatabaseMode));
+        demoBox.classList.add("hidden");
       }
     }
 
-    window.handleQuickDemoLogin = function(role) {
-      if (cleanDatabaseMode) return;
+    window.handleQuickDemoLogin = function() {
       const uInp = document.getElementById("auth-username");
       const pInp = document.getElementById("auth-password");
-      if (role === "principal") {
-        const adminUser = (principalAuth && principalAuth.username ? principalAuth.username : "admin").trim();
-        const adminPass = (principalAuth && principalAuth.password ? principalAuth.password : "admin786").trim();
-        if (uInp) uInp.value = adminUser;
-        if (pInp) pInp.value = adminPass;
-        window.loginWithAutoRole(adminUser, adminPass);
-      } else if (role === "teacher") {
-        const demoTeacherUser = (globalTeachers[0] && globalTeachers[0].username) ? globalTeachers[0].username : "ustadh";
-        const demoTeacherPin = (globalTeachers[0] && globalTeachers[0].pin) ? globalTeachers[0].pin : "1234";
-        if (uInp) uInp.value = demoTeacherUser;
-        if (pInp) pInp.value = demoTeacherPin;
-        window.loginWithAutoRole(demoTeacherUser, demoTeacherPin);
-      } else if (role === "parent") {
-        const demoStudent = globalStudents[0] || { studentId: "STD-101", pin: "1234" };
-        const demoId = demoStudent.studentId || "STD-101";
-        const demoPin = demoStudent.pin || "1234";
-        if (uInp) uInp.value = demoId;
-        if (pInp) pInp.value = demoPin;
-        window.loginWithAutoRole(demoId, demoPin);
-      }
+      if (uInp) uInp.value = "demo";
+      if (pInp) pInp.value = "demo786";
+      window.loginWithAutoRole("demo", "demo786");
     };
 
     function updateDbResetStatusBanner() {
       updateAuthDemoHelperUI();
+      const clearWrap = document.getElementById("btn-clear-sample-data-wrap");
+      const clearBtn = document.getElementById("btn-clear-sample-data");
+      const exitSandboxWrap = document.getElementById("btn-exit-demo-sandbox-wrap");
+      const exitSandboxBtn = document.getElementById("btn-exit-demo-sandbox-settings");
+
+      if (clearBtn && !clearBtn.disabled) {
+        clearBtn.innerText = t(
+          "🗑️ Clear Demo Data / Switch to Live Mode",
+          "🗑️ ഡെമോ വിവരങ്ങൾ നീക്കം ചെയ്ത് ലൈവ് മോഡിലേക്ക് മാറ്റുക",
+          "🗑️ ഡെമോ വിവരങ്ങൾ നീക്കം ചെയ്ത് ലൈവ് മോഡിലേക്ക് മാറ്റുക (Clear Demo Data / Switch to Live Mode)"
+        );
+      }
+      if (exitSandboxBtn) {
+        exitSandboxBtn.innerText = t(
+          "🚪 Exit Demo Preview & Return to Live Mode",
+          "🚪 ഡെമോയിൽ നിന്ന് പുറത്തുകടക്കുക (ലൈവ് മോഡിലേക്ക് മടങ്ങുക)",
+          "🚪 Exit Demo Preview & Return to Live Mode (ഡെമോയിൽ നിന്ന് പുറത്തുകടക്കുക)"
+        );
+      }
+
+      if (isDemoSandbox) {
+        if (clearWrap) clearWrap.classList.add("hidden");
+        if (clearBtn) clearBtn.classList.add("hidden");
+        if (exitSandboxWrap) exitSandboxWrap.classList.remove("hidden");
+      } else {
+        if (exitSandboxWrap) exitSandboxWrap.classList.add("hidden");
+        const shouldHideClear = Boolean(demoCleared || cleanDatabaseMode);
+        if (clearWrap) clearWrap.classList.toggle("hidden", shouldHideClear);
+        if (clearBtn) clearBtn.classList.toggle("hidden", shouldHideClear);
+      }
+
       const el = document.getElementById("db-reset-status-banner");
       if (!el) return;
+      if (isDemoSandbox) {
+        el.style.background = "#fffbeb";
+        el.style.borderColor = "#fcd34d";
+        el.style.color = "#92400e";
+        el.innerHTML = `
+          <span>🔍 ${t(
+            "Demo Preview Sandbox Active (demo / demo786) — Your real saved Live Data is 100% protected and untouched.",
+            "ഡെമോ പ്രിവ്യൂ മോഡ് സജീവമാണ് (demo / demo786) — നിങ്ങളുടെ യഥാർത്ഥ ലൈവ് വിവരങ്ങൾ പൂർണ്ണമായും സുരക്ഷിതമാണ്.",
+            "Demo Preview Sandbox Active (demo / demo786) — നിങ്ങളുടെ യഥാർത്ഥ ലൈവ് വിവരങ്ങൾ പൂർണ്ണമായും സുരക്ഷിതമാണ്."
+          )}</span>
+          <span class="tag tag-jayyid" style="font-size:0.7rem;">${t("Sandbox Only", "ഡെമോ സാൻഡ്ബോക്സ്", "Sandbox Only (ഡെമോ സാൻഡ്ബോക്സ്)")}</span>
+        `;
+        return;
+      }
       const totalRecords = globalStudents.length + globalTeachers.length + globalLogs.length;
-      if (cleanDatabaseMode && totalRecords === 0) {
+      if ((demoCleared || cleanDatabaseMode) && totalRecords === 0) {
         el.style.background = "#ecfdf5";
         el.style.borderColor = "#86efac";
         el.style.color = "#065f46";
         el.innerHTML = `
           <span>${t(
             "✓ Clean Production Database Active — All Demo Sample Data Cleared (0 Students, 0 Ustadhs, 0 Logs)",
-            "✓ ക്ലീൻ പ്രൊഡക്ഷൻ ഡാറ്റാബേസ് സജീവമാണ് — ഡെമോ വിവരങ്ങൾ പൂർണ്ണമായും നീക്കം ചെയ്തു (0 വിദ്യാർത്ഥികൾ, 0 ഉസ്താദുമാർ, 0 രേഖകൾ)"
+            "✓ ക്ലീൻ പ്രൊഡക്ഷൻ ഡാറ്റാബേസ് സജീവമാണ് — ഡെമോ വിവരങ്ങൾ പൂർണ്ണമായും നീക്കം ചെയ്തു (0 വിദ്യാർത്ഥികൾ, 0 ഉസ്താദുമാർ, 0 രേഖകൾ)",
+            "✓ Clean Production Database Active — ഡെമോ വിവരങ്ങൾ പൂർണ്ണമായും നീക്കം ചെയ്തു (0 Students, 0 Ustadhs, 0 Logs)"
           )}</span>
-          <span class="tag tag-mumtaz" style="font-size:0.7rem;">${t("Ready for Live Entry", "ലൈവ് വിവരങ്ങൾ ചേർക്കാം")}</span>
+          <span class="tag tag-mumtaz" style="font-size:0.7rem;">${t("Ready for Live Entry", "ലൈവ് വിവരങ്ങൾ ചേർക്കാം", "Ready for Live Entry")}</span>
+        `;
+      } else if (demoCleared || cleanDatabaseMode) {
+        el.style.background = "#ecfdf5";
+        el.style.borderColor = "#86efac";
+        el.style.color = "#065f46";
+        el.innerHTML = `
+          <span>✓ ${t("Live Production Mode Active:", "ലൈവ് പ്രൊഡക്ഷൻ മോഡ് സജീവമാണ്:", "Live Production Mode Active:")} <strong>${globalStudents.length} ${t("Students", "വിദ്യാർത്ഥികൾ", "Students")}</strong> · <strong>${globalTeachers.length} ${t("Ustadhs", "ഉസ്താദുമാർ", "Ustadhs")}</strong> · <strong>${globalLogs.length} ${t("Verified Logs", "ക്ലാസ്സ് രേഖകൾ", "Verified Logs")}</strong></span>
+          <span class="tag tag-mumtaz" style="font-size:0.7rem;">${t("Live Mode Protected", "ലൈവ് മോഡ് സുരക്ഷിതം", "Live Mode Protected")}</span>
         `;
       } else {
         el.style.background = "#ffffff";
         el.style.borderColor = "#fca5a5";
         el.style.color = "#991b1b";
         el.innerHTML = `
-          <span>${t("Active Records:", "നിലവിലെ രേഖകൾ:")} <strong>${globalStudents.length} ${t("Students", "വിദ്യാർത്ഥികൾ")}</strong> · <strong>${globalTeachers.length} ${t("Ustadhs", "ഉസ്താദുമാർ")}</strong> · <strong>${globalLogs.length} ${t("Verified Logs", "ക്ലാസ്സ് രേഖകൾ")}</strong></span>
-          <span style="font-size:0.72rem; color:#64748b;">${cleanDatabaseMode ? t("Live Production Mode", "ലൈവ് പ്രൊഡക്ഷൻ മോഡ്") : t("Demo Sample Data Active", "ഡെമോ വിവരങ്ങൾ സജീവമാണ്")}</span>
+          <span>${t("Active Records:", "നിലവിലെ രേഖകൾ:", "Active Records:")} <strong>${globalStudents.length} ${t("Students", "വിദ്യാർത്ഥികൾ", "Students")}</strong> · <strong>${globalTeachers.length} ${t("Ustadhs", "ഉസ്താദുമാർ", "Ustadhs")}</strong> · <strong>${globalLogs.length} ${t("Verified Logs", "ക്ലാസ്സ് രേഖകൾ", "Verified Logs")}</strong></span>
+          <span style="font-size:0.72rem; color:#64748b;">${t("Demo Sample Data Active", "ഡെമോ വിവരങ്ങൾ സജീവമാണ്", "Demo Sample Data Active")}</span>
         `;
       }
     }
@@ -4245,7 +4499,18 @@
       document.querySelectorAll(selectors).forEach((el) => {
         if (el.children.length > 0) return;
         // Never overwrite dynamic header buttons, campus badge, or notification drawer elements
-        if (el.id === "btn-header-auth" || el.id === "campus-badge" || el.id === "header-notif-badge" || el.closest("#header-notif-container")) return;
+        if (
+          el.id === "btn-header-auth" ||
+          el.id === "campus-badge" ||
+          el.id === "header-notif-badge" ||
+          el.id === "cfg-browser-notif-status-text" ||
+          el.id === "btn-request-browser-notif" ||
+          el.id === "btn-clear-sample-data" ||
+          el.id === "btn-exit-demo-sandbox-settings" ||
+          el.closest("#header-notif-container")
+        ) {
+          return;
+        }
         const currentText = (el.innerText || "").trim();
         if (!currentText) return;
         if (el.dataset.origI18nText === undefined) {
@@ -4255,19 +4520,35 @@
         }
         const orig = el.dataset.origI18nText;
         if (orig && MALAYALAM_EXACT_TEXT_MAP[orig]) {
-          el.innerText = lang === "ml" ? MALAYALAM_EXACT_TEXT_MAP[orig] : orig;
+          if (lang === "ml") {
+            el.innerText = MALAYALAM_EXACT_TEXT_MAP[orig];
+          } else if (lang === "en") {
+            el.innerText = orig.replace(/\s*\([^)]*[\u0D00-\u0D7F][^)]*\)/g, "").trim() || orig;
+          } else {
+            el.innerText = orig;
+          }
         }
       });
 
       // 2. Translate input & textarea placeholders
       document.querySelectorAll("input[placeholder], textarea[placeholder]").forEach((inp) => {
+        if (inp.id === "new-trait-label" || inp.id === "ustadh-new-pos-trait-label" || inp.id === "ustadh-new-neg-trait-label") {
+          return;
+        }
         const curPh = inp.getAttribute("placeholder") || "";
         if (inp.dataset.origI18nPh === undefined && MALAYALAM_PLACEHOLDER_MAP[curPh]) {
           inp.dataset.origI18nPh = curPh;
         }
         const origPh = inp.dataset.origI18nPh;
         if (origPh && MALAYALAM_PLACEHOLDER_MAP[origPh]) {
-          inp.setAttribute("placeholder", lang === "ml" ? MALAYALAM_PLACEHOLDER_MAP[origPh] : origPh);
+          if (lang === "ml") {
+            inp.setAttribute("placeholder", MALAYALAM_PLACEHOLDER_MAP[origPh]);
+          } else if (lang === "en") {
+            const cleanEnPh = origPh.replace(/\s*\([^)]*[\u0D00-\u0D7F][^)]*\)/g, "").trim() || origPh;
+            inp.setAttribute("placeholder", cleanEnPh);
+          } else {
+            inp.setAttribute("placeholder", origPh);
+          }
         }
       });
 
@@ -4284,6 +4565,11 @@
       if (cfgLang && cfgLang.value !== lang) cfgLang.value = lang;
       const hdrLang = document.getElementById("header-lang-select");
       if (hdrLang && hdrLang.value !== lang) hdrLang.value = lang;
+
+      const isDayMode = campusMode === "day";
+
+      // Run generic static DOM dictionary first so explicit ID-targeted translations take precedence
+      translateStaticDOMElements(lang);
 
       const translations = {
         "nav-teacher": {
@@ -4411,15 +4697,70 @@
           ml: "പുതിയ അറിയിപ്പുകൾ ഇല്ല",
           bi: "പുതിയ അറിയിപ്പുകൾ ഇല്ല (No new notifications)"
         },
+        "cfg-main-card-title": {
+          en: isDayMode ? "Campus, Language & Shift Configuration" : "Campus, Language & Salah Configuration",
+          ml: isDayMode ? "ക്യാമ്പസ്, ഭാഷ & ഷിഫ്റ്റ് ക്രമീകരണങ്ങൾ" : "ക്യാമ്പസ്, ഭാഷ & നമസ്കാര ക്രമീകരണങ്ങൾ",
+          bi: isDayMode ? "Campus, Language & Shift Configuration" : "Campus, Language & Salah Configuration"
+        },
+        "cfg-main-card-sub": {
+          en: "Synced to Firestore (settings/campus_config) & local storage",
+          ml: "ഫയർസ്റ്റോറിലേക്കും (settings/campus_config) ഫോണിലേക്കും തത്സമയം സേവ് ചെയ്യപ്പെടുന്നു",
+          bi: "Synced to Firestore (settings/campus_config) & local storage"
+        },
+        "lbl-cfg-campus-mode-prefix": {
+          en: "Campus Mode (Active:",
+          ml: "ക്യാമ്പസ് മോഡ് (നിലവിൽ:",
+          bi: "Campus Mode (Active:"
+        },
+        "cfg-mode-status-text": {
+          en: isDayMode ? "Day College / Day Madrasa" : "Residential Campus",
+          ml: isDayMode ? "ഡേ കോളേജ് / ഡേ മദ്രസ" : "റെസിഡൻഷ്യൽ ക്യാമ്പസ്",
+          bi: isDayMode ? "Day College / Day Madrasa" : "Residential Campus"
+        },
+        "opt-cfg-mode-day": {
+          en: "Day College / Day Madrasa",
+          ml: "ഡേ കോളേജ് / ഡേ മദ്രസ",
+          bi: "Day College / Day Madrasa"
+        },
+        "opt-cfg-mode-res": {
+          en: "Residential Campus",
+          ml: "റെസിഡൻഷ്യൽ ക്യാമ്പസ്",
+          bi: "Residential Campus"
+        },
+        "btn-quick-switch-mode": {
+          en: "⚡ Quick Switch Mode",
+          ml: "⚡ മോഡ് മാറ്റുക",
+          bi: "⚡ Quick Switch Mode"
+        },
+        "lbl-cfg-app-language": {
+          en: "App Display Language",
+          ml: "ആപ്പ് ഭാഷ തിരഞ്ഞെടുക്കുക",
+          bi: "App Display Language (ഭാഷ തിരഞ്ഞെടുക്കുക)"
+        },
+        "opt-cfg-lang-bi": {
+          en: "Bilingual (English + Malayalam)",
+          ml: "ഇംഗ്ലീഷ് + മലയാളം (Bilingual)",
+          bi: "Bilingual (English + മലയാളം)"
+        },
+        "opt-cfg-lang-en": {
+          en: "English Only",
+          ml: "ഇംഗ്ലീഷ് മാത്രം (English Only)",
+          bi: "English Only"
+        },
+        "opt-cfg-lang-ml": {
+          en: "Malayalam Only",
+          ml: "മലയാളം മാത്രം",
+          bi: "മലയാളം മാത്രം (Malayalam Only)"
+        },
         "lbl-cfg-salah-title": {
           en: "🕌 Enable 5-Time Jama'at Salah Tracking",
           ml: "🕌 5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന സജീവമാക്കുക",
           bi: "🕌 Enable 5-Time Jama'at Salah Tracking (5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന)"
         },
         "lbl-cfg-salah-sub": {
-          en: "When turned OFF, hides 5-Time Jama'at fields from Ustadh Desk, Parent Portal & Report Card",
-          ml: "ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും നമസ്കാര വിവരങ്ങൾ മറയ്ക്കപ്പെടും",
-          bi: "When turned OFF, hides 5-Time Jama'at fields from Ustadh Desk, Parent Portal & Report Card"
+          en: "Residential Campus: Turn OFF to hide 5-Time Jama'at Salah fields from Ustadh Desk, Parent Portal & Report Card",
+          ml: "റെസിഡൻഷ്യൽ ക്യാമ്പസ്: ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും നമസ്കാര വിവരങ്ങൾ മറയ്ക്കപ്പെടും",
+          bi: "Residential Campus: Turn OFF to hide 5-Time Jama'at Salah fields from Ustadh Desk, Parent Portal & Report Card"
         },
         "lbl-cfg-shift-transit-title": {
           en: "🌅 Enable Morning / Evening Shift & Transit Tracking",
@@ -4430,6 +4771,162 @@
           en: "Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal & Report Card",
           ml: "ഡേ സ്കൂൾ: ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും ഷിഫ്റ്റും യാത്രാ സമയ വിവരങ്ങളും മറയ്ക്കപ്പെടും",
           bi: "Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal & Report Card"
+        },
+        "lbl-cfg-browser-notif-title": {
+          en: "🔔 Real-Time Browser Notifications",
+          ml: "🔔 തത്സമയ സിസ്റ്റം അറിയിപ്പുകൾ",
+          bi: "🔔 Real-Time Browser Notifications (സിസ്റ്റം അറിയിപ്പുകൾ)"
+        },
+        "lbl-cfg-madrasa-id": {
+          en: "Madrasa Code / ID (Multi-Campus Isolation)",
+          ml: "മദ്രസ കോഡ് / ഐഡി (മൾട്ടി-ക്യാമ്പസ് സുരക്ഷ)",
+          bi: "Madrasa Code / ഐഡി (Multi-Campus Isolation)"
+        },
+        "lbl-cfg-madrasa-id-sub": {
+          en: "Unique Madrasa Code to keep this campus data, teachers, and students separate from other institutions (Default: MDR-01)",
+          ml: "മറ്റ് സ്ഥാപനങ്ങളിൽ നിന്ന് ഈ ക്യാമ്പസിലെ വിദ്യാർത്ഥികളുടെയും ഉസ്താദുമാരുടെയും വിവരങ്ങൾ വേർതിരിച്ചു സൂക്ഷിക്കാനുള്ള പ്രത്യേക കോഡ് (ഉദാ: MDR-01)",
+          bi: "Unique Madrasa Code to keep this campus data, teachers, and students separate from other institutions (Default: MDR-01)"
+        },
+        "lbl-cfg-college-name": {
+          en: "College Name",
+          ml: "സ്ഥാപനത്തിന്റെ പേര്",
+          bi: "College Name"
+        },
+        "lbl-cfg-college-sub": {
+          en: "Location / Subtitle",
+          ml: "സ്ഥലം / ഉപശീർഷകം",
+          bi: "Location / Subtitle"
+        },
+        "lbl-cfg-academic-term": {
+          en: "Academic Term",
+          ml: "അധ്യയന വർഷം / ടേം",
+          bi: "Academic Term"
+        },
+        "btn-save-settings": {
+          en: "Save & Sync Campus Settings",
+          ml: "ക്രമീകരണങ്ങൾ സേവ് ചെയ്യുക",
+          bi: "Save & Sync Campus Settings"
+        },
+        "cfg-security-card-title": {
+          en: "🔐 Principal Account Security",
+          ml: "🔐 പ്രിൻസിപ്പൽ അക്കൗണ്ട് സുരക്ഷ",
+          bi: "🔐 Principal Account Security"
+        },
+        "cfg-security-card-sub": {
+          en: "Change Principal Login ID & Password (saved to settings/principal_auth)",
+          ml: "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡിയും പാസ്‌വേഡും മാറ്റുക (settings/principal_auth-ൽ സേവ് ചെയ്യപ്പെടും)",
+          bi: "Change Principal Login ID & Password (saved to settings/principal_auth)"
+        },
+        "lbl-cfg-principal-user": {
+          en: "Principal Login ID / Username",
+          ml: "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി / യൂസർനെയിം",
+          bi: "Principal Login ID / Username"
+        },
+        "lbl-cfg-principal-pass": {
+          en: "New Password / PIN",
+          ml: "പുതിയ പാസ്‌വേഡ് / പിൻ",
+          bi: "New Password / PIN"
+        },
+        "lbl-cfg-principal-pass-conf": {
+          en: "Confirm New Password / PIN",
+          ml: "പുതിയ പാസ്‌വേഡ് ഉറപ്പുവരുത്തുക",
+          bi: "Confirm New Password / PIN"
+        },
+        "btn-update-principal-auth": {
+          en: "Update Principal Login Credentials",
+          ml: "പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങൾ മാറ്റുക",
+          bi: "Update Principal Login Credentials"
+        },
+        "cfg-traits-card-title": {
+          en: isDayMode
+            ? "✨ Student Behaviour, Cleanliness & Akhlaq Traits Manager"
+            : "✨ Hostel Behaviour, Cleanliness & Akhlaq Traits Manager",
+          ml: isDayMode
+            ? "✨ സ്വഭാവം, ശുചിത്വം & അഖ്ലാഖ് പോയിന്റ് ക്രമീകരണം"
+            : "✨ ഹോസ്റ്റൽ സ്വഭാവം, ശുചിത്വം & അഖ്ലാഖ് പോയിന്റ് ക്രമീകരണം",
+          bi: isDayMode
+            ? "✨ Student Behaviour, Cleanliness & Akhlaq Traits Manager"
+            : "✨ Hostel Behaviour, Cleanliness & Akhlaq Traits Manager"
+        },
+        "cfg-traits-card-sub": {
+          en: "Add or delete custom positive/negative traits shown as chips on the Ustadh Desk",
+          ml: "ഉസ്താദ് ഡെസ്കിൽ കാണിക്കുന്ന നല്ല സ്വഭാവങ്ങളും പോരായ്മകളും ഇവിടെ ചേർക്കുകയോ ഒഴിവാക്കുകയോ ചെയ്യാം",
+          bi: "Add or delete custom positive/negative traits shown as chips on the Ustadh Desk"
+        },
+        "lbl-add-trait-heading": {
+          en: "Add New Behaviour / Cleanliness Tag",
+          ml: "പുതിയ സ്വഭാവം / ശുചിത്വ ടാഗ് ചേർക്കുക",
+          bi: "Add New Behaviour / Cleanliness Tag"
+        },
+        "lbl-new-trait-label": {
+          en: "Trait Label",
+          ml: "സ്വഭാവത്തിന്റെ പേര്",
+          bi: "Trait Label (Malayalam / English)"
+        },
+        "lbl-new-trait-points": {
+          en: "Point Value (+ or -)",
+          ml: "പോയിന്റ് മൂല്യം (+ അല്ലെങ്കിൽ -)",
+          bi: "Point Value (+ or -)"
+        },
+        "opt-trait-pts-2": {
+          en: "+2 pts (Positive Trait)",
+          ml: "+2 പോയിന്റ് (നല്ല സ്വഭാവം)",
+          bi: "+2 pts (Positive Trait)"
+        },
+        "opt-trait-pts-3": {
+          en: "+3 pts (Exemplary Trait)",
+          ml: "+3 പോയിന്റ് (മാതൃകാ സ്വഭാവം)",
+          bi: "+3 pts (Exemplary Trait)"
+        },
+        "opt-trait-pts-5": {
+          en: "+5 pts (Major Merit)",
+          ml: "+5 പോയിന്റ് (പ്രത്യേക അംഗീകാരം)",
+          bi: "+5 pts (Major Merit)"
+        },
+        "opt-trait-pts-m2": {
+          en: "-2 pts (Minor Warning)",
+          ml: "-2 പോയിന്റ് (ചെറിയ മുന്നറിയിപ്പ്)",
+          bi: "-2 pts (Minor Warning)"
+        },
+        "opt-trait-pts-m3": {
+          en: "-3 pts (Negative Conduct)",
+          ml: "-3 പോയിന്റ് (ശ്രദ്ധക്കുറവ് / പോരായ്മ)",
+          bi: "-3 pts (Negative Conduct)"
+        },
+        "opt-trait-pts-m5": {
+          en: "-5 pts (Major Deduction)",
+          ml: "-5 പോയിന്റ് (ഗൗരവമായ വീഴ്ച)",
+          bi: "-5 pts (Major Deduction)"
+        },
+        "btn-add-trait-submit": {
+          en: "+ Add Trait & Sync to Ustadh Desk",
+          ml: "+ പുതിയ ടാഗ് ചേർക്കുക",
+          bi: "+ Add Trait & Sync to Ustadh Desk"
+        },
+        "lbl-settings-pos-traits": {
+          en: "Active Positive Traits (Click ✕ to remove):",
+          ml: "നിലവിലെ നല്ല സ്വഭാവങ്ങൾ (ഒഴിവാക്കാൻ ✕ ക്ലിക്ക് ചെയ്യുക):",
+          bi: "Active Positive Traits (Click ✕ to remove):"
+        },
+        "lbl-settings-neg-traits": {
+          en: "Active Negative / Warning Traits (Click ✕ to remove):",
+          ml: "നിലവിലെ പോരായ്മകൾ / മുന്നറിയിപ്പുകൾ (ഒഴിവാക്കാൻ ✕ ക്ലിക്ക് ചെയ്യുക):",
+          bi: "Active Negative / Warning Traits (Click ✕ to remove):"
+        },
+        "cfg-db-reset-title": {
+          en: "🗑️ Live Production Database Reset",
+          ml: "🗑️ ലൈവ് പ്രൊഡക്ഷൻ ഡാറ്റാബേസ് ക്രമീകരണം",
+          bi: "🗑️ Live Production Database Reset"
+        },
+        "cfg-db-reset-sub": {
+          en: "Remove initial sample students (Zaid Mansoor, etc.) and sample logs to start fresh with live academy records",
+          ml: "പ്രാരംഭ ഡെമോ വിദ്യാർത്ഥികളെയും (Zaid Mansoor മുതലായവ) ഡെമോ രേഖകളെയും നീക്കം ചെയ്ത് യഥാർത്ഥ അക്കാദമി രേഖകൾ ആരംഭിക്കുക",
+          bi: "Remove initial sample students (Zaid Mansoor, etc.) and sample logs to start fresh with live academy records"
+        },
+        "cfg-db-reset-desc": {
+          en: "Clicking the button below wipes all pre-loaded sample students, sample Ustadhs, sample logs, and sample schedules from both local storage and Firestore so your campus starts with a clean database. Your Principal login credentials and Campus Settings remain preserved.",
+          ml: "താഴെയുള്ള ബട്ടണിൽ ക്ലിക്ക് ചെയ്താൽ എല്ലാ ഡെമോ വിദ്യാർത്ഥികളെയും ഉസ്താദുമാരെയും ക്ലാസ്സ് രേഖകളെയും നീക്കം ചെയ്ത് പുതിയ ക്ലീൻ ഡാറ്റാബേസ് ആരംഭിക്കും. പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങളും ക്രമീകരണങ്ങളും സുരക്ഷിതമായി തുടരും.",
+          bi: "Clicking the button below wipes all pre-loaded sample students, sample Ustadhs, sample logs, and sample schedules from both local storage and Firestore so your campus starts with a clean database. Your Principal login credentials and Campus Settings remain preserved."
         }
       };
 
@@ -4439,6 +4936,39 @@
           el.innerText = translations[id][lang];
         }
       });
+
+      const newTraitInp = document.getElementById("new-trait-label");
+      if (newTraitInp) {
+        if (isDayMode) {
+          newTraitInp.placeholder =
+            lang === "en"
+              ? "e.g. Punctuality"
+              : lang === "ml"
+              ? "ഉദാ: കൃത്യനിഷ്ഠ"
+              : "e.g. Punctuality / കൃത്യനിഷ്ഠ";
+        } else {
+          newTraitInp.placeholder =
+            lang === "en"
+              ? "e.g. Room Cleanliness"
+              : lang === "ml"
+              ? "ഉദാ: റൂം ശുചിത്വം"
+              : "e.g. റൂം ശുചിത്വം / Cleanliness";
+        }
+      }
+
+      const demoInfoNote = document.getElementById("demo-mode-info-note");
+      if (demoInfoNote) {
+        if (lang === "en") {
+          demoInfoNote.innerHTML =
+            '💡 To preview Demo Mode: After logging out, sign in on the login page with ID: <code>demo</code> and Password: <code>demo786</code> to preview the Principal, Ustadh &amp; Parent portals together (your real live data remains 100% safe).';
+        } else if (lang === "ml") {
+          demoInfoNote.innerHTML =
+            '💡 ഡെമോ മോഡ് കാണാൻ: ലോഗൗട്ട് ചെയ്ത ശേഷം ലോഗിൻ പേജിൽ ID: <code>demo</code>, Password: <code>demo786</code> എന്ന് നൽകിയാൽ പ്രിൻസിപ്പൽ, ഉസ്താദ്, പാരന്റ് പോർട്ടലുകൾ ഒന്നിച്ച് കാണാം (നിങ്ങളുടെ യഥാർത്ഥ വിവരങ്ങൾ സുരക്ഷിതമായി തുടരും).';
+        } else {
+          demoInfoNote.innerHTML =
+            '💡 ഡെമോ മോഡ് കാണാൻ (Demo Preview): ലോഗൗട്ട് ചെയ്ത ശേഷം ലോഗിൻ പേജിൽ ID: <code>demo</code>, Password: <code>demo786</code> എന്ന് നൽകിയാൽ പ്രിൻസിപ്പൽ, ഉസ്താദ്, പാരന്റ് പോർട്ടലുകൾ ഒന്നിച്ച് കാണാം (Your real live data remains 100% safe).';
+        }
+      }
 
       const posTraitInp = document.getElementById("ustadh-new-pos-trait-label");
       if (posTraitInp) {
@@ -4471,11 +5001,13 @@
       }
 
       updateCampusBadgeUI();
-
-      translateStaticDOMElements(lang);
       updateSessionHeader();
       updateSalahUI();
       updateAkhlaqDeltaUI();
+      updateDbResetStatusBanner();
+      if (typeof window.updateBrowserNotificationStatus === "function") {
+        window.updateBrowserNotificationStatus();
+      }
 
       // Update auth screen role labels if on auth screen
       if (!currentUser) {
@@ -4541,10 +5073,13 @@
       }
     };
 
-    // Render Custom Akhlaq / Hostel Behaviour Chips on Ustadh Desk & Principal Settings List + Recall Removed Default Traits
+    // Render Custom Akhlaq / Student Behaviour Chips on Ustadh Desk & Principal Settings List + Recall Removed Default Traits
     function renderCustomTraitsUI() {
       syncNegativeTagSet();
-      const posTraits = customTraits.filter((tr) => Number(tr.points) >= 0);
+      const isDayMode = campusMode === "day";
+      const posTraits = customTraits.filter(
+        (tr) => Number(tr.points) >= 0 && !(isDayMode && isHostelDisciplineTag(tr.label))
+      );
       const negTraits = customTraits.filter((tr) => Number(tr.points) < 0);
 
       // 1. Ustadh Verification Desk Selectable Chips (Positive traits show ✓ when active/pre-selected)
@@ -4553,12 +5088,13 @@
         posContainer.innerHTML = posTraits
           .map((tr) => {
             const safeLabel = String(tr.label).replace(/'/g, "\\'");
+            const displayLbl = formatTraitDisplayLabel(tr.label);
             const pts = Number(tr.points) || 2;
             const isSelected = dailyAkhlaqTags.includes(String(tr.label).trim());
             const activeStyle = isSelected
               ? "background:#059669; color:#ffffff; border-color:#047857; box-shadow:0 1px 2px rgba(5,150,105,0.2);"
               : "";
-            return `<button type="button" class="chip chip-pos" style="${activeStyle}" onclick="addAkhlaqTag('${safeLabel}', ${pts})">${isSelected ? "✓" : "+"} ${tr.label} (+${pts})</button>`;
+            return `<button type="button" class="chip chip-pos" style="${activeStyle}" onclick="addAkhlaqTag('${safeLabel}', ${pts})">${isSelected ? "✓" : "+"} ${displayLbl} (+${pts})</button>`;
           })
           .join("");
       }
@@ -4568,12 +5104,13 @@
         negContainer.innerHTML = negTraits
           .map((tr) => {
             const safeLabel = String(tr.label).replace(/'/g, "\\'");
+            const displayLbl = formatTraitDisplayLabel(tr.label);
             const pts = Number(tr.points) || -3;
             const isSelected = dailyAkhlaqTags.includes(String(tr.label).trim());
             const activeStyle = isSelected
               ? "background:#dc2626; color:#ffffff; border-color:#b91c1c;"
               : "";
-            return `<button type="button" class="chip chip-neg" style="${activeStyle}" onclick="addAkhlaqTag('${safeLabel}', ${pts})">${isSelected ? "⚠" : "−"} ${tr.label} (${pts})</button>`;
+            return `<button type="button" class="chip chip-neg" style="${activeStyle}" onclick="addAkhlaqTag('${safeLabel}', ${pts})">${isSelected ? "⚠" : "−"} ${displayLbl} (${pts})</button>`;
           })
           .join("");
       }
@@ -4587,8 +5124,9 @@
             : posTraits
                 .map((tr) => {
                   const idx = customTraits.indexOf(tr);
+                  const displayLbl = formatTraitDisplayLabel(tr.label);
                   return `<span style="display:inline-flex; align-items:center; gap:6px; background:#dcfce7; color:#166534; border:1px solid #86efac; padding:4px 9px; border-radius:99px; font-size:0.74rem; font-weight:700;">
-                    ✓ ${tr.label} (+${tr.points})
+                    ✓ ${displayLbl} (+${tr.points})
                     <button type="button" onclick="handleDeleteCustomTrait(${idx})" title="${t("Remove trait", "ഒഴിവാക്കുക")}" style="background:none; border:none; color:#15803d; cursor:pointer; font-weight:900; font-size:0.8rem; line-height:1; padding:0 2px;">✕</button>
                   </span>`;
                 })
@@ -4603,24 +5141,34 @@
             : negTraits
                 .map((tr) => {
                   const idx = customTraits.indexOf(tr);
+                  const displayLbl = formatTraitDisplayLabel(tr.label);
                   return `<span style="display:inline-flex; align-items:center; gap:6px; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; padding:4px 9px; border-radius:99px; font-size:0.74rem; font-weight:700;">
-                    ⚠ ${tr.label} (${tr.points})
+                    ⚠ ${displayLbl} (${tr.points})
                     <button type="button" onclick="handleDeleteCustomTrait(${idx})" title="${t("Remove trait", "ഒഴിവാക്കുക")}" style="background:none; border:none; color:#b91c1c; cursor:pointer; font-weight:900; font-size:0.8rem; line-height:1; padding:0 2px;">✕</button>
                   </span>`;
                 })
                 .join("");
       }
 
-      // 3. Removed Default Traits ("ഒഴിവാക്കിയവ തിരികെ ചേർക്കുക") + "Restore All Default Traits"
+      // 3. Removed Default Traits + "Restore All Default Traits"
       const removedBox = document.getElementById("settings-removed-default-traits-box");
       if (removedBox) {
         const activeLabels = new Set(customTraits.map((tr) => String(tr.label).trim()));
-        const missingDefaults = DEFAULT_TRAITS.filter((d) => !activeLabels.has(d.label.trim()));
+        const missingDefaults = DEFAULT_TRAITS.filter(
+          (d) => !activeLabels.has(d.label.trim()) && !(isDayMode && isHostelDisciplineTag(d.label))
+        );
+
+        const restoreBtnText = t(
+          "Restore All Default Traits",
+          "എല്ലാം പൂർവ്വസ്ഥിതിയിലാക്കുക",
+          "Restore All Default Traits (എല്ലാം പൂർവ്വസ്ഥിതിയിലാക്കുക)"
+        );
 
         if (missingDefaults.length > 0) {
           const pillsHtml = missingDefaults
             .map((d) => {
               const safeLbl = String(d.label).replace(/'/g, "\\'");
+              const displayLbl = formatTraitDisplayLabel(d.label);
               const isPos = d.points >= 0;
               return `
                 <button
@@ -4629,7 +5177,7 @@
                   style="display:inline-flex; align-items:center; gap:5px; background:${isPos ? "#f0fdf4" : "#fef2f2"}; color:${isPos ? "#065f46" : "#991b1b"}; border:1px dashed ${isPos ? "#34d399" : "#f87171"}; padding:4px 10px; border-radius:99px; font-size:0.73rem; font-weight:700; cursor:pointer;"
                   title="${t("Click to recall / restore this default trait", "ഈ സ്വഭാവ ടാഗ് തിരികെ ചേർക്കാൻ ക്ലിക്ക് ചെയ്യുക")}"
                 >
-                  + ${t("Recall / Restore:", "തിരികെ ചേർക്കുക:")} ${d.label} (${d.points > 0 ? "+" + d.points : d.points})
+                  + ${t("Recall / Restore:", "തിരികെ ചേർക്കുക:", "Recall / Restore:")} ${displayLbl} (${d.points > 0 ? "+" + d.points : d.points})
                 </button>
               `;
             })
@@ -4639,14 +5187,14 @@
             <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px;">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
                 <span style="font-size:0.75rem; font-weight:700; color:#92400e;">
-                  ↺ ${t("Removed Default Traits (ഒഴിവാക്കിയവ തിരികെ ചേർക്കുക):", "ഒഴിവാക്കിയവ തിരികെ ചേർക്കുക (Removed Default Traits):")}
+                  ↺ ${t("Removed Default Traits:", "ഒഴിവാക്കിയവ തിരികെ ചേർക്കുക:", "Removed Default Traits (ഒഴിവാക്കിയവ തിരികെ ചേർക്കുക):")}
                 </span>
                 <button
                   type="button"
                   onclick="handleRestoreAllDefaultTraits()"
                   style="background:#064e3b; color:#ffffff; border:none; border-radius:6px; padding:5px 10px; font-size:0.72rem; font-weight:700; cursor:pointer;"
                 >
-                  ↺ ${t("Restore All Default Traits (എല്ലാം പൂർവ്വസ്ഥിതിയിലാക്കുക)", "എല്ലാം പൂർവ്വസ്ഥിതിയിലാക്കുക")}
+                  ↺ ${restoreBtnText}
                 </button>
               </div>
               <div class="chips-container" style="margin-bottom:0;">
@@ -4666,7 +5214,7 @@
                 class="btn-secondary"
                 style="padding:4px 10px; font-size:0.72rem;"
               >
-                ↺ ${t("Restore All Default Traits (എല്ലാം പൂർവ്വസ്ഥിതിയിലാക്കുക)", "എല്ലാം പൂർവ്വസ്ഥിതിയിലാക്കുക")}
+                ↺ ${restoreBtnText}
               </button>
             </div>
           `;
@@ -4675,24 +5223,26 @@
     }
 
     async function syncCampusConfigToFirestore() {
-      // Demo Mode edits must be saved strictly to localStorage and NEVER overwrite cloud settings on other phones
-      if (!cleanDatabaseMode) return;
+      // Demo Mode / Sandbox edits must NEVER overwrite cloud settings on other phones
+      if ((!cleanDatabaseMode && !demoCleared) || isDemoSandbox) return;
       try {
         if (window.fDb && window.fSetDoc && window.fDoc) {
           const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          const mId = (currentMadrasaId || "MDR-01").trim().toUpperCase();
           const cfgPayload = {
-            madrasaId: currentMadrasaId || "MDR-01",
+            madrasaId: mId,
             appLanguage,
             enableSalahTracking,
             enableShiftTransitTracking,
             customTraits,
-            cleanDatabaseMode,
+            cleanDatabaseMode: Boolean(demoCleared || cleanDatabaseMode),
+            demoCleared: Boolean(demoCleared || cleanDatabaseMode),
             ownerId: "portal-session",
             updatedAt: nowTs
           };
           // Save to scoped doc for this madrasa
           await window.fSetDoc(
-            window.fDoc(window.fDb, "settings", `campus_config_${currentMadrasaId || "MDR-01"}`),
+            window.fDoc(window.fDb, "settings", `campus_config_${mId}`),
             cfgPayload,
             { merge: true }
           );
@@ -4724,10 +5274,12 @@
         dailyAkhlaqTags.push(label);
         recalculateDailyAkhlaqDeltaFromTags();
       }
-      try {
-        localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
-        localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
-      } catch (err) {}
+      if (!isDemoSandbox) {
+        try {
+          localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
+          localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
+        } catch (err) {}
+      }
       if (labelInp) labelInp.value = "";
       renderCustomTraitsUI();
       await syncCampusConfigToFirestore();
@@ -4747,10 +5299,12 @@
         dailyAkhlaqTags = dailyAkhlaqTags.filter((tag) => tag !== lbl);
         recalculateDailyAkhlaqDeltaFromTags();
       }
-      try {
-        localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
-        localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
-      } catch (err) {}
+      if (!isDemoSandbox) {
+        try {
+          localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
+          localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
+        } catch (err) {}
+      }
       renderCustomTraitsUI();
       await syncCampusConfigToFirestore();
       if (window.showToast && removed) {
@@ -4774,10 +5328,12 @@
         }
       }
       removedDefaultTraits = removedDefaultTraits.filter((l) => l !== target.label);
-      try {
-        localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
-        localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
-      } catch (err) {}
+      if (!isDemoSandbox) {
+        try {
+          localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
+          localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
+        } catch (err) {}
+      }
       renderCustomTraitsUI();
       await syncCampusConfigToFirestore();
       if (window.showToast) {
@@ -4786,7 +5342,6 @@
     };
 
     window.handleRestoreAllDefaultTraits = async function() {
-      const existingLabels = new Set(customTraits.map((tr) => String(tr.label).trim()));
       const nonDefaultCustom = customTraits.filter(
         (tr) => !DEFAULT_TRAITS.some((d) => d.label === String(tr.label).trim())
       );
@@ -4794,10 +5349,12 @@
       removedDefaultTraits = [];
       dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
       recalculateDailyAkhlaqDeltaFromTags();
-      try {
-        localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
-        localStorage.setItem("hifz_removed_default_traits", JSON.stringify([]));
-      } catch (err) {}
+      if (!isDemoSandbox) {
+        try {
+          localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
+          localStorage.setItem("hifz_removed_default_traits", JSON.stringify([]));
+        } catch (err) {}
+      }
       renderCustomTraitsUI();
       await syncCampusConfigToFirestore();
       if (window.showToast) {
@@ -4812,6 +5369,12 @@
 
     window.handleUpdatePrincipalAuth = async function(e) {
       if (e && typeof e.preventDefault === "function") e.preventDefault();
+      if (isDemoSandbox) {
+        if (window.showToast) {
+          window.showToast(t("In Demo Sandbox, Principal login changes are disabled to protect your real account.", "ഡെമോ മോഡിൽ യഥാർത്ഥ പ്രിൻസിപ്പൽ പാസ്‌വേഡ് മാറ്റാൻ കഴിയില്ല."));
+        }
+        return;
+      }
       const newU = (document.getElementById("cfg-principal-username")?.value || "").trim();
       const newP = (document.getElementById("cfg-principal-password")?.value || "").trim();
       const confP = (document.getElementById("cfg-principal-password-confirm")?.value || "").trim();
@@ -4858,26 +5421,35 @@
     };
 
     window.handleClearSampleData = async function() {
+      if (isDemoSandbox) {
+        if (window.exitDemoSandbox) window.exitDemoSandbox();
+        return;
+      }
       const btn = document.getElementById("btn-clear-sample-data");
       if (btn) {
         btn.disabled = true;
         btn.innerText = t("⏳ Clearing Demo Data & Switching to Live Mode...", "⏳ ഡെമോ വിവരങ്ങൾ നീക്കം ചെയ്യുന്നു...");
       }
 
+      const mId = (currentMadrasaId || "MDR-01").trim().toUpperCase();
       isClearingDatabase = true;
+      demoCleared = true;
       cleanDatabaseMode = true;
-      globalStudents = [];
-      globalTeachers = [];
-      globalLogs = [];
-      globalSchedules = [];
-      globalNotices = [];
-      globalParentAlerts = [];
-      currentParentStudentId = "";
+
+      // Preserve any real non-sample records while permanently wiping all pre-loaded sample records
+      globalStudents = globalStudents.filter((s) => !isSampleStudent(s));
+      globalTeachers = globalTeachers.filter((t) => !isSampleTeacher(t));
+      globalLogs = globalLogs.filter((l) => !isSampleLog(l));
+      globalSchedules = globalSchedules.filter((s) => !isSampleSchedule(s));
+      globalNotices = globalNotices.filter((n) => !isSampleNotice(n));
+      globalParentAlerts = globalParentAlerts.filter((a) => !isSampleAlert(a));
+      currentParentStudentId = globalStudents[0] ? globalStudents[0].studentId : "";
 
       try {
+        localStorage.setItem(`hifz_demo_cleared_${mId}`, "true");
+        localStorage.setItem("hifz_demo_cleared", "true");
         localStorage.setItem("hifz_clean_db_mode", "true");
         saveLiveCollectionsToLocal();
-        localStorage.setItem("hifz_parent_alerts", JSON.stringify([]));
       } catch (e) {}
 
       updateAuthDemoHelperUI();
@@ -4885,37 +5457,80 @@
       renderAllViews();
       updateDbResetStatusBanner();
 
-      // Actively delete all existing sample/portal documents in Firestore so onSnapshot stays clean
+      // Permanently persist demoCleared: true and delete all sample documents in Firestore
       try {
         await syncCampusConfigToFirestore();
-        if (window.fDb && window.fGetDocs && window.fDeleteDoc && window.fQuery && window.fCollection && window.fWhere) {
-          const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
-          const collectionsToClear = ["students", "teachers", "hifz_logs", "schedules", "notices", "alerts"];
-          for (const colName of collectionsToClear) {
+        if (window.fDb && window.fSetDoc && window.fDoc) {
+          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          await window.fSetDoc(
+            window.fDoc(window.fDb, "settings", `campus_data_${mId}`),
+            {
+              madrasaId: mId,
+              students: globalStudents,
+              teachers: globalTeachers,
+              demoCleared: true,
+              cleanDatabaseMode: true,
+              ownerId: "portal-session",
+              updatedAt: nowTs
+            },
+            { merge: true }
+          );
+        }
+        if (window.fDb && window.fDeleteDoc && window.fDoc) {
+          const deletePromises = [];
+          ["STD-101", "STD-102", "STD-103", "STD-104", "STD-105"].forEach((id) =>
+            deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "students", id)))
+          );
+          ["TCH-101", "TCH-102", "TCH-ustadh", "TCH-ustadh1", "TCH-ustadh2", "ustadh", "ustadh1", "ustadh2"].forEach((id) =>
+            deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "teachers", id)))
+          );
+          ["LOG-101", "LOG-102", "LOG-103", "LOG-104", "LOG-105", "LOG-106", "LOG-107"].forEach((id) =>
+            deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "hifz_logs", id)))
+          );
+          ["SCH-101", "SCH-102", "SCH-103"].forEach((id) =>
+            deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "schedules", id)))
+          );
+          ["NOT-101"].forEach((id) =>
+            deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "notices", id)))
+          );
+          deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "alerts", "ALERT-SEED-1")));
+
+          if (window.fGetDocs && window.fCollection) {
             try {
-              const q = window.fQuery(window.fCollection(window.fDb, colName), ownerFilter);
-              const snap = await window.fGetDocs(q);
-              const deletePromises = [];
-              snap.forEach((docSnap) => {
-                deletePromises.push(window.fDeleteDoc(docSnap.ref));
+              const stdSnap = await window.fGetDocs(window.fCollection(window.fDb, "students"));
+              stdSnap.forEach((d) => {
+                if (SAMPLE_STUDENT_IDS.has(String(d.id).toUpperCase()) || isSampleStudent(d.data())) {
+                  deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "students", d.id)));
+                }
               });
-              if (deletePromises.length > 0) {
-                await Promise.allSettled(deletePromises);
-              }
-            } catch (colErr) {
-              console.warn(`Clear collection ${colName} note:`, colErr);
-            }
+            } catch (e) {}
+            try {
+              const tchSnap = await window.fGetDocs(window.fCollection(window.fDb, "teachers"));
+              tchSnap.forEach((d) => {
+                if (SAMPLE_TEACHER_IDS.has(String(d.id).toLowerCase()) || isSampleTeacher(d.data())) {
+                  deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "teachers", d.id)));
+                }
+              });
+            } catch (e) {}
+            try {
+              const logSnap = await window.fGetDocs(window.fCollection(window.fDb, "hifz_logs"));
+              logSnap.forEach((d) => {
+                if (SAMPLE_LOG_IDS.has(String(d.id).toUpperCase()) || isSampleLog(d.data())) {
+                  deletePromises.push(window.fDeleteDoc(window.fDoc(window.fDb, "hifz_logs", d.id)));
+                }
+              });
+            } catch (e) {}
           }
+
+          await Promise.allSettled(deletePromises);
         }
       } catch (err) {
         console.warn("Firestore clear sample data note:", err);
       } finally {
         isClearingDatabase = false;
-        if (btn) {
-          btn.disabled = false;
-          btn.innerText = t("✓ Demo Data Cleared — Live Mode Active (ഡെമോ വിവരങ്ങൾ നീക്കം ചെയ്തു)", "✓ ഡെമോ വിവരങ്ങൾ നീക്കം ചെയ്തു — ലൈവ് മോഡ് സജീവം");
-          btn.style.background = "#059669";
-        }
+        const clearWrap = document.getElementById("btn-clear-sample-data-wrap");
+        if (clearWrap) clearWrap.classList.add("hidden");
+        if (btn) btn.classList.add("hidden");
       }
 
       updateAuthDemoHelperUI();
@@ -4925,48 +5540,16 @@
       if (window.showToast) {
         window.showToast(
           t(
-            "✓ All demo data cleared! Switched to Live Mode & hidden demo login helpers.",
+            "✓ All demo data cleared! Switched permanently to Live Mode.",
             "✓ എല്ലാ ഡെമോ വിവരങ്ങളും നീക്കം ചെയ്തു! ലൈവ് മോഡ് സജീവമായി."
           )
         );
       }
     };
 
-    window.handleRestoreSampleData = async function() {
-      const clearBtn = document.getElementById("btn-clear-sample-data");
-      if (clearBtn) {
-        clearBtn.innerText = t(
-          "🗑️ Clear All Demo Data & Switch to Live Mode (ഡെമോ വിവരങ്ങൾ നീക്കം ചെയ്യുക)",
-          "🗑️ ഡെമോ വിവരങ്ങൾ നീക്കം ചെയ്ത് ലൈവ് മോഡിലേക്ക് മാറ്റുക"
-        );
-        clearBtn.style.background = "#dc2626";
-      }
-
-      cleanDatabaseMode = false;
-      globalStudents = [...INITIAL_STUDENTS];
-      globalTeachers = [...INITIAL_TEACHERS];
-      globalLogs = sortLogsChronologicallyDesc([...INITIAL_LOGS]);
-      globalSchedules = [...INITIAL_SCHEDULES];
-      globalNotices = [...INITIAL_NOTICES];
-      currentParentStudentId = "STD-101";
-
-      try {
-        localStorage.setItem("hifz_clean_db_mode", "false");
-        localStorage.removeItem("hifz_live_students");
-        localStorage.removeItem("hifz_live_teachers");
-        localStorage.removeItem("hifz_live_logs");
-        localStorage.removeItem("hifz_live_schedules");
-        localStorage.removeItem("hifz_live_notices");
-      } catch (e) {}
-
-      updateAuthDemoHelperUI();
-      populateStudentSelectors();
-      renderAllViews();
-      updateDbResetStatusBanner();
-      await syncCampusConfigToFirestore();
-      if (window.showToast) {
-        window.showToast(t("↺ Demo students, Ustadhs & logs restored!", "↺ ഡെമോ വിദ്യാർത്ഥികളെയും ഉസ്താദുമാരെയും പുനഃസ്ഥാപിച്ചു!"));
-      }
+    // Permanently disabled so saved Live Data can never be overwritten by accident
+    window.handleRestoreSampleData = function() {
+      return;
     };
 
     // 1-Tap Campus Mode Switcher with Real-Time Firestore Persistence (Principal Only)
@@ -4974,10 +5557,19 @@
       if (!currentUser || currentUser.role !== "principal") return;
       const newMode = campusMode === "day" ? "residential" : "day";
       campusMode = newMode;
-      try { localStorage.setItem("hifz_campus_mode", campusMode); } catch (e) {}
       dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
       applyCampusModeUI();
       renderAllViews();
+
+      if (isDemoSandbox) {
+        if (window.showToast) {
+          window.showToast("Campus mode switched to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + " (Demo Preview)!");
+        }
+        return;
+      }
+
+      try { localStorage.setItem("hifz_campus_mode", campusMode); } catch (e) {}
+      saveLiveCollectionsToLocal();
 
       if (!cleanDatabaseMode) {
         if (window.showToast) {
@@ -5011,10 +5603,19 @@
       if (!select) return;
       const newMode = select.value === "residential" ? "residential" : "day";
       campusMode = newMode;
-      try { localStorage.setItem("hifz_campus_mode", campusMode); } catch (e) {}
       dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
       applyCampusModeUI();
       renderAllViews();
+
+      if (isDemoSandbox) {
+        if (window.showToast) {
+          window.showToast("Campus mode set to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + " (Demo Preview)!");
+        }
+        return;
+      }
+
+      try { localStorage.setItem("hifz_campus_mode", campusMode); } catch (e) {}
+      saveLiveCollectionsToLocal();
 
       if (!cleanDatabaseMode) {
         if (window.showToast) {
@@ -5115,29 +5716,31 @@
         };
         renderAllViews();
 
-        try {
-          if (window.fDb && window.fUpdateDoc && window.fDoc) {
-            await window.fUpdateDoc(
-              window.fDoc(window.fDb, "hifz_logs", targetLog.id),
-              {
-                departureTime: String(targetLog.departureTime || "").slice(0, 60),
-                commuteMode: String(targetLog.commuteMode || "Parent Pickup").slice(0, 60),
-                updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
-              }
-            );
-          }
-        } catch (e) {
-          if (e && e.code === "not-found" && window.fDb && window.fSetDoc && window.fDoc) {
-            try {
-              await window.fSetDoc(
+        if (!isDemoSandbox) {
+          try {
+            if (window.fDb && window.fUpdateDoc && window.fDoc) {
+              await window.fUpdateDoc(
                 window.fDoc(window.fDb, "hifz_logs", targetLog.id),
-                buildFirestorePayloadFromLog(targetLog)
+                {
+                  departureTime: String(targetLog.departureTime || "").slice(0, 60),
+                  commuteMode: String(targetLog.commuteMode || "Parent Pickup").slice(0, 60),
+                  updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+                }
               );
-            } catch (innerErr) {
-              console.warn("Departure create fallback notice:", innerErr);
             }
-          } else {
-            console.warn("Departure sync notice:", e);
+          } catch (e) {
+            if (e && e.code === "not-found" && window.fDb && window.fSetDoc && window.fDoc) {
+              try {
+                await window.fSetDoc(
+                  window.fDoc(window.fDb, "hifz_logs", targetLog.id),
+                  buildFirestorePayloadFromLog(targetLog)
+                );
+              } catch (innerErr) {
+                console.warn("Departure create fallback notice:", innerErr);
+              }
+            } else {
+              console.warn("Departure sync notice:", e);
+            }
           }
         }
 
@@ -5166,34 +5769,39 @@
         ...(localLogOverrides[targetLog.id] || {}),
         parentHomeVerified: true
       };
+      saveLiveCollectionsToLocal();
       renderAllViews();
 
-      try {
-        if (window.fDb && window.fUpdateDoc && window.fDoc) {
-          await window.fUpdateDoc(
-            window.fDoc(window.fDb, "hifz_logs", targetLog.id),
-            {
-              parentHomeVerified: true,
-              updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
-            }
-          );
-        }
-      } catch (e) {
-        if (e && e.code === "not-found" && window.fDb && window.fSetDoc && window.fDoc) {
-          try {
-            await window.fSetDoc(
+      if (!isDemoSandbox) {
+        try {
+          if (window.fDb && window.fUpdateDoc && window.fDoc) {
+            await window.fUpdateDoc(
               window.fDoc(window.fDb, "hifz_logs", targetLog.id),
-              buildFirestorePayloadFromLog(targetLog)
+              {
+                parentHomeVerified: true,
+                updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
+              }
             );
-          } catch (innerErr) {
-            console.warn("Parent verification create fallback notice:", innerErr);
           }
-        } else {
-          console.warn("Parent verification sync notice:", e);
+        } catch (e) {
+          if (e && e.code === "not-found" && window.fDb && window.fSetDoc && window.fDoc) {
+            try {
+              await window.fSetDoc(
+                window.fDoc(window.fDb, "hifz_logs", targetLog.id),
+                buildFirestorePayloadFromLog(targetLog)
+              );
+            } catch (innerErr) {
+              console.warn("Parent verification create fallback notice:", innerErr);
+            }
+          } else {
+            console.warn("Parent verification sync notice:", e);
+          }
         }
       }
 
-      window.alert("Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു) — Digital sign-off sent to Ustadh Desk!");
+      if (window.showToast) {
+        window.showToast(t("✓ Verified & Listened at Home (വീട്ടിൽ വെച്ച് കേട്ടു) — Digital sign-off sent to Ustadh Desk!", "✓ വീട്ടിൽ വെച്ച് കേട്ടു — ഡിജിറ്റൽ ഒപ്പ് ഉസ്താദ് ഡെസ്കിലേക്ക് അയച്ചു!"));
+      }
     };
 
     // Toggle parent verification feed visibility
@@ -5842,25 +6450,27 @@
         );
       }
 
-      // Background Firestore update
-      try {
-        if (window.fDb && window.fUpdateDoc && window.fDoc) {
-          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-          window.fUpdateDoc(window.fDoc(window.fDb, "students", std.studentId), {
-            photoUrl: std.photoUrl,
-            updatedAt: nowTs
-          }).catch((err) => console.warn("Photo sync to students collection note:", err));
+      // Background Firestore update (skip in Demo Sandbox)
+      if (!isDemoSandbox) {
+        try {
+          if (window.fDb && window.fUpdateDoc && window.fDoc) {
+            const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+            window.fUpdateDoc(window.fDoc(window.fDb, "students", std.studentId), {
+              photoUrl: std.photoUrl,
+              updatedAt: nowTs
+            }).catch((err) => console.warn("Photo sync to students collection note:", err));
 
-          if (currentMadrasaId && window.fSetDoc) {
-            window.fSetDoc(
-              window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId}`),
-              { students: globalStudents, updatedAt: nowTs },
-              { merge: true }
-            ).catch(() => {});
+            if (currentMadrasaId && window.fSetDoc) {
+              window.fSetDoc(
+                window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId}`),
+                { students: globalStudents, updatedAt: nowTs },
+                { merge: true }
+              ).catch(() => {});
+            }
           }
+        } catch (e) {
+          console.warn("Photo sync note:", e);
         }
-      } catch (e) {
-        console.warn("Photo sync note:", e);
       }
 
       closeStudentPhotoModal();
@@ -5879,15 +6489,17 @@
         window.showToast(t(`Photo removed for ${std.name}`, `${std.name} ന്റെ ഫോട്ടോ ഒഴിവാക്കി`));
       }
 
-      try {
-        if (window.fDb && window.fUpdateDoc && window.fDoc) {
-          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-          window.fUpdateDoc(window.fDoc(window.fDb, "students", std.studentId), {
-            photoUrl: "",
-            updatedAt: nowTs
-          }).catch(() => {});
-        }
-      } catch (e) {}
+      if (!isDemoSandbox) {
+        try {
+          if (window.fDb && window.fUpdateDoc && window.fDoc) {
+            const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+            window.fUpdateDoc(window.fDoc(window.fDb, "students", std.studentId), {
+              photoUrl: "",
+              updatedAt: nowTs
+            }).catch(() => {});
+          }
+        } catch (e) {}
+      }
 
       closeStudentPhotoModal();
     };
@@ -6145,7 +6757,7 @@
           updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
         };
 
-        if (window.fDb && window.fSetDoc && window.fDoc && window.fCollection) {
+        if (!isDemoSandbox && window.fDb && window.fSetDoc && window.fDoc && window.fCollection) {
           await window.fSetDoc(
             window.fDoc(window.fCollection(window.fDb, "hifz_logs"), newLogId),
             firestorePayload
@@ -6209,12 +6821,14 @@
       globalLogs = globalLogs.filter((l) => l.id !== logId);
       saveLiveCollectionsToLocal();
       renderAllViews();
-      try {
-        if (window.fDb && window.fDeleteDoc && window.fDoc) {
-          await window.fDeleteDoc(window.fDoc(window.fDb, "hifz_logs", logId));
+      if (!isDemoSandbox) {
+        try {
+          if (window.fDb && window.fDeleteDoc && window.fDoc) {
+            await window.fDeleteDoc(window.fDoc(window.fDb, "hifz_logs", logId));
+          }
+        } catch (e) {
+          console.warn("Firestore log delete notice:", e);
         }
-      } catch (e) {
-        console.warn("Firestore log delete notice:", e);
       }
     };
 
@@ -6241,7 +6855,7 @@
       };
 
       try {
-        if (window.fDb && window.fSetDoc && window.fDoc) {
+        if (!isDemoSandbox && window.fDb && window.fSetDoc && window.fDoc) {
           await window.fSetDoc(window.fDoc(window.fDb, "schedules", newId), {
             studentId: scheduleObj.studentId,
             studentName: scheduleObj.studentName,
@@ -6339,55 +6953,57 @@
         window.showToast(t(`✓ പുതിയ വിദ്യാർത്ഥിയെ വിജയകരമായി ചേർത്തു / Enrolled ${studentObj.name} (${studentObj.studentId})!`, `✓ പുതിയ വിദ്യാർത്ഥിയെ വിജയകരമായി ചേർത്തു: ${studentObj.name} (${studentObj.studentId})`));
       }
 
-      // 2. Background Firestore synchronization inside a resilient try/catch block
-      try {
-        if (window.fDb && window.fSetDoc && window.fDoc) {
-          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-          const firestoreStudentPayload = {
-            id: studentId,
-            studentId,
-            name: rawName,
-            batch,
-            ustadhName,
-            juzCompleted,
-            currentJuz,
-            currentSurah,
-            guardianName,
-            guardianPhone,
-            pin,
-            madrasaId: currentMadrasaId || "MDR-01",
-            ownerId: "portal-session",
-            createdAt: nowTs,
-            updatedAt: nowTs
-          };
-          window.fSetDoc(window.fDoc(window.fDb, "students", studentId), firestoreStudentPayload).catch((colErr) => {
-            console.warn("Primary students collection sync note:", colErr);
-          });
+      // 2. Background Firestore synchronization inside a resilient try/catch block (skip in Demo Sandbox)
+      if (!isDemoSandbox) {
+        try {
+          if (window.fDb && window.fSetDoc && window.fDoc) {
+            const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+            const firestoreStudentPayload = {
+              id: studentId,
+              studentId,
+              name: rawName,
+              batch,
+              ustadhName,
+              juzCompleted,
+              currentJuz,
+              currentSurah,
+              guardianName,
+              guardianPhone,
+              pin,
+              madrasaId: currentMadrasaId || "MDR-01",
+              ownerId: "portal-session",
+              createdAt: nowTs,
+              updatedAt: nowTs
+            };
+            window.fSetDoc(window.fDoc(window.fDb, "students", studentId), firestoreStudentPayload).catch((colErr) => {
+              console.warn("Primary students collection sync note:", colErr);
+            });
 
-          const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId || "MDR-01"}`);
-          window.fSetDoc(campusDataRef, {
-            madrasaId: currentMadrasaId || "MDR-01",
-            students: globalStudents.map((s) => ({
-              studentId: s.studentId,
-              name: s.name,
-              batch: s.batch,
-              ustadhName: s.ustadhName,
-              juzCompleted: s.juzCompleted,
-              currentJuz: s.currentJuz,
-              currentSurah: s.currentSurah,
-              guardianName: s.guardianName,
-              guardianPhone: s.guardianPhone,
-              pin: s.pin,
-              photoUrl: s.photoUrl || ""
-            })),
-            ownerId: "portal-session",
-            updatedAt: nowTs
-          }, { merge: true }).catch((backupErr) => {
-            console.warn("Settings campus_data students backup note:", backupErr);
-          });
+            const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId || "MDR-01"}`);
+            window.fSetDoc(campusDataRef, {
+              madrasaId: currentMadrasaId || "MDR-01",
+              students: globalStudents.map((s) => ({
+                studentId: s.studentId,
+                name: s.name,
+                batch: s.batch,
+                ustadhName: s.ustadhName,
+                juzCompleted: s.juzCompleted,
+                currentJuz: s.currentJuz,
+                currentSurah: s.currentSurah,
+                guardianName: s.guardianName,
+                guardianPhone: s.guardianPhone,
+                pin: s.pin,
+                photoUrl: s.photoUrl || ""
+              })),
+              ownerId: "portal-session",
+              updatedAt: nowTs
+            }, { merge: true }).catch((backupErr) => {
+              console.warn("Settings campus_data students backup note:", backupErr);
+            });
+          }
+        } catch (err) {
+          console.warn("Background student sync note:", err);
         }
-      } catch (err) {
-        console.warn("Background student sync note:", err);
       }
     };
     window.addStudent = window.handleAddStudent;
@@ -6405,7 +7021,7 @@
           window.showToast(t(`Removed student ${studentName} (${studentId})`, `${studentName} (${studentId}) നെ ഒഴിവാക്കി`));
         }
 
-        if (window.fDb && window.fDoc) {
+        if (!isDemoSandbox && window.fDb && window.fDoc) {
           const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
           if (window.fDeleteDoc) {
             window.fDeleteDoc(window.fDoc(window.fDb, "students", studentId)).catch((e) => console.warn("Delete student doc note:", e));
@@ -6474,46 +7090,48 @@
         window.showToast(t(`✓ പുതിയ ഉസ്താദിനെ വിജയകരമായി ചേർത്തു / Ustadh added successfully: ${formattedName} (ID: ${username})`, `✓ പുതിയ ഉസ്താദിനെ വിജയകരമായി ചേർത്തു: ${formattedName} (${username})`));
       }
 
-      // 2. Background Firestore synchronization inside a resilient try/catch block
-      try {
-        if (window.fDb && window.fSetDoc && window.fDoc) {
-          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-          const firestoreTeacherPayload = {
-            id: teacherId,
-            teacherId,
-            name: formattedName,
-            batch,
-            phone,
-            username,
-            pin,
-            madrasaId: currentMadrasaId || "MDR-01",
-            ownerId: "portal-session",
-            createdAt: nowTs,
-            updatedAt: nowTs
-          };
-          window.fSetDoc(window.fDoc(window.fDb, "teachers", teacherId), firestoreTeacherPayload).catch((colErr) => {
-            console.warn("Primary teachers collection sync note:", colErr);
-          });
+      // 2. Background Firestore synchronization inside a resilient try/catch block (skip in Demo Sandbox)
+      if (!isDemoSandbox) {
+        try {
+          if (window.fDb && window.fSetDoc && window.fDoc) {
+            const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+            const firestoreTeacherPayload = {
+              id: teacherId,
+              teacherId,
+              name: formattedName,
+              batch,
+              phone,
+              username,
+              pin,
+              madrasaId: currentMadrasaId || "MDR-01",
+              ownerId: "portal-session",
+              createdAt: nowTs,
+              updatedAt: nowTs
+            };
+            window.fSetDoc(window.fDoc(window.fDb, "teachers", teacherId), firestoreTeacherPayload).catch((colErr) => {
+              console.warn("Primary teachers collection sync note:", colErr);
+            });
 
-          const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId || "MDR-01"}`);
-          window.fSetDoc(campusDataRef, {
-            madrasaId: currentMadrasaId || "MDR-01",
-            teachers: globalTeachers.map((t) => ({
-              teacherId: t.teacherId || t.id,
-              name: t.name,
-              batch: t.batch,
-              phone: t.phone,
-              username: t.username,
-              pin: t.pin
-            })),
-            ownerId: "portal-session",
-            updatedAt: nowTs
-          }, { merge: true }).catch((backupErr) => {
-            console.warn("Settings campus_data teachers backup note:", backupErr);
-          });
+            const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId || "MDR-01"}`);
+            window.fSetDoc(campusDataRef, {
+              madrasaId: currentMadrasaId || "MDR-01",
+              teachers: globalTeachers.map((t) => ({
+                teacherId: t.teacherId || t.id,
+                name: t.name,
+                batch: t.batch,
+                phone: t.phone,
+                username: t.username,
+                pin: t.pin
+              })),
+              ownerId: "portal-session",
+              updatedAt: nowTs
+            }, { merge: true }).catch((backupErr) => {
+              console.warn("Settings campus_data teachers backup note:", backupErr);
+            });
+          }
+        } catch (err) {
+          console.warn("Background teacher sync note:", err);
         }
-      } catch (err) {
-        console.warn("Background teacher sync note:", err);
       }
     };
     window.addUstadh = window.handleAddTeacher;
@@ -6530,7 +7148,7 @@
           window.showToast(t(`Removed ${teacherName}`, `${teacherName} നെ ഒഴിവാക്കി`));
         }
 
-        if (window.fDb && window.fDoc) {
+        if (!isDemoSandbox && window.fDb && window.fDoc) {
           const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
           if (window.fDeleteDoc) {
             window.fDeleteDoc(window.fDoc(window.fDb, "teachers", teacherId)).catch((e) => console.warn("Delete teacher doc note:", e));
@@ -6563,7 +7181,7 @@
       };
 
       try {
-        if (window.fDb && window.fSetDoc && window.fDoc) {
+        if (!isDemoSandbox && window.fDb && window.fSetDoc && window.fDoc) {
           const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
           window.fSetDoc(window.fDoc(window.fDb, "notices", newId), {
             title: noticeObj.title,
@@ -6607,7 +7225,7 @@
       }
 
       const madrasaIdInp = document.getElementById("cfg-madrasa-id");
-      if (madrasaIdInp && madrasaIdInp.value) {
+      if (!isDemoSandbox && madrasaIdInp && madrasaIdInp.value) {
         currentMadrasaId = madrasaIdInp.value.trim().toUpperCase() || "MDR-01";
       }
 
@@ -6616,6 +7234,23 @@
       const academicTerm = (document.getElementById("cfg-academic-term")?.value || "1448 AH · Rabi Al-Thani Term").trim();
 
       campusMode = mode === "residential" ? "residential" : "day";
+
+      const nameEl = document.getElementById("college-name-display");
+      if (nameEl) nameEl.innerText = name;
+      const subEl = document.getElementById("college-sub-display");
+      if (subEl) subEl.innerText = sub;
+      const termEl = document.getElementById("academic-term-display");
+      if (termEl) termEl.innerText = academicTerm;
+      applyCampusModeUI();
+
+      // Demo Sandbox: never overwrite saved Live Data in localStorage or Firestore
+      if (isDemoSandbox) {
+        if (window.showToast) {
+          window.showToast(t("✓ Settings applied in Demo Sandbox (Live Data untouched)", "✓ ഡെമോ സാൻഡ്ബോക്സിൽ ക്രമീകരണങ്ങൾ പ്രയോഗിച്ചു (ലൈവ് വിവരങ്ങൾ സുരക്ഷിതമാണ്)"));
+        }
+        return;
+      }
+
       try {
         localStorage.setItem("hifz_madrasa_id", currentMadrasaId);
         localStorage.setItem("hifz_campus_mode", campusMode);
@@ -6625,15 +7260,8 @@
         localStorage.setItem("hifz_college_name", name);
         localStorage.setItem("hifz_college_sub", sub);
         localStorage.setItem("hifz_academic_term", academicTerm);
+        saveLiveCollectionsToLocal();
       } catch (err) {}
-
-      const nameEl = document.getElementById("college-name-display");
-      if (nameEl) nameEl.innerText = name;
-      const subEl = document.getElementById("college-sub-display");
-      if (subEl) subEl.innerText = sub;
-      const termEl = document.getElementById("academic-term-display");
-      if (termEl) termEl.innerText = academicTerm;
-      applyCampusModeUI();
 
       // Demo Mode: edits must stay strictly on this device and NEVER overwrite cloud documents
       if (!cleanDatabaseMode) {
@@ -6858,7 +7486,7 @@
       }
     };
 
-    // Role Selection on Portal Sign In Screen (Supports Demo Credentials Helper until Principal Clears Demo Data)
+    // Role Selection on Portal Sign In Screen (Never pre-fills Login ID or Password)
     window.selectAuthRole = function(role, preserveInputs) {
       currentAuthRole = role || "teacher";
       document.getElementById("role-tab-teacher")?.classList.toggle("active", role === "teacher");
@@ -6873,19 +7501,14 @@
 
       const userInput = document.getElementById("auth-username");
       const passInput = document.getElementById("auth-password");
-      if (!preserveInputs && !cleanDatabaseMode) {
-        if (role === "principal") {
-          if (userInput) userInput.value = (principalAuth && principalAuth.username) ? principalAuth.username : "admin";
-          if (passInput) passInput.value = (principalAuth && principalAuth.password) ? principalAuth.password : "admin786";
-        } else if (role === "teacher") {
-          const demoTeacherUser = (globalTeachers[0] && globalTeachers[0].username) ? globalTeachers[0].username : "ustadh";
-          const demoTeacherPin = (globalTeachers[0] && globalTeachers[0].pin) ? globalTeachers[0].pin : "1234";
-          if (userInput) userInput.value = demoTeacherUser;
-          if (passInput) passInput.value = demoTeacherPin;
-        } else if (role === "parent") {
-          const demoStudent = globalStudents[0] || { studentId: "STD-101", pin: "1234" };
-          if (userInput) userInput.value = demoStudent.studentId || "STD-101";
-          if (passInput) passInput.value = demoStudent.pin || "1234";
+      if (!preserveInputs) {
+        if (userInput) {
+          userInput.value = "";
+          userInput.defaultValue = "";
+        }
+        if (passInput) {
+          passInput.value = "";
+          passInput.defaultValue = "";
         }
       }
     };
@@ -7583,39 +8206,94 @@
     // Browser Notification Permission & Status Handlers
     window.updateBrowserNotificationStatus = function() {
       const badge = document.getElementById("browser-notif-status-badge");
+      const statusText = document.getElementById("cfg-browser-notif-status-text");
       const btn = document.getElementById("btn-request-browser-notif");
-      if (!badge) return;
 
       if (!("Notification" in window)) {
-        badge.innerText = t("✕ Not Supported on this Browser", "✕ ഈ ബ്രൗസറിൽ ലഭ്യമല്ല");
-        badge.style.color = "#dc2626";
+        const msg = t("Status: Notifications Not Supported on this Browser ✕", "അവസ്ഥ: ഈ ബ്രൗസറിൽ അറിയിപ്പുകൾ ലഭ്യമല്ല ✕");
+        if (badge) {
+          badge.innerText = msg;
+          badge.style.color = "#dc2626";
+        }
+        if (statusText) {
+          statusText.innerText = msg;
+          statusText.style.color = "#dc2626";
+        }
         if (btn) btn.style.display = "none";
         return;
       }
 
       const perm = Notification.permission;
       if (perm === "granted") {
-        badge.innerText = t("✓ Active & Allowed (പ്രവർത്തനക്ഷമം)", "✓ പ്രവർത്തനക്ഷമം (Granted)");
-        badge.style.color = "#059669";
-        badge.style.fontWeight = "700";
+        const msg = t(
+          "Status: Notifications Enabled ✓",
+          "അവസ്ഥ: അറിയിപ്പുകൾ സജീവമാണ് ✓",
+          "Status: Notifications Enabled ✓ (അവസ്ഥ: അറിയിപ്പുകൾ സജീവമാണ് ✓)"
+        );
+        if (badge) {
+          badge.innerText = msg;
+          badge.style.color = "#059669";
+          badge.style.fontWeight = "700";
+        }
+        if (statusText) {
+          statusText.innerText = msg;
+          statusText.style.color = "#059669";
+          statusText.style.fontWeight = "700";
+        }
         if (btn) {
-          btn.innerText = t("🔔 Send Test Notification", "🔔 ടെസ്റ്റ് അറിയിപ്പ് അയക്കുക");
+          btn.innerText = t(
+            "🔔 Send Test Notification",
+            "🔔 ടെസ്റ്റ് അറിയിപ്പ് അയക്കുക",
+            "🔔 Send Test Notification (ടെസ്റ്റ് അറിയിപ്പ്)"
+          );
           btn.style.background = "#059669";
         }
       } else if (perm === "denied") {
-        badge.innerText = t("✕ Blocked by Browser Settings (നിരസിച്ചു)", "✕ ബ്രൗസർ ക്രമീകരണത്തിൽ നിരസിച്ചു");
-        badge.style.color = "#dc2626";
-        badge.style.fontWeight = "700";
+        const msg = t(
+          "Status: Notifications Blocked in Browser Settings ✕",
+          "അവസ്ഥ: ബ്രൗസർ ക്രമീകരണത്തിൽ നിരസിച്ചു ✕",
+          "Status: Blocked in Browser (ബ്രൗസർ ക്രമീകരണത്തിൽ നിരസിച്ചു)"
+        );
+        if (badge) {
+          badge.innerText = msg;
+          badge.style.color = "#dc2626";
+          badge.style.fontWeight = "700";
+        }
+        if (statusText) {
+          statusText.innerText = msg;
+          statusText.style.color = "#dc2626";
+          statusText.style.fontWeight = "700";
+        }
         if (btn) {
-          btn.innerText = t("⚠️ Blocked in Browser", "⚠️ നിരസിക്കപ്പെട്ടു");
+          btn.innerText = t(
+            "⚠️ Blocked in Browser",
+            "⚠️ നിരസിക്കപ്പെട്ടു",
+            "⚠️ Blocked in Browser (നിരസിക്കപ്പെട്ടു)"
+          );
           btn.style.background = "#64748b";
         }
       } else {
-        badge.innerText = t("⏳ Permission Not Requested (അനുമതി നൽകിയിട്ടില്ല)", "⏳ അനുമതി നൽകിയിട്ടില്ല");
-        badge.style.color = "#d97706";
-        badge.style.fontWeight = "700";
+        const msg = t(
+          "Status: Click Enable to allow notifications",
+          "അവസ്ഥ: അനുമതി നൽകാൻ ബട്ടൺ അമർത്തുക",
+          "Status: Click Enable to allow notifications (അവസ്ഥ: അനുമതി നൽകാൻ ബട്ടൺ അമർത്തുക)"
+        );
+        if (badge) {
+          badge.innerText = msg;
+          badge.style.color = "#d97706";
+          badge.style.fontWeight = "700";
+        }
+        if (statusText) {
+          statusText.innerText = msg;
+          statusText.style.color = "#2563eb";
+          statusText.style.fontWeight = "600";
+        }
         if (btn) {
-          btn.innerText = t("🔔 Enable Notifications", "🔔 അനുമതി നൽകുക (Enable)");
+          btn.innerText = t(
+            "🔔 Enable",
+            "🔔 അനുമതി നൽകുക",
+            "🔔 അനുമതി നൽകുക (Enable)"
+          );
           btn.style.background = "#2563eb";
         }
       }
@@ -7689,6 +8367,113 @@
       }
     };
 
+    function updateDemoPreviewBarButtons(activeRole) {
+      const bar = document.getElementById("demo-preview-switcher-bar");
+      if (bar) {
+        bar.classList.toggle("hidden", !isDemoSandbox);
+      }
+      const btnP = document.getElementById("demo-bar-btn-principal");
+      const btnT = document.getElementById("demo-bar-btn-teacher");
+      const btnPar = document.getElementById("demo-bar-btn-parent");
+      const pairs = [
+        { el: btnP, role: "principal" },
+        { el: btnT, role: "teacher" },
+        { el: btnPar, role: "parent" }
+      ];
+      pairs.forEach(({ el, role }) => {
+        if (!el) return;
+        const isActive = role === activeRole;
+        el.style.background = isActive ? "#fde68a" : "rgba(255,255,255,0.12)";
+        el.style.color = isActive ? "#064e3b" : "#ffffff";
+        el.style.border = isActive ? "1px solid #f59e0b" : "1px solid rgba(255,255,255,0.28)";
+        el.style.fontWeight = isActive ? "800" : "700";
+      });
+    }
+
+    window.switchDemoPreviewPortal = function(targetRole) {
+      if (!isDemoSandbox) {
+        isDemoSandbox = true;
+        loadDemoSandboxDataInMemory();
+      }
+      const role = targetRole === "teacher" || targetRole === "parent" ? targetRole : "principal";
+      if (!currentParentStudentId || !globalStudents.some((s) => s.studentId === currentParentStudentId)) {
+        currentParentStudentId = (globalStudents[0] && globalStudents[0].studentId) || "STD-101";
+      }
+      const activeSampleStd = globalStudents.find((s) => s.studentId === currentParentStudentId) || globalStudents[0] || { studentId: "STD-101", name: "Zaid Mansoor" };
+      const activeSampleTeacher = globalTeachers[0] || { teacherId: "TCH-1", username: "ustadh1", name: "Ustadh Ahmad" };
+
+      if (role === "principal") {
+        currentUser = {
+          role: "principal",
+          isDemoSandbox: true,
+          username: "demo",
+          name: "Principal Demo (പ്രിൻസിപ്പൽ ഡെമോ)",
+          loginTime: new Date().toISOString()
+        };
+      } else if (role === "teacher") {
+        currentUser = {
+          role: "teacher",
+          isDemoSandbox: true,
+          username: activeSampleTeacher.username || "demo",
+          teacherId: activeSampleTeacher.teacherId || "TCH-1",
+          name: activeSampleTeacher.name || "Ustadh Ahmad",
+          loginTime: new Date().toISOString()
+        };
+      } else {
+        currentUser = {
+          role: "parent",
+          isDemoSandbox: true,
+          username: activeSampleStd.studentId,
+          studentId: activeSampleStd.studentId,
+          name: "Parent of " + activeSampleStd.name,
+          loginTime: new Date().toISOString()
+        };
+      }
+
+      updateDemoPreviewBarButtons(role);
+      populateStudentSelectors();
+      applyAuthenticatedState(role);
+      renderAllViews();
+    };
+
+    window.exitDemoSandbox = function() {
+      isDemoSandbox = false;
+      currentUser = null;
+      const bar = document.getElementById("demo-preview-switcher-bar");
+      if (bar) bar.classList.add("hidden");
+
+      // Restore all saved Live Data and Campus Settings from localStorage
+      loadLiveCollectionsFromLocal(currentMadrasaId);
+      const savedCollegeName = localStorage.getItem("hifz_college_name") || "Asry Academy";
+      const savedCollegeSub = localStorage.getItem("hifz_college_sub") || "Bendichal · Al-Furqan Hifz Campus";
+      const savedAcademicTerm = localStorage.getItem("hifz_academic_term") || "1448 AH · Rabi Al-Thani Term";
+      const nameEl = document.getElementById("college-name-display");
+      if (nameEl) nameEl.innerText = savedCollegeName;
+      const subEl = document.getElementById("college-sub-display");
+      if (subEl) subEl.innerText = savedCollegeSub;
+      const termEl = document.getElementById("academic-term-display");
+      if (termEl) termEl.innerText = savedAcademicTerm;
+
+      const uInp = document.getElementById("auth-username");
+      const pInp = document.getElementById("auth-password");
+      if (uInp) uInp.value = "";
+      if (pInp) pInp.value = "";
+
+      applyCampusModeUI();
+      populateStudentSelectors();
+      renderAllViews();
+      showAuthView();
+
+      if (window.showToast) {
+        window.showToast(
+          t(
+            "✓ Exited Demo Preview — Returned to Live Mode (Your saved data is safe).",
+            "✓ ഡെമോയിൽ നിന്ന് പുറത്തുകടന്നു — ലൈവ് മോഡിലേക്ക് തിരിച്ചെത്തി (നിങ്ങളുടെ വിവരങ്ങൾ സുരക്ഷിതമാണ്)."
+          )
+        );
+      }
+    };
+
     // Automatic Role-Detection Authentication & Session Management
     window.loginWithAutoRole = function(username, password) {
       const u = (username || "").trim();
@@ -7703,6 +8488,30 @@
             "Please enter both Login ID and Password / PIN (ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക)"
           )
         };
+      }
+
+      // 0. Check Master Demo Sandbox Login ("demo" / "demo786") — Unlocks All 3 Portals in Sandbox without touching Live Data
+      if (u.toLowerCase() === "demo" && p === "demo786") {
+        isDemoSandbox = true;
+        loadDemoSandboxDataInMemory();
+        window.switchDemoPreviewPortal("principal");
+        if (window.showToast) {
+          window.showToast(
+            t(
+              "🔍 Demo Preview Active! Use the top bar to switch between Principal, Ustadh & Parent views.",
+              "🔍 ഡെമോ മോഡ് സജീവമായി! മുകളിലെ ബട്ടണുകൾ ഉപയോഗിച്ച് പ്രിൻസിപ്പൽ, ഉസ്താദ്, പാരന്റ് പോർട്ടലുകൾ കാണാം."
+            )
+          );
+        }
+        return { success: true, role: "principal", isDemoSandbox: true };
+      }
+
+      // Ensure any real login exits Demo Sandbox and loads real Live Data
+      if (isDemoSandbox) {
+        isDemoSandbox = false;
+        const bar = document.getElementById("demo-preview-switcher-bar");
+        if (bar) bar.classList.add("hidden");
+        loadLiveCollectionsFromLocal(currentMadrasaId);
       }
 
       const expectedAdminUser = (principalAuth && principalAuth.username ? principalAuth.username : "admin").trim();
@@ -7726,9 +8535,10 @@
       // 2. Check Ustadh / Teacher Credentials
       const lowerU = u.toLowerCase();
       const matchedTeacher = globalTeachers.find((tr) => {
+        if ((demoCleared || cleanDatabaseMode) && isSampleTeacher(tr)) return false;
         const tUser = (tr.username || tr.teacherId || "").toLowerCase();
         if (tUser && tUser === lowerU) return true;
-        if (!cleanDatabaseMode && (lowerU === "ustadh" || lowerU === "ustadh1") && (tUser === "ustadh" || tUser === "ustadh1")) {
+        if (!demoCleared && !cleanDatabaseMode && (lowerU === "ustadh" || lowerU === "ustadh1") && (tUser === "ustadh" || tUser === "ustadh1")) {
           return true;
         }
         return false;
@@ -7755,6 +8565,7 @@
       // 3. Check Parent / Student Credentials (Student Admission ID or Guardian Phone)
       const cleanInputPhone = u.replace(/[^0-9]/g, "");
       const matchedStudent = globalStudents.find((s) => {
+        if ((demoCleared || cleanDatabaseMode) && isSampleStudent(s)) return false;
         const idMatch = (s.studentId || "").toUpperCase() === u.toUpperCase();
         const sPhone = (s.guardianPhone || "").replace(/[^0-9]/g, "");
         const phoneMatch =
@@ -7803,12 +8614,26 @@
 
     // Logout and Return to Clean Initial Sign In View
     window.performLogout = function() {
+      if (isDemoSandbox) {
+        window.exitDemoSandbox();
+        return;
+      }
       try {
         localStorage.removeItem("hifz_portal_session");
       } catch (err) {
         console.warn("localStorage removal notice:", err);
       }
       currentUser = null;
+      const uInp = document.getElementById("auth-username");
+      const pInp = document.getElementById("auth-password");
+      if (uInp) {
+        uInp.value = "";
+        uInp.defaultValue = "";
+      }
+      if (pInp) {
+        pInp.value = "";
+        pInp.defaultValue = "";
+      }
       const notifCont = document.getElementById("header-notif-container");
       if (notifCont) notifCont.classList.add("hidden");
       const notifDrop = document.getElementById("notification-dropdown");
@@ -7860,6 +8685,9 @@
 
     // Show ONLY Portal Sign In View (Initial View Lock)
     window.showAuthView = function() {
+      const bar = document.getElementById("demo-preview-switcher-bar");
+      if (bar) bar.classList.add("hidden");
+
       const views = ["teacher", "schedules", "analytics", "principal", "parent"];
       views.forEach((v) => {
         document.getElementById("view-" + v)?.classList.add("hidden");
@@ -7888,7 +8716,17 @@
       const banner = document.getElementById("auth-alert-banner");
       if (banner) banner.classList.add("hidden");
 
-      selectAuthRole(currentAuthRole || "teacher");
+      selectAuthRole(currentAuthRole || "teacher", false);
+      const uInp = document.getElementById("auth-username");
+      const pInp = document.getElementById("auth-password");
+      if (uInp) {
+        uInp.value = "";
+        uInp.defaultValue = "";
+      }
+      if (pInp) {
+        pInp.value = "";
+        pInp.defaultValue = "";
+      }
       if (window.lucide) window.lucide.createIcons();
     };
 
@@ -7907,6 +8745,7 @@
         window.updateHeaderAuthButton();
       }
 
+      updateDemoPreviewBarButtons(role);
       updateSessionHeader();
       updateNavVisibilityForRole(currentUser ? currentUser.role : role);
 
@@ -7980,13 +8819,14 @@
         return;
       }
       if (lbl) {
+        const demoSuffix = isDemoSandbox ? t(" (Demo Preview)", " (ഡെമോ പ്രിവ്യൂ)") : "";
         if (currentUser.role === "principal") {
-          lbl.innerText = t("Principal Admin", "പ്രിൻസിപ്പൽ അഡ്മിൻ");
+          lbl.innerText = t("Principal Admin", "പ്രിൻസിപ്പൽ അഡ്മിൻ") + demoSuffix;
         } else if (currentUser.role === "parent" && (currentUser.name || "").startsWith("Parent of ")) {
           const childName = currentUser.name.replace("Parent of ", "");
-          lbl.innerText = t(`Parent of ${childName}`, `${childName} ന്റെ രക്ഷിതാവ്`);
+          lbl.innerText = t(`Parent of ${childName}`, `${childName} ന്റെ രക്ഷിതാവ്`) + demoSuffix;
         } else {
-          lbl.innerText = currentUser.name;
+          lbl.innerText = currentUser.name + demoSuffix;
         }
       }
       if (vBadge && currentUser.role === "teacher") {
@@ -8041,11 +8881,11 @@
 
         if (pSel) {
           const isParentRole = Boolean(currentUser && currentUser.role === "parent");
-          pSel.style.display = isParentRole ? "none" : "";
+          pSel.style.display = isParentRole && !isDemoSandbox ? "none" : "";
           pSel.innerHTML = globalStudents
-            .map((s) => `<option value="${s.studentId}">${s.name} (${s.studentId})</option>`)
+            .map((s) => `<option value="${s.studentId}">${isDemoSandbox ? "Demo Switch: " : ""}${s.name} (${s.studentId})</option>`)
             .join("");
-          if (isParentRole && currentUser.studentId && globalStudents.some((s) => s.studentId === currentUser.studentId)) {
+          if (isParentRole && !isDemoSandbox && currentUser.studentId && globalStudents.some((s) => s.studentId === currentUser.studentId)) {
             currentParentStudentId = currentUser.studentId;
             pSel.value = currentParentStudentId;
           } else if (globalStudents.some((s) => s.studentId === prevP)) {
@@ -9141,11 +9981,11 @@
     function renderParentPortal() {
       const pSel = document.getElementById("parent-student-switcher");
       const isParentRole = Boolean(currentUser && currentUser.role === "parent");
-      if (isParentRole && currentUser.studentId) {
+      if (isParentRole && !isDemoSandbox && currentUser.studentId) {
         currentParentStudentId = currentUser.studentId;
       }
       if (pSel) {
-        pSel.style.display = isParentRole ? "none" : "";
+        pSel.style.display = isParentRole && !isDemoSandbox ? "none" : "";
         if (pSel.value !== currentParentStudentId) {
           pSel.value = currentParentStudentId;
         }
@@ -10107,8 +10947,8 @@
         window.fOnSnapshot(
           window.fDoc(window.fDb, "settings", "general"),
           (docSnap) => {
-            // Demo Mode edits must NEVER be overwritten by other phones via cloud
-            if (!cleanDatabaseMode) return;
+            // Demo Mode / Sandbox edits must NEVER be overwritten by other phones via cloud
+            if (!cleanDatabaseMode || isDemoSandbox) return;
             if (docSnap && docSnap.exists()) {
               const d = docSnap.data();
               if (d.madrasaId && d.madrasaId !== currentMadrasaId) return;
@@ -10146,7 +10986,7 @@
           window.fOnSnapshot(
             window.fDoc(window.fDb, "settings", `general_${currentMadrasaId}`),
             (docSnap) => {
-              if (!cleanDatabaseMode) return;
+              if (!cleanDatabaseMode || isDemoSandbox) return;
               if (docSnap && docSnap.exists()) {
                 const d = docSnap.data();
                 if (d.mode) {
@@ -10178,49 +11018,94 @@
         }
       } catch (e) {}
 
-      // Listen to Campus Config (Language, Salah Toggle, Custom Akhlaq Traits)
+      // Listen to Campus Config (Language, Salah Toggle, Custom Akhlaq Traits, and permanent demoCleared flag)
+      const handleCampusConfigSnapshot = (docSnap) => {
+        if (isDemoSandbox) return;
+        if (docSnap && docSnap.exists()) {
+          const cfg = docSnap.data();
+          if (cfg.madrasaId && cfg.madrasaId !== currentMadrasaId) return;
+          if (cfg.demoCleared === true || cfg.cleanDatabaseMode === true) {
+            const wasCleared = demoCleared;
+            demoCleared = true;
+            cleanDatabaseMode = true;
+            const mId = (currentMadrasaId || "MDR-01").trim().toUpperCase();
+            try {
+              localStorage.setItem(`hifz_demo_cleared_${mId}`, "true");
+              localStorage.setItem("hifz_demo_cleared", "true");
+              localStorage.setItem("hifz_clean_db_mode", "true");
+            } catch (e) {}
+            globalStudents = globalStudents.filter((s) => !isSampleStudent(s));
+            globalTeachers = globalTeachers.filter((t) => !isSampleTeacher(t));
+            globalLogs = globalLogs.filter((l) => !isSampleLog(l));
+            globalSchedules = globalSchedules.filter((s) => !isSampleSchedule(s));
+            globalNotices = globalNotices.filter((n) => !isSampleNotice(n));
+            globalParentAlerts = globalParentAlerts.filter((a) => !isSampleAlert(a));
+            saveLiveCollectionsToLocal();
+            if (!wasCleared) {
+              populateStudentSelectors();
+              renderAllViews();
+              updateDbResetStatusBanner();
+            }
+          }
+          if (!cleanDatabaseMode && !demoCleared) return;
+          if (cfg.appLanguage) {
+            appLanguage = cfg.appLanguage;
+            try { localStorage.setItem("hifz_app_language", appLanguage); } catch (e) {}
+          }
+          if (typeof cfg.enableSalahTracking === "boolean") {
+            enableSalahTracking = cfg.enableSalahTracking;
+            try { localStorage.setItem("hifz_enable_salah", String(enableSalahTracking)); } catch (e) {}
+          }
+          if (typeof cfg.enableShiftTransitTracking === "boolean") {
+            enableShiftTransitTracking = cfg.enableShiftTransitTracking;
+            try { localStorage.setItem("hifz_enable_shift_transit", String(enableShiftTransitTracking)); } catch (e) {}
+          }
+          if (Array.isArray(cfg.customTraits) && cfg.customTraits.length > 0) {
+            customTraits = cfg.customTraits;
+            try { localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits)); } catch (e) {}
+          }
+          applyCampusModeUI();
+        }
+      };
+
       try {
         window.fOnSnapshot(
           window.fDoc(window.fDb, "settings", "campus_config"),
-          (docSnap) => {
-            if (!cleanDatabaseMode) return;
-            if (docSnap && docSnap.exists()) {
-              const cfg = docSnap.data();
-              if (cfg.madrasaId && cfg.madrasaId !== currentMadrasaId) return;
-              if (cfg.appLanguage) {
-                appLanguage = cfg.appLanguage;
-                try { localStorage.setItem("hifz_app_language", appLanguage); } catch (e) {}
-              }
-              if (typeof cfg.enableSalahTracking === "boolean") {
-                enableSalahTracking = cfg.enableSalahTracking;
-                try { localStorage.setItem("hifz_enable_salah", String(enableSalahTracking)); } catch (e) {}
-              }
-              if (typeof cfg.enableShiftTransitTracking === "boolean") {
-                enableShiftTransitTracking = cfg.enableShiftTransitTracking;
-                try { localStorage.setItem("hifz_enable_shift_transit", String(enableShiftTransitTracking)); } catch (e) {}
-              }
-              if (Array.isArray(cfg.customTraits) && cfg.customTraits.length > 0) {
-                customTraits = cfg.customTraits;
-                try { localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits)); } catch (e) {}
-              }
-              applyCampusModeUI();
-            }
-          },
+          handleCampusConfigSnapshot,
           () => {}
         );
+        if (currentMadrasaId) {
+          window.fOnSnapshot(
+            window.fDoc(window.fDb, "settings", `campus_config_${currentMadrasaId}`),
+            handleCampusConfigSnapshot,
+            () => {}
+          );
+        }
 
         // Also listen to settings/campus_data_${madrasaId} backup for teachers & students
         if (currentMadrasaId) {
           window.fOnSnapshot(
             window.fDoc(window.fDb, "settings", `campus_data_${currentMadrasaId}`),
             (docSnap) => {
-              if (isClearingDatabase || !cleanDatabaseMode) return;
+              if (isClearingDatabase || isDemoSandbox) return;
               if (docSnap && docSnap.exists()) {
                 const d = docSnap.data();
+                if (d.demoCleared === true || d.cleanDatabaseMode === true) {
+                  demoCleared = true;
+                  cleanDatabaseMode = true;
+                  const mId = (currentMadrasaId || "MDR-01").trim().toUpperCase();
+                  try {
+                    localStorage.setItem(`hifz_demo_cleared_${mId}`, "true");
+                    localStorage.setItem("hifz_demo_cleared", "true");
+                    localStorage.setItem("hifz_clean_db_mode", "true");
+                  } catch (e) {}
+                }
+                if (!cleanDatabaseMode && !demoCleared) return;
                 if (Array.isArray(d.teachers) && d.teachers.length > 0) {
                   const existingUsernames = new Set(globalTeachers.map((t) => (t.username || t.teacherId || "").toLowerCase()));
                   let updated = false;
                   d.teachers.forEach((t) => {
+                    if ((demoCleared || cleanDatabaseMode) && isSampleTeacher(t)) return;
                     if (t.username && !existingUsernames.has(t.username.toLowerCase())) {
                       globalTeachers.push(t);
                       updated = true;
@@ -10236,6 +11121,7 @@
                   const existingStdIds = new Set(globalStudents.map((s) => s.studentId));
                   let updated = false;
                   d.students.forEach((s) => {
+                    if ((demoCleared || cleanDatabaseMode) && isSampleStudent(s)) return;
                     if (s.studentId && !existingStdIds.has(s.studentId)) {
                       globalStudents.push(s);
                       updated = true;
@@ -10259,6 +11145,7 @@
         window.fOnSnapshot(
           window.fDoc(window.fDb, "settings", "principal_auth"),
           (docSnap) => {
+            if (isDemoSandbox) return;
             if (docSnap && docSnap.exists()) {
               const authData = docSnap.data();
               if (authData && authData.username && authData.password) {
@@ -10281,11 +11168,12 @@
         window.fOnSnapshot(
           window.fQuery(window.fCollection(window.fDb, "hifz_logs"), ownerFilter),
           (snap) => {
-            if (isClearingDatabase) return;
+            if (isClearingDatabase || isDemoSandbox) return;
             if (isInitialFirestoreSyncDone && snap.docChanges) {
               snap.docChanges().forEach((change) => {
                 if (change.type === "added") {
                   const logData = change.doc.data();
+                  if ((demoCleared || cleanDatabaseMode) && isSampleLog(logData)) return;
                   const sName = logData.studentName || t("Student", "വിദ്യാർത്ഥി");
                   if (window.showLiveEventToast) {
                     window.showLiveEventToast(
@@ -10306,12 +11194,13 @@
             const remoteLogs = [];
             snap.forEach((d) => {
               const norm = normalizeLog(d.data(), d.id);
+              if ((demoCleared || cleanDatabaseMode) && isSampleLog(norm)) return;
               const over = localLogOverrides[norm.id];
               if (over) Object.assign(norm, over);
               remoteLogs.push(norm);
             });
             const remoteIds = new Set(remoteLogs.map((l) => l.id));
-            const seedFallback = cleanDatabaseMode
+            const seedFallback = (demoCleared || cleanDatabaseMode)
               ? []
               : INITIAL_LOGS.filter((l) => !remoteIds.has(l.id)).map((l) => {
                   const over = localLogOverrides[l.id];
@@ -10332,11 +11221,17 @@
         window.fOnSnapshot(
           window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter),
           (snap) => {
-            if (isClearingDatabase) return;
+            if (isClearingDatabase || isDemoSandbox) return;
             const remoteStudents = [];
-            snap.forEach((d) => remoteStudents.push(d.data()));
+            snap.forEach((d) => {
+              const sData = d.data();
+              if ((demoCleared || cleanDatabaseMode) && (SAMPLE_STUDENT_IDS.has(String(d.id).toUpperCase()) || isSampleStudent(sData))) {
+                return;
+              }
+              remoteStudents.push(sData);
+            });
             const remoteIds = new Set(remoteStudents.map((s) => s.studentId));
-            globalStudents = cleanDatabaseMode
+            globalStudents = (demoCleared || cleanDatabaseMode)
               ? [...remoteStudents]
               : [...INITIAL_STUDENTS.filter((s) => !remoteIds.has(s.studentId)), ...remoteStudents];
             saveLiveCollectionsToLocal();
@@ -10353,11 +11248,17 @@
         window.fOnSnapshot(
           window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter),
           (snap) => {
-            if (isClearingDatabase) return;
+            if (isClearingDatabase || isDemoSandbox) return;
             const remoteTeachers = [];
-            snap.forEach((d) => remoteTeachers.push(d.data()));
+            snap.forEach((d) => {
+              const tData = d.data();
+              if ((demoCleared || cleanDatabaseMode) && (SAMPLE_TEACHER_IDS.has(String(d.id).toLowerCase()) || isSampleTeacher(tData))) {
+                return;
+              }
+              remoteTeachers.push(tData);
+            });
             const remoteIds = new Set(remoteTeachers.map((t) => t.username || t.teacherId));
-            globalTeachers = cleanDatabaseMode
+            globalTeachers = (demoCleared || cleanDatabaseMode)
               ? [...remoteTeachers]
               : [...INITIAL_TEACHERS.filter((t) => !remoteIds.has(t.username) && !remoteIds.has(t.teacherId)), ...remoteTeachers];
             saveLiveCollectionsToLocal();
@@ -10374,11 +11275,12 @@
         window.fOnSnapshot(
           window.fQuery(window.fCollection(window.fDb, "alerts"), ownerFilter),
           (snap) => {
-            if (isClearingDatabase) return;
+            if (isClearingDatabase || isDemoSandbox) return;
             if (isInitialFirestoreSyncDone && snap.docChanges) {
               snap.docChanges().forEach((change) => {
                 if (change.type === "added") {
                   const alertData = change.doc.data();
+                  if ((demoCleared || cleanDatabaseMode) && isSampleAlert({ id: change.doc.id, ...alertData })) return;
                   const sName = alertData.studentName || t("Student", "വിദ്യാർത്ഥി");
                   if (window.showLiveEventToast) {
                     window.showLiveEventToast(
@@ -10397,8 +11299,12 @@
             }
 
             const remoteAlerts = [];
-            snap.forEach((d) => remoteAlerts.push({ id: d.id, ...d.data() }));
-            if (cleanDatabaseMode) {
+            snap.forEach((d) => {
+              const item = { id: d.id, ...d.data() };
+              if ((demoCleared || cleanDatabaseMode) && isSampleAlert(item)) return;
+              remoteAlerts.push(item);
+            });
+            if (demoCleared || cleanDatabaseMode) {
               globalParentAlerts = [...remoteAlerts];
             } else {
               const remoteIds = new Set(remoteAlerts.map((a) => a.id));
@@ -10419,11 +11325,12 @@
         window.fOnSnapshot(
           window.fQuery(window.fCollection(window.fDb, "notices"), ownerFilter),
           (snap) => {
-            if (isClearingDatabase) return;
+            if (isClearingDatabase || isDemoSandbox) return;
             if (isInitialFirestoreSyncDone && snap.docChanges) {
               snap.docChanges().forEach((change) => {
                 if (change.type === "added") {
                   const noticeData = change.doc.data();
+                  if ((demoCleared || cleanDatabaseMode) && isSampleNotice({ id: change.doc.id, ...noticeData })) return;
                   if (window.showLiveEventToast) {
                     window.showLiveEventToast(
                       t("📢 New Campus Circular", "📢 പുതിയ ക്യാമ്പസ് അറിയിപ്പ്"),
@@ -10436,8 +11343,12 @@
             }
 
             const remoteNotices = [];
-            snap.forEach((d) => remoteNotices.push({ id: d.id, ...d.data() }));
-            if (cleanDatabaseMode) {
+            snap.forEach((d) => {
+              const item = { id: d.id, ...d.data() };
+              if ((demoCleared || cleanDatabaseMode) && isSampleNotice(item)) return;
+              remoteNotices.push(item);
+            });
+            if (demoCleared || cleanDatabaseMode) {
               globalNotices = [...remoteNotices];
             } else {
               const remoteIds = new Set(remoteNotices.map((n) => n.id));
@@ -10463,6 +11374,18 @@
 
     // Initialize UI on DOM Ready
     window.addEventListener("DOMContentLoaded", () => {
+      // Always start Login ID and Password inputs 100% empty
+      const uInp = document.getElementById("auth-username");
+      const pInp = document.getElementById("auth-password");
+      if (uInp) {
+        uInp.value = "";
+        uInp.defaultValue = "";
+      }
+      if (pInp) {
+        pInp.value = "";
+        pInp.defaultValue = "";
+      }
+
       // Restore locally stored campus identity & madrasaId
       const savedMadrasaId = localStorage.getItem("hifz_madrasa_id");
       if (savedMadrasaId) {
@@ -10470,6 +11393,8 @@
         const cfgMadrasa = document.getElementById("cfg-madrasa-id");
         if (cfgMadrasa) cfgMadrasa.value = currentMadrasaId;
       }
+      loadLiveCollectionsFromLocal(currentMadrasaId);
+
       const savedCollegeName = localStorage.getItem("hifz_college_name");
       if (savedCollegeName) {
         const nameEl = document.getElementById("college-name-display");
@@ -10509,10 +11434,23 @@
         localStorage.removeItem("hifz_portal_session");
       }
 
+      // If demo data was cleared, invalidate any old session belonging to a sample teacher or sample student
+      if (
+        savedSession &&
+        (demoCleared || cleanDatabaseMode) &&
+        ((savedSession.role === "teacher" && isSampleTeacher(savedSession)) ||
+          (savedSession.role === "parent" && isSampleStudent(savedSession)))
+      ) {
+        savedSession = null;
+        try {
+          localStorage.removeItem("hifz_portal_session");
+        } catch (e) {}
+      }
+
       if (savedSession && savedSession.role && (savedSession.name || savedSession.username)) {
         currentUser = savedSession;
         if (currentUser.role === "parent") {
-          currentParentStudentId = currentUser.studentId || "STD-101";
+          currentParentStudentId = currentUser.studentId || (globalStudents[0] ? globalStudents[0].studentId : "");
         }
         applyAuthenticatedState(currentUser.role);
       } else {
