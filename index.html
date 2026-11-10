@@ -7672,17 +7672,107 @@
       }
     };
 
-    // Real-Time Slide-in Toast Pop-up & Browser Native Notification
-    window.showLiveEventToast = function(title, message, icon, onClickAction) {
+    // Register Service Worker (./sw.js) for Phone Status Bar & Lock-Screen Notifications
+    window.hifzSwRegistration = null;
+    window.registerHifzServiceWorker = async function() {
+      if (!("serviceWorker" in navigator)) return null;
       try {
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification(title, {
-            body: message,
-            icon: "/favicon.ico"
-          });
-        }
+        const reg = await navigator.serviceWorker.register("./sw.js");
+        window.hifzSwRegistration = reg;
+        return reg;
       } catch (err) {
-        console.warn("Native notification dispatch notice:", err);
+        return null;
+      }
+    };
+    window.addEventListener("load", () => {
+      window.registerHifzServiceWorker();
+    });
+
+    // Send Real Phone Status Bar & Lock-Screen Notification via Service Worker (./sw.js)
+    window.sendPhoneNotification = async function(title, body) {
+      const safeTitle = title || "🕌 Hifz Portal";
+      const safeBody = body || "";
+      const iconUrl = "https://cdn-icons-png.flaticon.com/512/2997/2997295.png";
+      const notifTag = "hifz-alert-" + Date.now();
+
+      try {
+        if (navigator.vibrate) {
+          navigator.vibrate([300, 100, 300, 100, 400]);
+        }
+      } catch (e) {}
+
+      if (!("Notification" in window)) return;
+
+      let perm = Notification.permission;
+      if (perm !== "granted") {
+        try {
+          perm = await Notification.requestPermission();
+        } catch (e) {}
+      }
+      if (perm !== "granted") return;
+
+      let swDispatched = false;
+      if ("serviceWorker" in navigator) {
+        try {
+          let reg = window.hifzSwRegistration;
+          if (!reg) {
+            reg = await navigator.serviceWorker.getRegistration("./sw.js");
+          }
+          if (!reg) {
+            reg = await window.registerHifzServiceWorker();
+          }
+          if (!reg && navigator.serviceWorker.ready) {
+            reg = await Promise.race([
+              navigator.serviceWorker.ready,
+              new Promise((resolve) => setTimeout(() => resolve(null), 1500))
+            ]);
+          }
+          if (reg) {
+            window.hifzSwRegistration = reg;
+            if (typeof reg.showNotification === "function") {
+              await reg.showNotification(safeTitle, {
+                body: safeBody,
+                icon: iconUrl,
+                badge: iconUrl,
+                vibrate: [300, 100, 300, 100, 400],
+                requireInteraction: true,
+                renotify: true,
+                tag: notifTag
+              });
+              swDispatched = true;
+            }
+            const activeWorker = reg.active || navigator.serviceWorker.controller;
+            if (activeWorker && typeof activeWorker.postMessage === "function") {
+              activeWorker.postMessage({
+                type: "SHOW_PHONE_NOTIFICATION",
+                title: safeTitle,
+                body: safeBody,
+                tag: notifTag
+              });
+              swDispatched = true;
+            }
+          }
+        } catch (err) {
+          console.warn("Service worker notification dispatch notice:", err);
+        }
+      }
+
+      if (!swDispatched) {
+        try {
+          new Notification(safeTitle, {
+            body: safeBody,
+            icon: iconUrl,
+            badge: iconUrl,
+            tag: notifTag
+          });
+        } catch (err) {}
+      }
+    };
+
+    // Real-Time Slide-in Toast Pop-up & Phone Status Bar Notification
+    window.showLiveEventToast = function(title, message, icon, onClickAction, skipPhonePush) {
+      if (!skipPhonePush && typeof window.sendPhoneNotification === "function") {
+        window.sendPhoneNotification(title, message);
       }
 
       let toast = document.getElementById("live-event-toast");
@@ -8279,45 +8369,13 @@
       }
     };
 
-    window.handleRequestBrowserNotificationPermission = function() {
+    window.handleRequestBrowserNotificationPermission = async function() {
       try {
         localStorage.setItem("hifz_notifications_enabled", "true");
       } catch (e) {}
 
-      // Safely request native browser permission in background if default, never showing any blocked error
-      try {
-        if ("Notification" in window && Notification.permission === "default") {
-          Promise.resolve(Notification.requestPermission()).catch(() => {});
-        } else if ("Notification" in window && Notification.permission === "granted") {
-          new Notification(getActiveCampusName(), {
-            body: t(
-              "🔔 Real-Time Alerts Active!",
-              "🔔 തത്സമയ അറിയിപ്പുകൾ സജീവമാണ്!",
-              "🔔 തത്സമയ അറിയിപ്പുകൾ സജീവമാണ് / Real-Time Alerts Active!"
-            ),
-            icon: "/favicon.ico"
-          });
-        }
-      } catch (e) {}
-
       playGentleNotificationChime();
       window.updateBrowserNotificationStatus();
-
-      // Highlight top header notification bell & badge
-      if (typeof window.updateNotificationsUI === "function") {
-        window.updateNotificationsUI();
-      }
-      const bellCont = document.getElementById("header-notif-container");
-      if (bellCont && currentUser) {
-        bellCont.classList.remove("hidden");
-      }
-      const bellBadge = document.getElementById("header-notif-badge");
-      if (bellBadge) {
-        bellBadge.classList.remove("hidden");
-        if (!bellBadge.innerText || bellBadge.innerText === "0") {
-          bellBadge.innerText = "✓";
-        }
-      }
 
       const alertTitle = t(
         "🔔 Real-Time Alerts Active!",
@@ -8330,13 +8388,208 @@
         "Instant campus circulars, Hifz logs & parent notices are active (തത്സമയ അറിയിപ്പുകൾ സജീവമാണ്)."
       );
 
+      // Register ./sw.js and trigger real phone status bar / lock-screen notification + in-app toast
+      await window.registerHifzServiceWorker();
+      if (typeof window.sendPhoneNotification === "function") {
+        await window.sendPhoneNotification(alertTitle, alertBody);
+      }
+
+      // Highlight top header notification bell & badge
+      if (typeof window.updateNotificationsUI === "function") {
+        window.updateNotificationsUI();
+      }
+      const bellCont = document.getElementById("header-notif-container");
+      if (bellCont && currentUser) {
+        bellCont.classList.remove("hidden");
+      }
+      const bellBadge = document.getElementById("header-notif-badge");
+      if (bellBadge) {
+        bellBadge.classList.remove("hidden");
+        bellBadge.style.display = "inline-block";
+        if (!bellBadge.innerText || bellBadge.innerText === "0") {
+          bellBadge.innerText = "✓";
+        }
+      }
+
       if (typeof window.showLiveEventToast === "function") {
-        window.showLiveEventToast(alertTitle, alertBody, "🔔");
+        window.showLiveEventToast(alertTitle, alertBody, "🔔", null, true);
       }
       if (typeof window.showToast === "function") {
         window.showToast(alertTitle);
       }
     };
+
+    // Offline Catch-Up Alert Tracker (lastSeenAlertTime_{madrasaId}_{role})
+    function extractTimestampMs(record) {
+      if (!record || typeof record !== "object") return 0;
+      const candidates = [
+        record.updatedAt,
+        record.createdAt,
+        record.departureTimeIso,
+        record.homeVerifiedAt,
+        record.timestamp
+      ];
+      for (const c of candidates) {
+        if (!c) continue;
+        if (typeof c === "number" && c > 0) return c;
+        if (typeof c.toMillis === "function") return c.toMillis();
+        if (typeof c.seconds === "number") return c.seconds * 1000;
+        if (typeof c === "string") {
+          const parsed = Date.parse(c);
+          if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+        }
+      }
+      return 0;
+    }
+
+    window.checkOfflineCatchUpAlerts = function() {
+      if (!currentUser || !currentUser.role || isDemoSandbox) return;
+      const mId = (currentMadrasaId || deviceMadrasaId || "").trim().toUpperCase();
+      if (!mId) return;
+      const role = currentUser.role;
+      const storageKey = `lastSeenAlertTime_${mId}_${role}`;
+
+      let lastSeenMs = 0;
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          lastSeenMs = Number(raw) || 0;
+        }
+      } catch (e) {}
+
+      // If no baseline exists yet for this device/madrasa/role, initialize to 60 seconds ago so brand-new events fire
+      if (!lastSeenMs) {
+        lastSeenMs = Date.now() - 60000;
+        try {
+          localStorage.setItem(storageKey, String(Date.now()));
+        } catch (e) {}
+      }
+
+      const catchUpEvents = [];
+      let newestEventMs = lastSeenMs;
+
+      if (role === "parent") {
+        const pStudentId = currentParentStudentId || currentUser.studentId || "";
+        globalLogs
+          .filter((l) => !pStudentId || l.studentId === pStudentId)
+          .forEach((l) => {
+            const ts = extractTimestampMs(l);
+            if (ts > lastSeenMs) {
+              if (ts > newestEventMs) newestEventMs = ts;
+              if (l.departureStatus === "Departed" || l.departureTimeDisplay) {
+                catchUpEvents.push({
+                  id: "catchup-dep-" + l.id + "-" + ts,
+                  title: t("🚐 Campus Transit Update", "🚐 ക്യാമ്പസ് യാത്രാ അറിയിപ്പ്"),
+                  body: `${l.studentName || t("Student", "വിദ്യാർത്ഥി")}: ${l.departureTimeDisplay || t("Departed from campus", "ക്യാമ്പസിൽ നിന്ന് പുറപ്പെട്ടു")} (${l.commuteMode || ""})`
+                });
+              } else {
+                catchUpEvents.push({
+                  id: "catchup-log-" + l.id + "-" + ts,
+                  title: t("📖 New Hifz Verification", "📖 പുതിയ ഹിഫ്ള് പരിശോധന"),
+                  body: `${l.studentName || t("Student", "വിദ്യാർത്ഥി")}: ${l.sabaqTarget || "Sabaq"} (${l.sabaqGrade || "Verified"})`
+                });
+              }
+            }
+          });
+
+        globalNotices.forEach((n) => {
+          const ts = extractTimestampMs(n);
+          if (ts > lastSeenMs) {
+            if (ts > newestEventMs) newestEventMs = ts;
+            catchUpEvents.push({
+              id: "catchup-notice-" + n.id + "-" + ts,
+              title: t("📢 Official Campus Notice", "📢 ഔദ്യോഗിക ക്യാമ്പസ് അറിയിപ്പ്"),
+              body: n.title || t("New campus announcement", "പുതിയ അറിയിപ്പ്")
+            });
+          }
+        });
+      } else if (role === "teacher") {
+        globalParentAlerts.forEach((a) => {
+          const ts = extractTimestampMs(a);
+          if (ts > lastSeenMs) {
+            if (ts > newestEventMs) newestEventMs = ts;
+            catchUpEvents.push({
+              id: "catchup-alert-" + a.id + "-" + ts,
+              title: t("📢 Parent Leave / Exam Request", "📢 രക്ഷിതാവിന്റെ അറിയിപ്പ്"),
+              body: `${a.studentName || t("Student", "വിദ്യാർത്ഥി")}: ${a.noticeType || a.title || "Notice"}`
+            });
+          }
+        });
+
+        globalLogs
+          .filter((l) => l.parentHomeVerified)
+          .forEach((l) => {
+            const ts = extractTimestampMs(l);
+            if (ts > lastSeenMs) {
+              if (ts > newestEventMs) newestEventMs = ts;
+              catchUpEvents.push({
+                id: "catchup-home-" + l.id + "-" + ts,
+                title: t("🏡 Parent Home Revision Signed", "🏡 വീട്ടിലെ ആവർത്തനം രക്ഷിതാവ് സാക്ഷ്യപ്പെടുത്തി"),
+                body: `${l.studentName || t("Student", "വിദ്യാർത്ഥി")}: ${l.sabaqTarget || "Home Revision"}`
+              });
+            }
+          });
+      } else if (role === "principal") {
+        globalParentAlerts.forEach((a) => {
+          const ts = extractTimestampMs(a);
+          if (ts > lastSeenMs) {
+            if (ts > newestEventMs) newestEventMs = ts;
+            catchUpEvents.push({
+              id: "catchup-prin-alert-" + a.id + "-" + ts,
+              title: t("📋 New Parent Notice / Leave", "📋 പുതിയ രക്ഷിതാവ് അപേക്ഷ"),
+              body: `${a.studentName || t("Student", "വിദ്യാർത്ഥി")}: ${a.noticeType || a.title || "Request"}`
+            });
+          }
+        });
+
+        globalLogs.forEach((l) => {
+          const ts = extractTimestampMs(l);
+          if (ts > lastSeenMs) {
+            if (ts > newestEventMs) newestEventMs = ts;
+            catchUpEvents.push({
+              id: "catchup-prin-log-" + l.id + "-" + ts,
+              title: t("📖 Hifz Verification Synced", "📖 ഹിഫ്ള് പരിശോധന രേഖപ്പെടുത്തി"),
+              body: `${l.studentName || t("Student", "വിദ്യാർത്ഥി")}: ${l.sabaqTarget || "Sabaq"} (${l.attendance || "Present"})`
+            });
+          }
+        });
+      }
+
+      if (catchUpEvents.length > 0) {
+        try {
+          localStorage.setItem(storageKey, String(Math.max(Date.now(), newestEventMs)));
+        } catch (e) {}
+
+        const latestEvent = catchUpEvents[0];
+        const summaryTitle =
+          catchUpEvents.length > 1
+            ? `${latestEvent.title} (+${catchUpEvents.length - 1})`
+            : latestEvent.title;
+
+        playGentleNotificationChime();
+        if (typeof window.showLiveEventToast === "function") {
+          window.showLiveEventToast(summaryTitle, latestEvent.body, "🔔");
+        }
+        if (typeof window.updateNotificationsUI === "function") {
+          window.updateNotificationsUI();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        window.checkOfflineCatchUpAlerts();
+        if (typeof window.updateNotificationsUI === "function") {
+          window.updateNotificationsUI();
+        }
+      }
+    });
+    window.addEventListener("focus", () => {
+      window.checkOfflineCatchUpAlerts();
+    });
+    window.addEventListener("online", () => {
+      window.checkOfflineCatchUpAlerts();
+    });
 
     function showAuthAlert(message) {
       const banner = document.getElementById("auth-alert-banner");
@@ -11199,22 +11452,36 @@
             if (isClearingDatabase || isDemoSandbox) return;
             if (isInitialFirestoreSyncDone && snap.docChanges) {
               snap.docChanges().forEach((change) => {
-                if (change.type === "added") {
+                if (change.type === "added" || change.type === "modified") {
                   const logData = change.doc.data();
                   if (!belongsToMadrasa(change.doc.id, logData, currentMadrasaId)) return;
                   if ((demoCleared || cleanDatabaseMode) && isSampleLog(logData)) return;
                   const sName = logData.studentName || t("Student", "വിദ്യാർത്ഥി");
                   if (currentUser && window.showLiveEventToast) {
-                    window.showLiveEventToast(
-                      t("📖 New Verification Recorded", "📖 പുതിയ ഹിഫ്ള് പരിശോധന രേഖപ്പെടുത്തി"),
-                      `${sName}: ${logData.sabaqTarget || "Sabaq"} (${logData.sabaqGrade || "Grade"})`,
-                      "📖",
-                      () => {
-                        if (currentUser && currentUser.role === "teacher" && logData.studentId) {
-                          window.selectStudentForVerification(logData.studentId);
+                    if (change.type === "modified" && logData.departureStatus === "Departed" && currentUser.role === "parent") {
+                      window.showLiveEventToast(
+                        t("🚐 Campus Departure Alert", "🚐 കുട്ടി ക്യാമ്പസിൽ നിന്ന് പുറപ്പെട്ടു"),
+                        `${sName}: ${logData.departureTimeDisplay || t("Departed", "പുറപ്പെട്ടു")} · ${logData.commuteMode || ""}`,
+                        "🚐"
+                      );
+                    } else if (change.type === "modified" && logData.parentHomeVerified && currentUser.role === "teacher") {
+                      window.showLiveEventToast(
+                        t("🏡 Parent Verified Home Revision", "🏡 വീട്ടിൽ വെച്ച് രക്ഷിതാവ് കേട്ടു"),
+                        `${sName}: ${logData.sabaqTarget || "Home Revision"}`,
+                        "🏡"
+                      );
+                    } else if (change.type === "added") {
+                      window.showLiveEventToast(
+                        t("📖 New Verification Recorded", "📖 പുതിയ ഹിഫ്ള് പരിശോധന രേഖപ്പെടുത്തി"),
+                        `${sName}: ${logData.sabaqTarget || "Sabaq"} (${logData.sabaqGrade || "Grade"})`,
+                        "📖",
+                        () => {
+                          if (currentUser && currentUser.role === "teacher" && logData.studentId) {
+                            window.selectStudentForVerification(logData.studentId);
+                          }
                         }
-                      }
-                    );
+                      );
+                    }
                   }
                 }
               });
@@ -11237,6 +11504,7 @@
             saveLiveCollectionsToLocal();
             renderAllViews();
             if (window.updateNotificationsUI) window.updateNotificationsUI();
+            if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
           },
           () => {}
         );
@@ -11346,6 +11614,7 @@
             globalParentAlerts = [...remoteAlerts, ...localFiltered];
             renderSelectedStudentSnapshot();
             if (window.updateNotificationsUI) window.updateNotificationsUI();
+            if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
           },
           () => {}
         );
@@ -11388,6 +11657,7 @@
             saveLiveCollectionsToLocal();
             renderAllViews();
             if (window.updateNotificationsUI) window.updateNotificationsUI();
+            if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
           },
           () => {}
         );
@@ -11467,8 +11737,10 @@
 
       updateCampusIdentityUI();
 
+      if (window.registerHifzServiceWorker) window.registerHifzServiceWorker();
       if (window.updateBrowserNotificationStatus) window.updateBrowserNotificationStatus();
       if (window.updateNotificationsUI) window.updateNotificationsUI();
+      if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
 
       if (window.lucide) window.lucide.createIcons();
     });
