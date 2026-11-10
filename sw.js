@@ -14,28 +14,24 @@ self.addEventListener('push', event => {
   event.waitUntil(
     self.registration.showNotification(data.title || '🕌 Hifz Portal', {
       body: data.body || '',
-      icon: 'https://cdn-icons-png.flaticon.com/512/2997/2997295.png',
-      badge: 'https://cdn-icons-png.flaticon.com/512/2997/2997295.png',
-      vibrate: [300, 100, 300, 100, 400],
-      requireInteraction: true,
+      tag: 'hifz-campus-alert',
       renotify: true,
-      tag: 'hifz-bg-' + Date.now()
+      silent: false,
+      vibrate: [200, 100, 200]
     })
   );
 });
 
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SHOW_PHONE_NOTIFICATION') {
-    const { title, body, tag } = event.data;
+    const { title, body } = event.data;
     event.waitUntil(
       self.registration.showNotification(title || '🕌 Hifz Portal', {
         body: body || '',
-        icon: 'https://cdn-icons-png.flaticon.com/512/2997/2997295.png',
-        badge: 'https://cdn-icons-png.flaticon.com/512/2997/2997295.png',
-        vibrate: [300, 100, 300, 100, 400],
-        requireInteraction: true,
+        tag: 'hifz-campus-alert',
         renotify: true,
-        tag: tag || ('hifz-alert-' + Date.now())
+        silent: false,
+        vibrate: [200, 100, 200]
       })
     );
   }

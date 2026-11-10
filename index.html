@@ -7688,16 +7688,46 @@
       window.registerHifzServiceWorker();
     });
 
+    // Audible Web Audio Chime for Real-Time Campus Alerts
+    function playGentleNotificationChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.setValueAtTime(880, now + 0.12); // A5
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.44);
+      } catch (e) {}
+    }
+
     // Send Real Phone Status Bar & Lock-Screen Notification via Service Worker (./sw.js)
+    // Strictly ONE single notification per event with a 2-second debounce lock to prevent Chrome "Possible spam" filter
+    let lastNotificationSentAt = 0;
     window.sendPhoneNotification = async function(title, body) {
+      const nowMs = Date.now();
+      if (nowMs - lastNotificationSentAt < 2000) {
+        return;
+      }
+      lastNotificationSentAt = nowMs;
+
       const safeTitle = title || "🕌 Hifz Portal";
       const safeBody = body || "";
-      const iconUrl = "https://cdn-icons-png.flaticon.com/512/2997/2997295.png";
-      const notifTag = "hifz-alert-" + Date.now();
 
+      // Always play audible Web Audio chime + vibration
+      playGentleNotificationChime();
       try {
         if (navigator.vibrate) {
-          navigator.vibrate([300, 100, 300, 100, 400]);
+          navigator.vibrate([200, 100, 200]);
         }
       } catch (e) {}
 
@@ -7727,30 +7757,16 @@
               new Promise((resolve) => setTimeout(() => resolve(null), 1500))
             ]);
           }
-          if (reg) {
+          if (reg && typeof reg.showNotification === "function") {
             window.hifzSwRegistration = reg;
-            if (typeof reg.showNotification === "function") {
-              await reg.showNotification(safeTitle, {
-                body: safeBody,
-                icon: iconUrl,
-                badge: iconUrl,
-                vibrate: [300, 100, 300, 100, 400],
-                requireInteraction: true,
-                renotify: true,
-                tag: notifTag
-              });
-              swDispatched = true;
-            }
-            const activeWorker = reg.active || navigator.serviceWorker.controller;
-            if (activeWorker && typeof activeWorker.postMessage === "function") {
-              activeWorker.postMessage({
-                type: "SHOW_PHONE_NOTIFICATION",
-                title: safeTitle,
-                body: safeBody,
-                tag: notifTag
-              });
-              swDispatched = true;
-            }
+            await reg.showNotification(safeTitle, {
+              body: safeBody,
+              tag: "hifz-campus-alert",
+              renotify: true,
+              silent: false,
+              vibrate: [200, 100, 200]
+            });
+            swDispatched = true;
           }
         } catch (err) {
           console.warn("Service worker notification dispatch notice:", err);
@@ -7761,9 +7777,9 @@
         try {
           new Notification(safeTitle, {
             body: safeBody,
-            icon: iconUrl,
-            badge: iconUrl,
-            tag: notifTag
+            tag: "hifz-campus-alert",
+            renotify: true,
+            silent: false
           });
         } catch (err) {}
       }
@@ -8306,28 +8322,6 @@
       }
     };
 
-    // Gentle Web Audio Chime for Real-Time Campus Alerts
-    function playGentleNotificationChime() {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const now = ctx.currentTime;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.setValueAtTime(880, now + 0.11); // A5
-        gain.gain.setValueAtTime(0.001, now);
-        gain.gain.exponentialRampToValueAtTime(0.12, now + 0.03);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now);
-        osc.stop(now + 0.4);
-      } catch (e) {}
-    }
-
     // Browser Notification Permission & Status Handlers (Managed via localStorage without browser-blocked lockouts)
     window.updateBrowserNotificationStatus = function() {
       try {
@@ -8374,7 +8368,6 @@
         localStorage.setItem("hifz_notifications_enabled", "true");
       } catch (e) {}
 
-      playGentleNotificationChime();
       window.updateBrowserNotificationStatus();
 
       const alertTitle = t(
