@@ -1996,6 +1996,151 @@
               </div>
             </div>
 
+            <!-- Online Hifz Academy Controls (Dual Time-Zone Slot, Live Link & Alert, Delivery Mode & Tajweed Chips) -->
+            <div id="online-academy-controls" class="hidden" style="background:#eff6ff; border:1px solid #93c5fd; border-radius:10px; padding:12px 14px; margin-bottom:1rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                <span style="font-size:0.84rem; font-weight:700; color:#1e3a8a;" id="lbl-online-panel-title">
+                  🌐 Online Hifz Academy · Live Session &amp; Tajweed Desk (ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി)
+                </span>
+                <span style="font-size:0.72rem; color:#1d4ed8; background:#dbeafe; padding:2px 8px; border-radius:6px; font-weight:700;" id="lbl-online-mode-pill">
+                  🌐 Online Mode Active
+                </span>
+              </div>
+
+              <!-- 1. Dual Time-Zone Slot (IST & Gulf/UAE) + Live Class Link + 1-Click Reminder -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; align-items:end; margin-bottom:10px;">
+                <div>
+                  <label for="online-time-slot" id="lbl-online-slot" style="font-size:0.76rem; color:#1e3a8a; font-weight:700;">
+                    🕒 Online Class Time Slot (IST &amp; UAE/Gulf Time)
+                  </label>
+                  <select id="online-time-slot" onchange="handleOnlineSlotChange(this.value)" style="font-size:0.78rem; padding:7px 10px;">
+                    <option value="07:30 AM IST · 06:00 AM UAE/Gulf">07:30 AM IST · 06:00 AM UAE/Gulf (Morning Batch)</option>
+                    <option value="06:30 AM IST · 05:00 AM UAE/Gulf">06:30 AM IST · 05:00 AM UAE/Gulf (Fajr Batch)</option>
+                    <option value="05:00 PM IST · 03:30 PM UAE/Gulf">05:00 PM IST · 03:30 PM UAE/Gulf (Afternoon Batch)</option>
+                    <option value="07:30 PM IST · 06:00 PM UAE/Gulf">07:30 PM IST · 06:00 PM UAE/Gulf (Evening Batch)</option>
+                    <option value="08:30 PM IST · 07:00 PM UAE/Gulf">08:30 PM IST · 07:00 PM UAE/Gulf (Night Batch)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="online-class-link" id="lbl-online-link" style="font-size:0.76rem; color:#1e3a8a; font-weight:700;">
+                    🎥 Live Class Link (Google Meet / Zoom / WhatsApp)
+                  </label>
+                  <input
+                    type="text"
+                    id="online-class-link"
+                    value="https://meet.google.com/new"
+                    placeholder="https://meet.google.com/... or Zoom link"
+                    onchange="handleOnlineLinkChange(this.value)"
+                    style="font-size:0.78rem; padding:7px 10px;"
+                  />
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px dashed #bfdbfe;">
+                <span style="font-size:0.75rem; color:#1e40af; font-weight:600;" id="lbl-online-reminder-hint">
+                  Send instant phone alert &amp; WhatsApp class link to student/parent:
+                </span>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button
+                    type="button"
+                    id="btn-send-online-reminder"
+                    onclick="handleSendOnlineClassReminder()"
+                    style="background:#2563eb; color:#ffffff; border:none; border-radius:7px; padding:7px 12px; font-size:0.76rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px;"
+                  >
+                    📲 ക്ലാസ് ഓർമ്മപ്പെടുത്തൽ അയക്കുക (Send Class Link &amp; Alert)
+                  </button>
+                  <button
+                    type="button"
+                    onclick="handleOpenOnlineClassLink()"
+                    style="background:#ffffff; color:#1d4ed8; border:1px solid #93c5fd; border-radius:7px; padding:7px 11px; font-size:0.75rem; font-weight:700; cursor:pointer;"
+                  >
+                    🎥 Open Live Room
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Online Session Delivery Mode -->
+              <div style="margin-bottom:10px;">
+                <div style="font-size:0.76rem; font-weight:700; color:#1e3a8a; margin-bottom:6px;" id="lbl-online-delivery-mode">
+                  Session Delivery Mode (ക്ലാസ് നടന്ന രീതി):
+                </div>
+                <div class="chips-container" style="margin-bottom:0;" id="online-delivery-mode-chips">
+                  <button
+                    type="button"
+                    class="chip active"
+                    id="btn-delivery-live"
+                    onclick="setOnlineDeliveryMode('🎥 ലൈവ് വീഡിയോ ക്ലാസ് (Live Video Class)')"
+                    style="background:#1d4ed8; color:#ffffff; border-color:#1e40af; font-weight:700;"
+                  >
+                    🎥 ലൈവ് വീഡിയോ ക്ലാസ് (Live Video Class)
+                  </button>
+                  <button
+                    type="button"
+                    class="chip"
+                    id="btn-delivery-voice"
+                    onclick="setOnlineDeliveryMode('🎙️ വോയ്സ് റെക്കോർഡിംഗ് (Voice Recording)')"
+                    style="background:#ffffff; color:#1e3a8a; border-color:#93c5fd; font-weight:700;"
+                  >
+                    🎙️ വോയ്സ് റെക്കോർഡിംഗ് (Voice Recording)
+                  </button>
+                  <button
+                    type="button"
+                    class="chip"
+                    id="btn-delivery-net"
+                    onclick="setOnlineDeliveryMode('📶 നെറ്റ്വർക്ക് തടസ്സം (Network Issue)')"
+                    style="background:#ffffff; color:#92400e; border-color:#fcd34d; font-weight:700;"
+                  >
+                    📶 നെറ്റ്വർക്ക് തടസ്സം (Network Issue)
+                  </button>
+                </div>
+              </div>
+
+              <!-- 3. Quick Tajweed Focus Chips -->
+              <div>
+                <div style="font-size:0.76rem; font-weight:700; color:#065f46; margin-bottom:6px;" id="lbl-online-tajweed-chips">
+                  Tajweed Evaluation &amp; Focus Points (തജ്‌വീദ് വിലയിരുത്തൽ):
+                </div>
+                <div class="chips-container" style="margin-bottom:0;" id="online-tajweed-chips-container">
+                  <button
+                    type="button"
+                    class="chip"
+                    data-tajweed="✓ തജ്വീദ് പൂർണ്ണം (Perfect Tajweed)"
+                    onclick="toggleTajweedChip('✓ തജ്വീദ് പൂർണ്ണം (Perfect Tajweed)')"
+                    style="background:#059669; color:#ffffff; border-color:#047857; font-weight:700;"
+                  >
+                    ✓ തജ്വീദ് പൂർണ്ണം (Perfect Tajweed)
+                  </button>
+                  <button
+                    type="button"
+                    class="chip"
+                    data-tajweed="⚠ മദ്ദ് ശ്രദ്ധിക്കുക (Madd)"
+                    onclick="toggleTajweedChip('⚠ മദ്ദ് ശ്രദ്ധിക്കുക (Madd)')"
+                    style="background:#ffffff; color:#991b1b; border-color:#fca5a5; font-weight:700;"
+                  >
+                    ⚠ മദ്ദ് ശ്രദ്ധിക്കുക (Madd)
+                  </button>
+                  <button
+                    type="button"
+                    class="chip"
+                    data-tajweed="⚠ ഗുന്ന ശ്രദ്ധിക്കുക (Ghunnah)"
+                    onclick="toggleTajweedChip('⚠ ഗുന്ന ശ്രദ്ധിക്കുക (Ghunnah)')"
+                    style="background:#ffffff; color:#991b1b; border-color:#fca5a5; font-weight:700;"
+                  >
+                    ⚠ ഗുന്ന ശ്രദ്ധിക്കുക (Ghunnah)
+                  </button>
+                  <button
+                    type="button"
+                    class="chip"
+                    data-tajweed="⚠ മഖ്റജ് (Makhraj)"
+                    onclick="toggleTajweedChip('⚠ മഖ്റജ് (Makhraj)')"
+                    style="background:#ffffff; color:#991b1b; border-color:#fca5a5; font-weight:700;"
+                  >
+                    ⚠ മഖ്റജ് (Makhraj)
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Attendance Nuances (Residential vs Day College) -->
             <div class="form-group">
               <label>Daily Attendance Status (ഹാജർ നില)</label>
@@ -2514,6 +2659,7 @@
                     <select id="cfg-campus-mode" onchange="handleCampusModeSelectChange()" style="flex:1; min-width:180px;">
                       <option value="day" id="opt-cfg-mode-day" selected>Day College / Day Madrasa</option>
                       <option value="residential" id="opt-cfg-mode-res">Residential Campus</option>
+                      <option value="online" id="opt-cfg-mode-online">🌐 Online Hifz Academy (ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി)</option>
                     </select>
                     <button
                       type="button"
@@ -2521,7 +2667,7 @@
                       class="btn-secondary"
                       onclick="toggleCampusModeQuick()"
                       style="white-space:nowrap; padding:9px 14px; font-weight:700;"
-                      title="1-Tap Switch between Day College and Residential Campus"
+                      title="1-Tap Switch between Day Madrasa, Residential Campus, and Online Hifz Academy"
                     >
                       ⚡ Quick Switch Mode
                     </button>
@@ -2775,6 +2921,7 @@
                 <label for="parent-notice-type" style="font-size:0.74rem;">Notice Category</label>
                 <select id="parent-notice-type" style="padding:6px 10px; font-size:0.78rem;" onchange="handleLeaveTypeChange()">
                   <option value="School Exam Mode (സ്കൂൾ പരീക്ഷ)">School Exam Mode (സ്കൂൾ പരീക്ഷ)</option>
+                  <option value="Online Slot Reschedule Request (ക്ലാസ് സമയം മാറ്റാൻ)">🕒 Online Slot Reschedule Request (ക്ലാസ് സമയം മാറ്റാൻ)</option>
                   <option value="Planned Leave / Absence (അവധി)">Planned Leave / Absence (അവധി)</option>
                   <option value="Sick / Medical Leave (അസുഖം)">Sick / Medical Leave (അസുഖം)</option>
                   <option value="Late Arrival (വൈകി എത്തും)">Late Arrival (വൈകി എത്തും)</option>
@@ -3452,7 +3599,7 @@
         ? pos
         : ["അദബ് / മര്യാദ", "ഏകാഗ്രത", "ശുചിത്വം", "കൃത്യനിഷ്ഠ", "ഹോസ്റ്റൽ അച്ചടക്കം"];
       const activeMode = (typeof campusMode === "string" && campusMode) ? campusMode : (localStorage.getItem("hifz_campus_mode") || "day");
-      if (activeMode === "day") {
+      if (activeMode !== "residential") {
         return list.filter((lbl) => !isHostelDisciplineTag(lbl));
       }
       return list;
@@ -3996,6 +4143,10 @@
         manzilGrade,
         salahTracking: Array.isArray(raw.salahTracking) ? raw.salahTracking : (raw.salahTracking ? [raw.salahTracking] : []),
         hostelAdab: typeof raw.hostelAdab === "string" ? raw.hostelAdab : "",
+        onlineTimeSlot: typeof raw.onlineTimeSlot === "string" ? raw.onlineTimeSlot : "",
+        onlineClassLink: typeof raw.onlineClassLink === "string" ? raw.onlineClassLink : "",
+        onlineDeliveryMode: typeof raw.onlineDeliveryMode === "string" ? raw.onlineDeliveryMode : "",
+        tajweedTags: Array.isArray(raw.tajweedTags) ? raw.tajweedTags : [],
         akhlaqScoreDelta: typeof raw.akhlaqScoreDelta === "number" ? raw.akhlaqScoreDelta : 0,
         akhlaqTags: Array.isArray(raw.akhlaqTags) ? raw.akhlaqTags : [],
         note: typeof raw.note === "string" ? raw.note : "",
@@ -4003,6 +4154,143 @@
         ownerId: raw.ownerId || "portal-session",
         createdAt: raw.createdAt || null
       };
+    }
+
+    // Online Hifz Academy State & Interactive Handlers
+    let currentOnlineTimeSlot = localStorage.getItem("hifz_online_slot") || "07:30 AM IST · 06:00 AM UAE/Gulf";
+    let currentOnlineClassLink = localStorage.getItem("hifz_online_link") || "https://meet.google.com/new";
+    let currentOnlineDeliveryMode = "🎥 ലൈവ് വീഡിയോ ക്ലാസ് (Live Video Class)";
+    let currentTajweedTags = ["✓ തജ്വീദ് പൂർണ്ണം (Perfect Tajweed)"];
+
+    window.handleOnlineSlotChange = function(val) {
+      if (!val) return;
+      currentOnlineTimeSlot = val;
+      try { localStorage.setItem("hifz_online_slot", val); } catch (e) {}
+    };
+
+    window.handleOnlineLinkChange = function(val) {
+      currentOnlineClassLink = (val || "https://meet.google.com/new").trim();
+      try { localStorage.setItem("hifz_online_link", currentOnlineClassLink); } catch (e) {}
+    };
+
+    window.handleOpenOnlineClassLink = function(customUrl) {
+      const linkInp = document.getElementById("online-class-link");
+      const rawUrl = customUrl || (linkInp && linkInp.value ? linkInp.value.trim() : currentOnlineClassLink) || "https://meet.google.com/new";
+      const safeUrl = /^https?:\/\//i.test(rawUrl) ? rawUrl : "https://" + rawUrl;
+      const a = document.createElement("a");
+      a.href = safeUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    window.handleSendOnlineClassReminder = function() {
+      const sel = document.getElementById("t-student-select");
+      const stdId = sel && sel.value ? sel.value : "STD-101";
+      const std = globalStudents.find((s) => s.studentId === stdId) || globalStudents[0];
+      const stdName = std ? std.name : "Student";
+      const slotEl = document.getElementById("online-time-slot");
+      const slot = (slotEl && slotEl.value) ? slotEl.value : currentOnlineTimeSlot;
+      const linkEl = document.getElementById("online-class-link");
+      const link = (linkEl && linkEl.value) ? linkEl.value.trim() : currentOnlineClassLink;
+
+      const title = t("🌐 Online Hifz Live Class Reminder", "🌐 ഓൺലൈൻ ഹിഫ്ള് ലൈവ് ക്ലാസ് അറിയിപ്പ്");
+      const body = t(
+        `${stdName}: Online Hifz session scheduled at ${slot}. Tap to join live class.`,
+        `${stdName}: ഓൺലൈൻ ഹിഫ്ള് ക്ലാസ് സമയം: ${slot}. ലൈവ് ക്ലാസിൽ പ്രവേശിക്കാൻ തയ്യാറാകുക.`
+      );
+      if (typeof window.sendPhoneNotification === "function") {
+        window.sendPhoneNotification(title, body);
+      }
+      if (window.showToast) {
+        window.showToast(t("📲 Class link & phone notification sent! Opening WhatsApp...", "📲 ക്ലാസ് ലിങ്കും ഫോൺ നോട്ടിഫിക്കേഷനും അയച്ചു!"));
+      }
+
+      const rawPhone = std && std.guardianPhone ? std.guardianPhone.replace(/[^0-9]/g, "") : "";
+      const cleanPhone = rawPhone.length === 10 ? "91" + rawPhone : rawPhone;
+      const waText = encodeURIComponent(
+        `🕌 *${getActiveCampusName()} — Online Hifz Live Class*\n\n` +
+        `Assalamu Alaikum,\n` +
+        `👨‍🎓 *Student:* ${stdName} (${std ? std.studentId : stdId})\n` +
+        `🕒 *Time Slot (IST / UAE):* ${slot}\n` +
+        `📖 *Active Surah:* ${std && std.currentSurah ? std.currentSurah : "Current Sabaq"}\n` +
+        `🎥 *Join Live Class Link:* ${link}\n\n` +
+        `Please join on time with Mushaf ready.`
+      );
+      const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${waText}` : `https://wa.me/?text=${waText}`;
+      const a = document.createElement("a");
+      a.href = waUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    window.setOnlineDeliveryMode = function(modeLabel) {
+      currentOnlineDeliveryMode = modeLabel;
+      renderOnlineAcademyControlsUI();
+    };
+
+    window.toggleTajweedChip = function(tagLabel) {
+      const idx = currentTajweedTags.indexOf(tagLabel);
+      if (idx > -1) {
+        currentTajweedTags.splice(idx, 1);
+      } else {
+        currentTajweedTags.push(tagLabel);
+      }
+      renderOnlineAcademyControlsUI();
+    };
+
+    function renderOnlineAcademyControlsUI() {
+      const slotEl = document.getElementById("online-time-slot");
+      if (slotEl && currentOnlineTimeSlot) slotEl.value = currentOnlineTimeSlot;
+      const linkEl = document.getElementById("online-class-link");
+      if (linkEl && currentOnlineClassLink && !linkEl.value) linkEl.value = currentOnlineClassLink;
+
+      const modeMap = [
+        { id: "btn-online-mode-video", val: "🎥 ലൈവ് വീഡിയോ ക്ലാസ് (Live Video Class)" },
+        { id: "btn-online-mode-voice", val: "🎙️ വോയ്സ് റെക്കോർഡിംഗ് (Voice Recording)" },
+        { id: "btn-online-mode-net", val: "📶 നെറ്റ്വർക്ക് തടസ്സം (Network Issue)" }
+      ];
+      modeMap.forEach((m) => {
+        const el = document.getElementById(m.id);
+        if (!el) return;
+        const active = currentOnlineDeliveryMode === m.val;
+        el.classList.toggle("active", active);
+        if (active) {
+          el.style.background = "#0284c7";
+          el.style.color = "#ffffff";
+          el.style.borderColor = "#0369a1";
+        } else {
+          el.style.background = "#ffffff";
+          el.style.color = "#0369a1";
+          el.style.borderColor = "#7dd3fc";
+        }
+      });
+
+      const tajweedMap = [
+        { id: "chip-tajweed-perfect", val: "✓ തജ്വീദ് പൂർണ്ണം (Perfect Tajweed)", pos: true },
+        { id: "chip-tajweed-madd", val: "⚠ മദ്ദ് ശ്രദ്ധിക്കുക (Madd)", pos: false },
+        { id: "chip-tajweed-ghunnah", val: "⚠ ഗുന്ന ശ്രദ്ധിക്കുക (Ghunnah)", pos: false },
+        { id: "chip-tajweed-makhraj", val: "⚠ മഖ്റജ് (Makhraj)", pos: false }
+      ];
+      tajweedMap.forEach((tj) => {
+        const el = document.getElementById(tj.id);
+        if (!el) return;
+        const active = currentTajweedTags.includes(tj.val);
+        if (active) {
+          el.style.background = tj.pos ? "#059669" : "#d97706";
+          el.style.color = "#ffffff";
+          el.style.borderColor = tj.pos ? "#047857" : "#b45309";
+        } else {
+          el.style.background = "#ffffff";
+          el.style.color = tj.pos ? "#065f46" : "#92400e";
+          el.style.borderColor = tj.pos ? "#a7f3d0" : "#fde68a";
+        }
+      });
     }
 
     // Residential Campus State & Salah Tracker Helpers
@@ -4046,23 +4334,33 @@
       if (inp) inp.value = currentHostelAdab.join(", ");
     };
 
+    function getCampusModeDisplayLabel(mode, withSwitchHint) {
+      const m = mode || campusMode;
+      if (m === "online") {
+        return withSwitchHint
+          ? t("🌐 Online Hifz Academy (Switch Mode)", "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി (മോഡ് മാറ്റുക)")
+          : t("🌐 Online Hifz Academy", "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി");
+      }
+      if (m === "residential") {
+        return withSwitchHint
+          ? t("Residential Campus (Switch Mode)", "റെസിഡൻഷ്യൽ ക്യാമ്പസ് (മോഡ് മാറ്റുക)")
+          : t("Residential Campus", "റെസിഡൻഷ്യൽ ക്യാമ്പസ്");
+      }
+      return withSwitchHint
+        ? t("Day College / Day Madrasa (Switch Mode)", "ഡേ കോളേജ് / ഡേ മദ്രസ (മോഡ് മാറ്റുക)")
+        : t("Day College / Day Madrasa", "ഡേ കോളേജ് / ഡേ മദ്രസ");
+    }
+
     function updateCampusBadgeUI() {
       const badge = document.getElementById("campus-badge");
       if (!badge) return;
       const isPrincipal = Boolean(currentUser && currentUser.role === "principal");
+      badge.innerText = getCampusModeDisplayLabel(campusMode, isPrincipal);
       if (isPrincipal) {
-        badge.innerText =
-          campusMode === "day"
-            ? t("Day College / Day Madrasa (Switch Mode)", "ഡേ കോളേജ് / ഡേ മദ്രസ (മോഡ് മാറ്റുക)")
-            : t("Residential Campus (Switch Mode)", "റെസിഡൻഷ്യൽ ക്യാമ്പസ് (മോഡ് മാറ്റുക)");
         badge.style.cursor = "pointer";
         badge.style.pointerEvents = "auto";
-        badge.title = t("Click to switch between Day College and Residential Campus mode", "ക്യാമ്പസ് മോഡ് മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക");
+        badge.title = t("Click to switch between Day Madrasa, Residential Campus, and Online Hifz Mode", "ക്യാമ്പസ് മോഡ് മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക");
       } else {
-        badge.innerText =
-          campusMode === "day"
-            ? t("Day College / Day Madrasa", "ഡേ കോളേജ് / ഡേ മദ്രസ")
-            : t("Residential Campus", "റെസിഡൻഷ്യൽ ക്യാമ്പസ്");
         badge.style.cursor = "default";
         badge.style.pointerEvents = "none";
         badge.removeAttribute("title");
@@ -4070,11 +4368,12 @@
       badge.classList.toggle("residential", campusMode === "residential");
     }
 
-    // Apply Campus Mode ("day" vs "residential")
+    // Apply Campus Mode ("day" vs "residential" vs "online")
     function applyCampusModeUI() {
       const teacherSubtitle = document.getElementById("teacher-desk-subtitle");
       const dayControls = document.getElementById("day-college-controls");
       const resControls = document.getElementById("residential-campus-controls");
+      const onlineControls = document.getElementById("online-academy-controls");
       const homeRevSec = document.getElementById("sec-home-revision");
       const homeVerifiedPill = document.getElementById("ustadh-home-verified-pill");
       const cfgMode = document.getElementById("cfg-campus-mode");
@@ -4086,10 +4385,7 @@
 
       updateCampusBadgeUI();
       if (cfgStatusText) {
-        cfgStatusText.innerText =
-          campusMode === "day"
-            ? t("Day College / Day Madrasa", "ഡേ കോളേജ് / ഡേ മദ്രസ")
-            : t("Residential Campus", "റെസിഡൻഷ്യൽ ക്യാമ്പസ്");
+        cfgStatusText.innerText = getCampusModeDisplayLabel(campusMode, false);
       }
 
       // Panel & Section Visibility
@@ -4099,7 +4395,7 @@
       const salahCheckbox = document.getElementById("cfg-enable-salah");
       const shiftTransitCheckbox = document.getElementById("cfg-enable-shift-transit");
 
-      // 1. Principal Campus Settings Toggle Cards (Residential vs Day Madrasa)
+      // 1. Principal Campus Settings Toggle Cards (Residential vs Day Madrasa vs Online)
       if (salahToggleCard) {
         salahToggleCard.classList.toggle("hidden", campusMode !== "residential");
       }
@@ -4123,10 +4419,13 @@
       if (resControls) {
         resControls.classList.toggle("hidden", campusMode !== "residential");
       }
-      if (homeRevSec) {
-        homeRevSec.classList.toggle("hidden", campusMode !== "day");
+      if (onlineControls) {
+        onlineControls.classList.toggle("hidden", campusMode !== "online");
       }
-      if (homeVerifiedPill && campusMode !== "day") {
+      if (homeRevSec) {
+        homeRevSec.classList.toggle("hidden", campusMode === "residential");
+      }
+      if (homeVerifiedPill && campusMode === "residential") {
         homeVerifiedPill.classList.add("hidden");
       }
 
@@ -4136,18 +4435,16 @@
         if (btnLate) btnLate.classList.add("hidden");
         if (btnEarly) btnEarly.classList.add("hidden");
 
-        // If previously selected Day-specific attendance, safely reset to Present
         if (currentAttendance === "Late Arrival (വൈകി എത്തി)" || currentAttendance === "Early Permission (നേരത്തെ പോയി)") {
           setAttendance("Present");
         }
       } else {
-        // Day Mode
+        // Day or Online Mode
         if (btnSick) btnSick.classList.add("hidden");
         if (btnLate) btnLate.classList.remove("hidden");
-        if (btnEarly) btnEarly.classList.remove("hidden");
+        if (btnEarly) btnEarly.classList.toggle("hidden", campusMode === "online");
 
-        // If previously selected Sick Bay, safely reset to Present
-        if (currentAttendance === "Sick Bay / Medical Leave") {
+        if (currentAttendance === "Sick Bay / Medical Leave" || (campusMode === "online" && currentAttendance === "Early Permission (നേരത്തെ പോയി)")) {
           setAttendance("Present");
         }
       }
@@ -4160,7 +4457,12 @@
 
       if (teacherSubtitle) {
         teacherSubtitle.innerText =
-          campusMode === "residential"
+          campusMode === "online"
+            ? t(
+                "Record Live Online Sabaq, Sabqi, Manzil, Dual Time-Zone Slot & Tajweed Feedback",
+                "ഓൺലൈൻ സബഖ്, സബ്ഖി, മൻസിൽ, തജ്‌വീദ് വിലയിരുത്തൽ, ലൈവ് ക്ലാസ് സമയം എന്നിവ രേഖപ്പെടുത്തുക"
+              )
+            : campusMode === "residential"
             ? enableSalahTracking
               ? t(
                   "Record Sabaq, Sabqi, Manzil, Hostel Adab & 5-Time Salah Tracking",
@@ -4192,6 +4494,7 @@
       if (cfgAdminUser && !cfgAdminUser.value) {
         cfgAdminUser.value = principalAuth.username;
       }
+      renderOnlineAcademyControlsUI();
       renderCustomTraitsUI();
       applyAppLanguageUI();
       renderAllViews();
@@ -4774,9 +5077,9 @@
           bi: "Campus Mode (Active:"
         },
         "cfg-mode-status-text": {
-          en: isDayMode ? "Day College / Day Madrasa" : "Residential Campus",
-          ml: isDayMode ? "ഡേ കോളേജ് / ഡേ മദ്രസ" : "റെസിഡൻഷ്യൽ ക്യാമ്പസ്",
-          bi: isDayMode ? "Day College / Day Madrasa" : "Residential Campus"
+          en: campusMode === "online" ? "🌐 Online Hifz Academy" : isDayMode ? "Day College / Day Madrasa" : "Residential Campus",
+          ml: campusMode === "online" ? "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി" : isDayMode ? "ഡേ കോളേജ് / ഡേ മദ്രസ" : "റെസിഡൻഷ്യൽ ക്യാമ്പസ്",
+          bi: campusMode === "online" ? "🌐 Online Hifz Academy (ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി)" : isDayMode ? "Day College / Day Madrasa" : "Residential Campus"
         },
         "opt-cfg-mode-day": {
           en: "Day College / Day Madrasa",
@@ -4787,6 +5090,11 @@
           en: "Residential Campus",
           ml: "റെസിഡൻഷ്യൽ ക്യാമ്പസ്",
           bi: "Residential Campus"
+        },
+        "opt-cfg-mode-online": {
+          en: "🌐 Online Hifz Academy (Online Hifz Mode)",
+          ml: "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി (Online Hifz Mode)",
+          bi: "🌐 Online Hifz Academy (ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി)"
         },
         "btn-quick-switch-mode": {
           en: "⚡ Quick Switch Mode",
@@ -5088,9 +5396,9 @@
     // Render Custom Akhlaq / Student Behaviour Chips on Ustadh Desk & Principal Settings List + Recall Removed Default Traits
     function renderCustomTraitsUI() {
       syncNegativeTagSet();
-      const isDayMode = campusMode === "day";
+      const isNonResMode = campusMode !== "residential";
       const posTraits = customTraits.filter(
-        (tr) => Number(tr.points) >= 0 && !(isDayMode && isHostelDisciplineTag(tr.label))
+        (tr) => Number(tr.points) >= 0 && !(isNonResMode && isHostelDisciplineTag(tr.label))
       );
       const negTraits = customTraits.filter((tr) => Number(tr.points) < 0);
 
@@ -5167,7 +5475,7 @@
       if (removedBox) {
         const activeLabels = new Set(customTraits.map((tr) => String(tr.label).trim()));
         const missingDefaults = DEFAULT_TRAITS.filter(
-          (d) => !activeLabels.has(d.label.trim()) && !(isDayMode && isHostelDisciplineTag(d.label))
+          (d) => !activeLabels.has(d.label.trim()) && !(isNonResMode && isHostelDisciplineTag(d.label))
         );
 
         const restoreBtnText = t(
@@ -5513,26 +5821,31 @@
     // 1-Tap Campus Mode Switcher with Real-Time Firestore Persistence (Principal Only)
     window.toggleCampusModeQuick = async function() {
       if (!currentUser || currentUser.role !== "principal") return;
-      const newMode = campusMode === "day" ? "residential" : "day";
+      const newMode = campusMode === "day" ? "residential" : campusMode === "residential" ? "online" : "day";
       campusMode = newMode;
       dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
       applyCampusModeUI();
       renderAllViews();
 
+      const modeLabel = getCampusModeDisplayLabel(newMode, false);
+
       if (isDemoSandbox) {
         if (window.showToast) {
-          window.showToast("Campus mode switched to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + " (Demo Preview)!");
+          window.showToast("Campus mode switched to " + modeLabel + " (Demo Preview)!");
         }
         return;
       }
 
       const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
-      try { localStorage.setItem(`hifz_campus_mode_${mId}`, campusMode); } catch (e) {}
+      try {
+        localStorage.setItem(`hifz_campus_mode_${mId}`, campusMode);
+        localStorage.setItem("hifz_campus_mode", campusMode);
+      } catch (e) {}
       saveLiveCollectionsToLocal();
 
       if (!cleanDatabaseMode) {
         if (window.showToast) {
-          window.showToast("Campus mode switched to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + " (Local)!");
+          window.showToast("Campus mode switched to " + modeLabel + " (Local)!");
         }
         return;
       }
@@ -5549,7 +5862,7 @@
           await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`), payload, { merge: true });
         }
         if (window.showToast) {
-          window.showToast("Campus mode switched to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + "!");
+          window.showToast("Campus mode switched to " + modeLabel + "!");
         }
       } catch (err) {
         console.warn("Campus mode switch note:", err);
@@ -5559,26 +5872,31 @@
     window.handleCampusModeSelectChange = async function() {
       const select = document.getElementById("cfg-campus-mode");
       if (!select) return;
-      const newMode = select.value === "residential" ? "residential" : "day";
+      const newMode = select.value === "residential" ? "residential" : select.value === "online" ? "online" : "day";
       campusMode = newMode;
       dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
       applyCampusModeUI();
       renderAllViews();
 
+      const modeLabel = getCampusModeDisplayLabel(newMode, false);
+
       if (isDemoSandbox) {
         if (window.showToast) {
-          window.showToast("Campus mode set to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + " (Demo Preview)!");
+          window.showToast("Campus mode set to " + modeLabel + " (Demo Preview)!");
         }
         return;
       }
 
       const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
-      try { localStorage.setItem(`hifz_campus_mode_${mId}`, campusMode); } catch (e) {}
+      try {
+        localStorage.setItem(`hifz_campus_mode_${mId}`, campusMode);
+        localStorage.setItem("hifz_campus_mode", campusMode);
+      } catch (e) {}
       saveLiveCollectionsToLocal();
 
       if (!cleanDatabaseMode) {
         if (window.showToast) {
-          window.showToast("Campus mode set to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + " (Local)!");
+          window.showToast("Campus mode set to " + modeLabel + " (Local)!");
         }
         return;
       }
@@ -5595,7 +5913,7 @@
           await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`), payload, { merge: true });
         }
         if (window.showToast) {
-          window.showToast("Campus mode set to " + (newMode === "day" ? "Day College / Day Madrasa" : "Residential Campus") + "!");
+          window.showToast("Campus mode set to " + modeLabel + "!");
         }
       } catch (err) {
         console.warn("Campus mode select note:", err);
@@ -5799,7 +6117,9 @@
       const type = document.getElementById("parent-notice-type")?.value || "";
       const rem = document.getElementById("parent-notice-remarks");
       if (rem) {
-        if (type.includes("Exam")) {
+        if (type.includes("Reschedule")) {
+          rem.value = "Requesting Online Class Slot Reschedule to 08:30 PM IST · 07:00 PM UAE/Gulf (ക്ലാസ് സമയം മാറ്റാൻ അപേക്ഷിക്കുന്നു)";
+        } else if (type.includes("Exam")) {
           rem.value = "School Annual/Term Exam (ലഘുവായ ഹോം ടാർഗെറ്റ് നൽകുക)";
         } else if (type.includes("Sick")) {
           rem.value = "Medical / Fever leave";
@@ -5808,6 +6128,21 @@
         } else if (type.includes("Planned Leave")) {
           rem.value = "Family function / travel leave";
         }
+      }
+    };
+
+    window.handleRequestOnlineSlotReschedule = function() {
+      const formContainer = document.getElementById("parent-leave-form-container");
+      if (formContainer && formContainer.classList.contains("hidden")) {
+        formContainer.classList.remove("hidden");
+      }
+      const typeSelect = document.getElementById("parent-notice-type");
+      if (typeSelect) {
+        typeSelect.value = "Online Slot Reschedule Request (ക്ലാസ് സമയം മാറ്റാൻ)";
+        window.handleLeaveTypeChange();
+      }
+      if (formContainer) {
+        formContainer.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     };
 
@@ -6679,7 +7014,7 @@
           : rawManzil || defaultManzil;
 
         const homeRevisionTarget =
-          campusMode === "day" && !isAbsent
+          campusMode !== "residential" && !isAbsent
             ? rawHomeRev ||
               (isExamMode
                 ? "Light 1/4 Juz Revision (School Exam Balance Mode)"
@@ -6714,8 +7049,10 @@
           ? Math.max(-30, Math.min(30, dailyAkhlaqDelta))
           : 0;
 
-        const shiftToSave = campusMode === "day" ? currentShift : "Full Day / Residential";
-        const commuteToSave = campusMode === "day" ? rawCommute || "Parent Pickup" : "Residential Hostel";
+        const onlineSlotInput = document.getElementById("online-time-slot")?.value || currentOnlineTimeSlot;
+        const onlineLinkInput = (document.getElementById("online-class-link")?.value || currentOnlineClassLink || "https://meet.google.com/new").trim();
+        const shiftToSave = campusMode === "online" ? onlineSlotInput : campusMode === "day" ? currentShift : "Full Day / Residential";
+        const commuteToSave = campusMode === "online" ? currentOnlineDeliveryMode : campusMode === "day" ? rawCommute || "Parent Pickup" : "Residential Hostel";
         const depTimeToSave = (campusMode === "day" && !isAbsent) ? rawDepTime.slice(0, 60) : "";
         const rawAdab = document.getElementById("hostel-adab-input")?.value || currentHostelAdab.join(", ");
 
@@ -6741,6 +7078,10 @@
           manzilGrade: (isSickBay ? "Sick Bay Leave" : isAbsent ? "Not Recited" : manzilGrade).slice(0, 60),
           salahTracking: (campusMode === "residential" && enableSalahTracking && !isAbsent) ? currentSalahTracking : [],
           hostelAdab: (campusMode === "residential" && !isAbsent ? rawAdab : "").slice(0, 100),
+          onlineTimeSlot: campusMode === "online" ? onlineSlotInput.slice(0, 80) : "",
+          onlineClassLink: campusMode === "online" ? onlineLinkInput.slice(0, 200) : "",
+          onlineDeliveryMode: campusMode === "online" ? currentOnlineDeliveryMode.slice(0, 80) : "",
+          tajweedTags: (campusMode === "online" && !isAbsent) ? currentTajweedTags.slice(0, 6) : [],
           akhlaqScoreDelta: safeDelta,
           akhlaqTags: safeTags,
           note: safeNote.slice(0, 400),
@@ -7241,7 +7582,7 @@
       const sub = (document.getElementById("cfg-college-sub")?.value || "Hifz Tracker Portal").trim();
       const academicTerm = (document.getElementById("cfg-academic-term")?.value || "1448 AH · Rabi Al-Thani Term").trim();
 
-      campusMode = mode === "residential" ? "residential" : "day";
+      campusMode = mode === "residential" ? "residential" : mode === "online" ? "online" : "day";
 
       // Demo Sandbox: never overwrite saved Live Data in localStorage or Firestore
       if (isDemoSandbox) {
@@ -9609,7 +9950,23 @@
 
         ${
           latestLog
-            ? campusMode === "day"
+            ? campusMode === "online"
+              ? `
+          <div style="margin-top:10px; padding:9px 11px; border-radius:8px; background:#eff6ff; border:1px solid #93c5fd; font-size:0.76rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
+              <strong style="color:#0369a1;">🌐 ${t("Online Hifz Live Session", "ഓൺലൈൻ ഹിഫ്ള് ലൈവ് സെഷൻ")} · ${latestLog.onlineTimeSlot || currentOnlineTimeSlot}</strong>
+              <span class="tag ${isLatestAbsent ? "tag-absent" : "tag-present"}" style="font-size:0.7rem;">
+                ${isLatestAbsent ? t("Absent", "ആബ്സെന്റ്") : (latestLog.onlineDeliveryMode || currentOnlineDeliveryMode)}
+              </span>
+            </div>
+            <div style="color:var(--text-secondary); margin-top:4px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+              <span><strong>${t("Home Practice Target:", "വീട്ടിലെ ആവർത്തനം:")}</strong> ${latestLog.homeRevisionTarget || std.currentSurah}</span>
+              ${Array.isArray(latestLog.tajweedTags) && latestLog.tajweedTags.length > 0
+                ? latestLog.tajweedTags.map((tj) => `<span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:1px 6px; border-radius:99px; font-size:0.68rem; font-weight:700;">${tj}</span>`).join("")
+                : ""}
+            </div>
+          </div>`
+              : campusMode === "day"
               ? `
           <div style="margin-top:10px; padding:9px 11px; border-radius:8px; background:${
             isParentVerified ? "#f0fdf4" : "#fffbeb"
@@ -9730,7 +10087,7 @@
               <span>·</span>
               <span class="tag ${getAttendanceTagClass(cleanAtt)}">${formatAttendanceDisplay(cleanAtt)}</span>
               ${campusMode === "day" && !isAbsent && log.schoolExamMode ? `<span class="tag tag-exam-mode">${t("School Exam Mode", "സ്കൂൾ പരീക്ഷാ മോഡ്")}</span>` : ""}
-              ${campusMode === "day" && !isAbsent && log.parentHomeVerified ? `<span class="tag tag-home-verified">${t("✓ Home Verified", "✓ വീട്ടിൽ വെച്ച് കേട്ടു")}</span>` : ""}
+              ${campusMode !== "residential" && !isAbsent && log.parentHomeVerified ? `<span class="tag tag-home-verified">${t("✓ Home Verified", "✓ വീട്ടിൽ വെച്ച് കേട്ടു")}</span>` : ""}
               <button type="button" onclick="handleDeleteLog('${log.id}')" title="${t("Delete", "ഒഴിവാക്കുക")}" aria-label="Delete log for ${log.studentName} on ${log.dateStr}" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:0.8rem; padding:2px 4px;">✕</button>
             </div>
           </div>
@@ -9743,6 +10100,18 @@
               `Absent — Sabaq, Sabqi, Manzil${campusMode === "residential" && enableSalahTracking ? " & 5-Time Salah" : ""} not recorded for this session.`,
               "ആബ്സെന്റ് — ഈ സെഷനിൽ സബഖ്, സബ്ഖി, മൻസിൽ രേഖപ്പെടുത്തിയിട്ടില്ല."
             )}
+          </div>`
+              : campusMode === "online"
+              ? `
+          <div style="font-size:0.74rem; color:#0369a1; margin-bottom:5px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <span><strong>${t("Slot:", "സമയം:")}</strong> ${log.onlineTimeSlot || log.shift || currentOnlineTimeSlot}</span>
+            <span>·</span>
+            <span><strong>${t("Session Mode:", "ക്ലാസ് രീതി:")}</strong> ${log.onlineDeliveryMode || currentOnlineDeliveryMode}</span>
+            ${
+              Array.isArray(log.tajweedTags) && log.tajweedTags.length > 0
+                ? log.tajweedTags.map((tj) => `<span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:1px 7px; border-radius:99px; font-size:0.69rem; font-weight:700;">${tj}</span>`).join("")
+                : ""
+            }
           </div>`
               : campusMode === "day"
               ? `
@@ -9782,7 +10151,7 @@
               <div><strong>${t("Sabqi:", "സബ്ഖി:")}</strong> ${log.sabqiTarget} · ${log.sabqiGrade}</div>
               <div><strong>${t("Manzil:", "മൻസിൽ:")}</strong> ${log.manzilTarget} · ${log.manzilGrade}</div>
               ${
-                campusMode === "day" && log.homeRevisionTarget
+                campusMode !== "residential" && log.homeRevisionTarget
                   ? `<div style="color:#065f46; margin-top:2px;"><strong>${t("Home Revision (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം):", "വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം:")}</strong> ${log.homeRevisionTarget}</div>`
                   : ""
               }
@@ -10323,7 +10692,183 @@
       const attRate = stdLogs.length > 0 ? Math.round((present / stdLogs.length) * 100) : 100;
       const akhlaq = calculateAkhlaqMetric(stdLogs);
 
-      // Day College Transit vs Residential Campus 5-Time Salah Tracker Cards
+      // Qari Audio Player & Voice Note Recitation Recorder Helpers (Parent Portal)
+      if (!window._qariVoiceHelpersInitialized) {
+        window._qariVoiceHelpersInitialized = true;
+        window.activeVoiceMediaRecorder = null;
+        window.activeVoiceChunks = [];
+        window.activeVoiceTimerInterval = null;
+        window.activeVoiceSeconds = 0;
+
+        window.detectSurahNumberFromText = function(text) {
+          const s = String(text || "").toLowerCase();
+          if (s.includes("mulk") || s.includes("67")) return "067";
+          if (s.includes("yaseen") || s.includes("ya-sin") || s.includes("yasin") || s.includes("36")) return "036";
+          if (s.includes("rahman") || s.includes("55")) return "055";
+          if (s.includes("waqi") || s.includes("56")) return "056";
+          if (s.includes("naba") || s.includes("78")) return "078";
+          if (s.includes("baqarah")) return "002";
+          if (s.includes("fatiha")) return "001";
+          if (s.includes("maryam") || s.includes("19")) return "019";
+          return "018"; // Default Surah Al-Kahf
+        };
+
+        window.updateQariAudioSource = function() {
+          const surahSel = document.getElementById("qari-surah-select");
+          const ayahInp = document.getElementById("qari-ayah-input");
+          const audioEl = document.getElementById("qari-audio-element");
+          if (!surahSel || !audioEl) return;
+          const surahCode = String(surahSel.value || "018").padStart(3, "0");
+          const rawAyah = Math.max(1, Math.min(286, parseInt(ayahInp && ayahInp.value ? ayahInp.value : "1", 10) || 1));
+          const ayahCode = String(rawAyah).padStart(3, "0");
+          audioEl.src = `https://everyayah.com/data/Alafasy_128kbps/${surahCode}${ayahCode}.mp3`;
+          audioEl.play().catch(() => {});
+        };
+
+        window.stepQariAyah = function(delta) {
+          const ayahInp = document.getElementById("qari-ayah-input");
+          if (!ayahInp) return;
+          const cur = parseInt(ayahInp.value || "1", 10) || 1;
+          ayahInp.value = String(Math.max(1, cur + delta));
+          window.updateQariAudioSource();
+        };
+
+        window.toggleQariAudioPlayer = function(defaultTargetText) {
+          const box = document.getElementById("parent-qari-player-box");
+          if (!box) return;
+          const willShow = box.classList.contains("hidden");
+          box.classList.toggle("hidden");
+          if (willShow) {
+            const surahSel = document.getElementById("qari-surah-select");
+            if (surahSel && defaultTargetText) {
+              surahSel.value = window.detectSurahNumberFromText(defaultTargetText);
+            }
+            window.updateQariAudioSource();
+          } else {
+            const audioEl = document.getElementById("qari-audio-element");
+            if (audioEl) audioEl.pause();
+          }
+        };
+
+        window.toggleVoiceRecitationRecorder = function() {
+          const box = document.getElementById("parent-voice-recorder-box");
+          if (!box) return;
+          box.classList.toggle("hidden");
+        };
+
+        window.startVoiceRecording = async function() {
+          const statusEl = document.getElementById("voice-rec-status");
+          const startBtn = document.getElementById("btn-start-voice-rec");
+          const stopBtn = document.getElementById("btn-stop-voice-rec");
+          const previewWrap = document.getElementById("voice-rec-preview-wrap");
+
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            if (window.showToast) window.showToast(t("Microphone recording not supported in this browser.", "മൈക്രോഫോൺ റെക്കോർഡിംഗ് ലഭ്യമല്ല."));
+            return;
+          }
+
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            window.activeVoiceChunks = [];
+            const recorder = new MediaRecorder(stream);
+            window.activeVoiceMediaRecorder = recorder;
+
+            recorder.ondataavailable = (ev) => {
+              if (ev.data && ev.data.size > 0) window.activeVoiceChunks.push(ev.data);
+            };
+
+            recorder.onstop = () => {
+              stream.getTracks().forEach((tr) => tr.stop());
+              clearInterval(window.activeVoiceTimerInterval);
+              const blob = new Blob(window.activeVoiceChunks, { type: "audio/webm" });
+              window.latestRecordedVoiceBlob = blob;
+              const audioUrl = URL.createObjectURL(blob);
+              const previewAudio = document.getElementById("voice-rec-preview-audio");
+              if (previewAudio) previewAudio.src = audioUrl;
+              if (previewWrap) previewWrap.classList.remove("hidden");
+              if (statusEl) {
+                statusEl.innerText = t("✓ Recitation recorded! Listen below or share to Ustadh.", "✓ ഓത്ത് റെക്കോർഡ് ചെയ്തു! കേട്ടുനോക്കി ഉസ്താദിന് അയക്കാം.");
+                statusEl.style.color = "#047857";
+              }
+            };
+
+            recorder.start();
+            window.activeVoiceSeconds = 0;
+            if (startBtn) startBtn.classList.add("hidden");
+            if (stopBtn) stopBtn.classList.remove("hidden");
+            if (previewWrap) previewWrap.classList.add("hidden");
+            if (statusEl) {
+              statusEl.innerText = t("🔴 Recording Recitation... (00:00)", "🔴 ഓത്ത് റെക്കോർഡ് ചെയ്യുന്നു... (00:00)");
+              statusEl.style.color = "#dc2626";
+            }
+
+            clearInterval(window.activeVoiceTimerInterval);
+            window.activeVoiceTimerInterval = setInterval(() => {
+              window.activeVoiceSeconds++;
+              const mm = String(Math.floor(window.activeVoiceSeconds / 60)).padStart(2, "0");
+              const ss = String(window.activeVoiceSeconds % 60).padStart(2, "0");
+              if (statusEl) {
+                statusEl.innerText = t(`🔴 Recording Recitation... (${mm}:${ss})`, `🔴 ഓത്ത് റെക്കോർഡ് ചെയ്യുന്നു... (${mm}:${ss})`);
+              }
+            }, 1000);
+          } catch (err) {
+            if (statusEl) {
+              statusEl.innerText = t("⚠ Please allow microphone permission to record recitation.", "⚠ മൈക്രോഫോൺ അനുമതി നൽകുക.");
+              statusEl.style.color = "#b45309";
+            }
+          }
+        };
+
+        window.stopVoiceRecording = function() {
+          const startBtn = document.getElementById("btn-start-voice-rec");
+          const stopBtn = document.getElementById("btn-stop-voice-rec");
+          if (window.activeVoiceMediaRecorder && window.activeVoiceMediaRecorder.state !== "inactive") {
+            window.activeVoiceMediaRecorder.stop();
+          }
+          clearInterval(window.activeVoiceTimerInterval);
+          if (startBtn) startBtn.classList.remove("hidden");
+          if (stopBtn) stopBtn.classList.add("hidden");
+        };
+
+        window.shareVoiceNoteOnWhatsApp = async function() {
+          const activeStd = globalStudents.find((s) => s.studentId === currentParentStudentId) || globalStudents[0];
+          const stdName = activeStd ? activeStd.name : "Student";
+          const stdId = activeStd ? activeStd.studentId : "STD-101";
+          const teacher = globalTeachers.find((tr) => tr.name.toLowerCase() === ((activeStd && activeStd.ustadhName) || "").toLowerCase()) || globalTeachers[0];
+          const teacherPhone = teacher && teacher.phone ? teacher.phone.replace(/[^0-9]/g, "") : "919847011223";
+
+          if (window.latestRecordedVoiceBlob && navigator.canShare) {
+            try {
+              const file = new File([window.latestRecordedVoiceBlob], `Hifz_Recitation_${stdId}.webm`, { type: "audio/webm" });
+              if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                  title: `${stdName} — Hifz Recitation Audio`,
+                  text: `Assalamu Alaikum Ustadh, attached is ${stdName} (${stdId})'s home Hifz recitation audio.`,
+                  files: [file]
+                });
+                return;
+              }
+            } catch (e) {}
+          }
+
+          const msg = encodeURIComponent(
+            `🕌 *${getActiveCampusName()} — Home Recitation Voice Submission*\n\n` +
+            `Assalamu Alaikum ${activeStd && activeStd.ustadhName ? activeStd.ustadhName : "Ustadh"},\n` +
+            `🎙️ *Student:* ${stdName} (${stdId})\n` +
+            `📖 *Recited Portion:* ${activeStd && activeStd.currentSurah ? activeStd.currentSurah : "Assigned Home Revision"}\n` +
+            `✓ We have recorded & practiced the recitation at home (sending voice note).`
+          );
+          const a = document.createElement("a");
+          a.href = `https://wa.me/${teacherPhone}?text=${msg}`;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+      }
+
+      // Day College Transit vs Residential Campus 5-Time Salah vs Online Hifz Academy Cards
       const dayCardsContainer = document.getElementById("parent-day-college-cards");
       if (dayCardsContainer) {
         if (campusMode === "residential") {
@@ -10383,7 +10928,50 @@
           );
           const isVerified = Boolean(latestLog && latestLog.parentHomeVerified);
 
-          const transitCardHtml = enableShiftTransitTracking
+          const assignedSlot = (latestLog && latestLog.onlineTimeSlot) ? latestLog.onlineTimeSlot : currentOnlineTimeSlot;
+          const assignedLink = (latestLog && latestLog.onlineClassLink) ? latestLog.onlineClassLink : currentOnlineClassLink;
+          const latestDeliveryMode = (latestLog && latestLog.onlineDeliveryMode) ? latestLog.onlineDeliveryMode : currentOnlineDeliveryMode;
+          const latestTajweed = (latestLog && Array.isArray(latestLog.tajweedTags) && latestLog.tajweedTags.length > 0)
+            ? latestLog.tajweedTags
+            : currentTajweedTags;
+
+          const leftCardHtml = campusMode === "online"
+            ? `
+            <div style="background:linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border:1.5px solid #38bdf8; border-radius:10px; padding:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:0.74rem; font-weight:700; color:#0369a1;">🌐 ${t("ONLINE CLASS SCHEDULE & DUAL TIME-ZONE", "ഓൺലൈൻ ക്ലാസ് സമയം (IST & ഗൾഫ് സമയം)")}</span>
+                <span class="tag tag-present" style="background:#0284c7; color:#ffffff; border-color:#0369a1;">${latestDeliveryMode}</span>
+              </div>
+              <div style="font-family:var(--font-mono); font-size:0.92rem; font-weight:700; color:#0c4a6e; margin-bottom:6px;">
+                🕒 ${assignedSlot}
+              </div>
+              ${
+                latestTajweed && latestTajweed.length > 0
+                  ? `<div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px;">
+                      ${latestTajweed.map((tj) => `<span style="background:#ffffff; color:#0369a1; border:1px solid #7dd3fc; padding:2px 8px; border-radius:99px; font-size:0.7rem; font-weight:700;">${tj}</span>`).join("")}
+                    </div>`
+                  : ""
+              }
+              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+                <button
+                  type="button"
+                  onclick="handleOpenOnlineClassLink('${assignedLink.replace(/'/g, "\\'")}')"
+                  class="btn-primary"
+                  style="background:#0284c7; border-color:#0369a1; padding:8px 13px; font-size:0.78rem; width:auto; flex:1;"
+                >
+                  🎥 ${t("Join Live Class (ലൈവ് ക്ലാസിൽ പ്രവേശിക്കുക)", "ലൈവ് ക്ലാസിൽ പ്രവേശിക്കുക (Join Live Class)")}
+                </button>
+                <button
+                  type="button"
+                  onclick="handleRequestOnlineSlotReschedule()"
+                  class="btn-secondary"
+                  style="background:#ffffff; color:#0369a1; border:1px solid #7dd3fc; padding:8px 11px; font-size:0.75rem; font-weight:700; width:auto;"
+                >
+                  🕒 ${t("Request Slot Reschedule", "ക്ലാസ് സമയം മാറ്റാൻ അപേക്ഷിക്കുക")}
+                </button>
+              </div>
+            </div>`
+            : enableShiftTransitTracking
             ? `
             <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:14px;">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
@@ -10401,13 +10989,15 @@
             </div>`
             : "";
 
+          const safeHomeTargetAttr = String(homeTarget || std.currentSurah || "Surah Al-Kahf").replace(/'/g, "\\'");
+
           dayCardsContainer.innerHTML = `
-            ${transitCardHtml}
+            ${leftCardHtml}
             <div style="background:${isVerified ? "#f0fdf4" : "#ffffff"}; border:1px solid ${
               isVerified ? "#86efac" : "#cbd5e1"
-            }; border-radius:10px; padding:14px; ${enableShiftTransitTracking ? "" : "grid-column: 1 / -1;"}">
-              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
-                <span style="font-size:0.74rem; font-weight:700; color:#065f46;">${t("HOME REVISION TARGET (വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം)", "വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗം")}</span>
+            }; border-radius:10px; padding:14px; ${(campusMode === "online" || enableShiftTransitTracking) ? "" : "grid-column: 1 / -1;"}">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:0.74rem; font-weight:700; color:#065f46;">${t("HOME REVISION & AUDIO RECITATION PRACTICE", "വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗവും ഓഡിയോ പരിശീലനവും")}</span>
                 ${
                   isVerified
                     ? `<span class="tag tag-home-verified">${t("✓ Digital Sign-Off Complete", "✓ ഡിജിറ്റൽ ഒപ്പ് പൂർത്തിയായി")}</span>`
@@ -10418,6 +11008,74 @@
                 ${homeTarget}
                 ${latestLog && latestLog.schoolExamMode ? ` <span class="tag tag-exam-mode">${t("School Exam Mode", "സ്കൂൾ പരീക്ഷാ മോഡ്")}</span>` : ""}
               </div>
+
+              <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+                <button
+                  type="button"
+                  onclick="toggleQariAudioPlayer('${safeHomeTargetAttr}')"
+                  class="btn-secondary"
+                  style="padding:7px 11px; font-size:0.76rem; font-weight:700; background:#f0f9ff; color:#0369a1; border:1px solid #bae6fd; width:auto;"
+                >
+                  🔊 ${t("Listen to Qari Audio (പാഠഭാഗം കേൾക്കുക)", "പാഠഭാഗം കേൾക്കുക (Listen to Qari Audio)")}
+                </button>
+                <button
+                  type="button"
+                  onclick="toggleVoiceRecitationRecorder()"
+                  class="btn-secondary"
+                  style="padding:7px 11px; font-size:0.76rem; font-weight:700; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; width:auto;"
+                >
+                  🎙️ ${t("Record & Send Recitation (ഓത്ത് റെക്കോർഡ് ചെയ്ത് അയക്കുക)", "ഓത്ത് റെക്കോർഡ് ചെയ്ത് അയക്കുക")}
+                </button>
+              </div>
+
+              <!-- In-App Qari Audio Player Drawer -->
+              <div id="parent-qari-player-box" class="hidden" style="background:#f8fafc; border:1px solid #bae6fd; border-radius:8px; padding:10px; margin-bottom:10px;">
+                <div style="font-size:0.74rem; font-weight:700; color:#0369a1; margin-bottom:6px;">
+                  🎧 ${t("Sheikh Mishary Rashid Alafasy — Tajweed Practice Audio", "ശൈഖ് മിഷാരി റാഷിദ് അൽ-അഫാസി — തജ്‌വീദ് പാരായണം")}
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px;">
+                  <select id="qari-surah-select" onchange="updateQariAudioSource()" style="flex:1; min-width:140px; padding:5px 8px; font-size:0.76rem; border-radius:6px; border:1px solid #cbd5e1;">
+                    <option value="018">Surah 18: Al-Kahf (സൂറത്തുൽ കഹ്ഫ്)</option>
+                    <option value="036">Surah 36: Ya-Sin (സൂറത്ത് യാസീൻ)</option>
+                    <option value="055">Surah 55: Ar-Rahman (സൂറത്തുൽ റഹ്മാൻ)</option>
+                    <option value="056">Surah 56: Al-Waqi'ah (സൂറത്തുൽ വാഖിഅ)</option>
+                    <option value="067">Surah 67: Al-Mulk (സൂറത്തുൽ മുൽക്ക്)</option>
+                    <option value="078">Surah 78: An-Naba' (സൂറത്തുന്നബഅ്)</option>
+                    <option value="019">Surah 19: Maryam (സൂറത്ത് മർയം)</option>
+                    <option value="002">Surah 2: Al-Baqarah (സൂറത്തുൽ ബഖറ)</option>
+                    <option value="001">Surah 1: Al-Fatihah (സൂറത്തുൽ ഫാത്തിഹ)</option>
+                  </select>
+                  <div style="display:inline-flex; align-items:center; gap:4px;">
+                    <span style="font-size:0.72rem; font-weight:700; color:#475569;">Ayah:</span>
+                    <input type="number" id="qari-ayah-input" value="1" min="1" max="286" onchange="updateQariAudioSource()" style="width:58px; padding:5px; font-size:0.76rem; border-radius:6px; border:1px solid #cbd5e1; text-align:center;" />
+                    <button type="button" onclick="stepQariAyah(-1)" class="btn-secondary" style="padding:4px 8px; font-size:0.72rem; width:auto;">◀</button>
+                    <button type="button" onclick="stepQariAyah(1)" class="btn-secondary" style="padding:4px 8px; font-size:0.72rem; width:auto;">▶</button>
+                  </div>
+                </div>
+                <audio id="qari-audio-element" controls preload="none" style="width:100%; height:34px;"></audio>
+              </div>
+
+              <!-- In-App Voice Note Recitation Recorder Drawer -->
+              <div id="parent-voice-recorder-box" class="hidden" style="background:#fff1f2; border:1px solid #fecdd3; border-radius:8px; padding:10px; margin-bottom:10px;">
+                <div id="voice-rec-status" style="font-size:0.75rem; font-weight:700; color:#9f1239; margin-bottom:8px;">
+                  🎙️ ${t("Record Student's Sabaq / Revision Voice Note for Ustadh", "വിദ്യാർത്ഥിയുടെ ഓത്ത് റെക്കോർഡ് ചെയ്ത് ഉസ്താദിന് അയക്കുക")}
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                  <button type="button" id="btn-start-voice-rec" onclick="startVoiceRecording()" class="btn-primary" style="background:#e11d48; border-color:#be123c; padding:6px 12px; font-size:0.76rem; width:auto;">
+                    ● ${t("Start Recording (റെക്കോർഡിംഗ് തുടങ്ങുക)", "റെക്കോർഡിംഗ് തുടങ്ങുക")}
+                  </button>
+                  <button type="button" id="btn-stop-voice-rec" onclick="stopVoiceRecording()" class="btn-primary hidden" style="background:#0f172a; border-color:#0f172a; padding:6px 12px; font-size:0.76rem; width:auto;">
+                    ■ ${t("Stop & Preview (നിർത്തുക)", "നിർത്തുക")}
+                  </button>
+                </div>
+                <div id="voice-rec-preview-wrap" class="hidden" style="margin-top:8px; padding-top:8px; border-top:1px dashed #fda4af;">
+                  <audio id="voice-rec-preview-audio" controls style="width:100%; height:34px; margin-bottom:8px;"></audio>
+                  <button type="button" onclick="shareVoiceNoteOnWhatsApp()" class="btn-primary" style="background:#059669; border-color:#047857; padding:7px 12px; font-size:0.76rem; width:100%;">
+                    📲 ${t("Send Recorded Recitation to Ustadh on WhatsApp", "റെക്കോർഡ് ചെയ്ത ഓത്ത് വാട്സ്ആപ്പിൽ ഉസ്താദിന് അയക്കുക")}
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="button"
                 id="btn-parent-home-verify"
@@ -10505,7 +11163,7 @@
         const rawPosTags = akhlaq.cleanPositiveTags && akhlaq.cleanPositiveTags.length > 0
           ? akhlaq.cleanPositiveTags
           : getDefaultPositiveTraitLabels();
-        const posTags = rawPosTags.filter((tg) => !(campusMode === "day" && isHostelDisciplineTag(tg)));
+        const posTags = rawPosTags.filter((tg) => !(campusMode !== "residential" && isHostelDisciplineTag(tg)));
         const negTags = akhlaq.score >= 100 ? [] : (akhlaq.cleanNegativeTags || []);
 
         akhlaqCard.innerHTML = `
@@ -10582,7 +11240,9 @@
                 displayAtt = "Present";
               }
 
-              const shiftLabel = campusMode === "residential"
+              const shiftLabel = campusMode === "online"
+                ? (r.onlineTimeSlot || currentOnlineTimeSlot)
+                : campusMode === "residential"
                 ? t("Residential Session", "റെസിഡൻഷ്യൽ സെഷൻ")
                 : (enableShiftTransitTracking ? formatShiftDisplay(r.shift) : t("Daily Session", "പ്രതിദിന സെഷൻ"));
 
@@ -10602,7 +11262,9 @@
                 <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                   ${
                     displayAtt !== "Absent"
-                      ? campusMode === "residential"
+                      ? campusMode === "online"
+                        ? `<span class="tag tag-present" style="font-size:0.67rem; padding:1px 6px; background:#e0f2fe; color:#0369a1;">${r.onlineDeliveryMode || "🎥 Live Online"}</span>`
+                        : campusMode === "residential"
                         ? enableSalahTracking
                           ? `<span class="tag tag-present" style="font-size:0.67rem; padding:1px 6px;">${Array.isArray(r.salahTracking) && r.salahTracking.length > 0 ? r.salahTracking.length + "/5 " + t("Salah", "നമസ്കാരം") : "5/5 " + t("Jama'at", "ജമാഅത്ത്")}</span>`
                           : ""
@@ -10624,9 +11286,16 @@
                     <div><strong>${t("Sabaq (New Lesson):", "സബഖ് (പുതിയ പാഠം):")}</strong> ${formatSurahDisplay(r.sabaqTarget)} <span class="tag tag-mumtaz" style="font-size:0.68rem; padding:1px 6px;">${cleanSabaqGrade}</span></div>
                     <div style="margin-top:2px;"><strong>${t("Sabqi (Recent):", "സബ്ഖി (സമീപകാല ജുസ്അ്):")}</strong> ${formatHomeTargetDisplay(r.sabqiTarget)} <span style="font-size:0.75rem; color:#065f46; font-weight:600;">[${cleanSabqiGrade}]</span></div>
                     <div style="margin-top:2px;"><strong>${t("Manzil (Old Juz):", "മൻസിൽ (പഴയ ജുസ്അ്):")}</strong> ${formatHomeTargetDisplay(r.manzilTarget)} <span style="font-size:0.75rem; color:#1e40af; font-weight:600;">[${cleanManzilGrade}]</span></div>
-                    
                     ${
-                      campusMode === "day" && r.homeRevisionTarget
+                      Array.isArray(r.tajweedTags) && r.tajweedTags.length > 0
+                        ? `<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:5px; align-items:center;">
+                            <strong style="font-size:0.75rem; color:#0369a1;">${t("Tajweed Feedback:", "തജ്‌വീദ് വിലയിരുത്തൽ:")}</strong>
+                            ${r.tajweedTags.map((tj) => `<span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:1px 7px; border-radius:99px; font-size:0.69rem; font-weight:700;">${tj}</span>`).join("")}
+                          </div>`
+                        : ""
+                    }
+                    ${
+                      campusMode !== "residential" && r.homeRevisionTarget
                         ? `
                       <div style="margin-top:8px; padding:6px 10px; background:${isVerified ? "#f0fdf4" : "#fffbeb"}; border:1px solid ${isVerified ? "#86efac" : "#fde68a"}; border-radius:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
                         <span style="font-size:0.76rem; color:#065f46;">
@@ -10933,8 +11602,20 @@
       const rawPositiveTraits = (akhlaq.cleanPositiveTags && akhlaq.cleanPositiveTags.length > 0)
         ? akhlaq.cleanPositiveTags
         : getDefaultPositiveTraitLabels();
-      const positiveTraits = rawPositiveTraits.filter((tg) => !(campusMode === "day" && isHostelDisciplineTag(tg)));
+      const positiveTraits = rawPositiveTraits.filter((tg) => !(campusMode !== "residential" && isHostelDisciplineTag(tg)));
       const negativeTraits = akhlaq.score >= 100 ? [] : (akhlaq.cleanNegativeTags || []);
+      const latestTajweedTags = (() => {
+        for (const l of stdLogs) {
+          if (Array.isArray(l.tajweedTags) && l.tajweedTags.length > 0) return l.tajweedTags;
+        }
+        return campusMode === "online" ? currentTajweedTags : [];
+      })();
+      const latestOnlineDelivery = (() => {
+        for (const l of stdLogs) {
+          if (l.onlineDeliveryMode) return l.onlineDeliveryMode;
+        }
+        return campusMode === "online" ? currentOnlineDeliveryMode : "";
+      })();
       const analytics = calculateHifzAnalytics(stdLogs, std);
 
       const pagesCount = analytics.weeks.reduce((sum, w) => sum + w.pages, 0);
@@ -11046,7 +11727,7 @@
               <div style="font-family:'JetBrains Mono', monospace; font-size:0.95rem; font-weight:700; color:#047857; margin-top:2px;">
                 ${attRate}% (${daysPresent}/${totalSessions})
               </div>
-              <div style="font-size:0.7rem; color:#475569;">${daysPresent} ${t("Present", "ഹാജർ")} · ${campusMode === "residential" ? t("Residential", "റെസിഡൻഷ്യൽ") : (enableShiftTransitTracking ? t("Day Shift", "ഡേ ഷിഫ്റ്റ്") : t("Day School", "ഡേ സ്കൂൾ"))}</div>
+              <div style="font-size:0.7rem; color:#475569;">${daysPresent} ${t("Present", "ഹാജർ")} · ${campusMode === "online" ? t("🌐 Online Academy", "🌐 ഓൺലൈൻ അക്കാദമി") : campusMode === "residential" ? t("Residential", "റെസിഡൻഷ്യൽ") : (enableShiftTransitTracking ? t("Day Shift", "ഡേ ഷിഫ്റ്റ്") : t("Day School", "ഡേ സ്കൂൾ"))}</div>
             </div>
           </div>
 
@@ -11124,6 +11805,15 @@
               ${positiveTraits.map((tg) => `<span style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; padding:2px 8px; border-radius:99px; font-size:0.7rem; font-weight:600;">✓ ${tg}</span>`).join("")}
               ${negativeTraits.map((tg) => `<span style="background:#fee2e2; color:#991b1b; border:1px solid #fecaca; padding:2px 8px; border-radius:99px; font-size:0.7rem; font-weight:600;">⚠ ${tg}</span>`).join("")}
             </div>
+            ${
+              latestTajweedTags.length > 0 || latestOnlineDelivery
+                ? `<div style="margin-top:8px; padding-top:8px; border-top:1px dashed #86efac; display:flex; align-items:center; flex-wrap:wrap; gap:6px;">
+                    <span style="font-size:0.7rem; font-weight:700; color:#0369a1; text-transform:uppercase; letter-spacing:0.02em;">${t("Online Session & Tajweed Focus:", "ഓൺലൈൻ സെഷൻ & തജ്‌വീദ് വിലയിരുത്തൽ:")}</span>
+                    ${latestOnlineDelivery ? `<span style="background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc; padding:2px 8px; border-radius:99px; font-size:0.7rem; font-weight:700;">${latestOnlineDelivery}</span>` : ""}
+                    ${latestTajweedTags.map((tj) => `<span style="background:#f0f9ff; color:#075985; border:1px solid #bae6fd; padding:2px 8px; border-radius:99px; font-size:0.7rem; font-weight:600;">${tj}</span>`).join("")}
+                  </div>`
+                : ""
+            }
           </div>
 
           <!-- 5. Monthly Revision, Appraisal & Next Month Target (2-Column Summary Box) -->
@@ -11244,7 +11934,7 @@
       if (d.madrasaId && String(d.madrasaId).trim().toUpperCase() !== mId) return;
 
       if (d.mode) {
-        campusMode = d.mode === "residential" ? "residential" : "day";
+        campusMode = d.mode === "residential" ? "residential" : d.mode === "online" ? "online" : "day";
       }
       const cleanName = d.name && !isLegacyHardcodedCampusText(d.name) ? String(d.name).trim() : "";
       const cleanSub = d.sub && !isLegacyHardcodedCampusText(d.sub) ? String(d.sub).trim() : "";
