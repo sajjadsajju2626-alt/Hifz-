@@ -1636,9 +1636,8 @@
           aria-label="Select Language"
           style="width:auto; padding:6px 10px; font-size:0.76rem; font-weight:700; border-radius:8px; border:1px solid #a7f3d0; background:#ecfdf5; color:#064e3b; cursor:pointer;"
         >
-          <option value="bi">🌐 EN + മലയാളം</option>
-          <option value="ml">🌐 മലയാളം</option>
-          <option value="en">🌐 English</option>
+          <option value="ml">മലയാളം</option>
+          <option value="en">English</option>
         </select>
         <button type="button" class="btn-portal-signin" id="btn-header-auth" onclick="handleHeaderAuthClick()">
           Portal Sign In
@@ -2437,7 +2436,7 @@
 
     <!-- 4. PRINCIPAL DASHBOARD VIEW -->
     <section id="view-principal" class="hidden">
-      <div class="sub-tabs">
+      <div class="sub-tabs" id="principal-sub-tabs">
         <button type="button" class="sub-tab-btn" id="ptab-btn-settings" onclick="switchPrincipalTab('settings')">
           Campus Settings
         </button>
@@ -2446,9 +2445,6 @@
         </button>
         <button type="button" class="sub-tab-btn" id="ptab-btn-enroll" onclick="switchPrincipalTab('enroll')">
           Add Student / Ustadh
-        </button>
-        <button type="button" class="sub-tab-btn" id="ptab-btn-notices" onclick="switchPrincipalTab('notices')">
-          Notice Desk
         </button>
       </div>
 
@@ -2659,7 +2655,7 @@
                     <select id="cfg-campus-mode" onchange="handleCampusModeSelectChange()" style="flex:1; min-width:180px;">
                       <option value="day" id="opt-cfg-mode-day" selected>Day College / Day Madrasa</option>
                       <option value="residential" id="opt-cfg-mode-res">Residential Campus</option>
-                      <option value="online" id="opt-cfg-mode-online">🌐 Online Hifz Academy (ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി)</option>
+                      <option value="online" id="opt-cfg-mode-online">🌐 Online Hifz Academy</option>
                     </select>
                     <button
                       type="button"
@@ -2714,6 +2710,40 @@
                       style="width:20px; height:20px; accent-color:#d97706; flex-shrink:0;"
                     />
                   </label>
+                </div>
+
+                <!-- 3. Online Hifz Mode: Live Class Link, Voice Recitation & Dual Time-Zone Configuration Card -->
+                <div id="cfg-online-academy-card" class="form-group hidden" style="background:#f0f9ff; border:1px solid #7dd3fc; border-radius:8px; padding:10px 12px;">
+                  <label for="cfg-enable-online-features" style="margin:0; display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
+                    <div>
+                      <div style="font-size:0.84rem; font-weight:700; color:#0369a1;" id="lbl-cfg-online-features-title">
+                        🎥 Enable Live Class Link, Voice Recitation &amp; Dual Time-Zone
+                      </div>
+                      <div style="font-size:0.73rem; color:#0284c7; font-weight:500; margin-top:2px;" id="lbl-cfg-online-features-sub">
+                        Online Hifz Academy: Configure live video class link, dual time-zone slot (IST &amp; UAE/Gulf), Qari audio, and voice recitation
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      id="cfg-enable-online-features"
+                      checked
+                      onchange="handleOnlineFeaturesToggle(this.checked)"
+                      style="width:20px; height:20px; accent-color:#0284c7; flex-shrink:0;"
+                    />
+                  </label>
+                  <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #bae6fd;">
+                    <label for="cfg-default-online-link" id="lbl-cfg-default-online-link" style="font-size:0.75rem; font-weight:700; color:#0c4a6e; margin-bottom:4px; display:block;">
+                      Default Online Class Link (Google Meet / Zoom / WhatsApp)
+                    </label>
+                    <input
+                      type="text"
+                      id="cfg-default-online-link"
+                      value="https://meet.google.com/new"
+                      placeholder="https://meet.google.com/abc-defg-hij"
+                      onchange="handleDefaultOnlineLinkSettingChange(this.value)"
+                      style="background:#ffffff; border:1px solid #7dd3fc; font-size:0.8rem;"
+                    />
+                  </div>
                 </div>
 
                 <!-- Real-Time Push & Browser Notification Settings -->
@@ -3511,42 +3541,54 @@
     ];
 
     const TRAIT_I18N_MAP = {
-      "അദബ് / മര്യാദ": { en: "Adab / Manners", ml: "അദബ് / മര്യാദ", bi: "അദബ് / മര്യാദ (Adab / Manners)" },
-      "Adab / Manners": { en: "Adab / Manners", ml: "അദബ് / മര്യാദ", bi: "അദബ് / മര്യാദ (Adab / Manners)" },
-      "ഏകാഗ്രത": { en: "Focus & Attention", ml: "ഏകാഗ്രത", bi: "ഏകാഗ്രത (Focus & Attention)" },
-      "Focus & Attention": { en: "Focus & Attention", ml: "ഏകാഗ്രത", bi: "ഏകാഗ്രത (Focus & Attention)" },
-      "ശുചിത്വം": { en: "Cleanliness", ml: "ശുചിത്വം", bi: "ശുചിത്വം (Cleanliness)" },
-      "Cleanliness": { en: "Cleanliness", ml: "ശുചിത്വം", bi: "ശുചിത്വം (Cleanliness)" },
-      "വൃത്തി": { en: "Cleanliness", ml: "വൃത്തി", bi: "വൃത്തി (Cleanliness)" },
-      "കൃത്യനിഷ്ഠ": { en: "Punctuality", ml: "കൃത്യനിഷ്ഠ", bi: "കൃത്യനിഷ്ഠ (Punctuality)" },
-      "Punctuality": { en: "Punctuality", ml: "കൃത്യനിഷ്ഠ", bi: "കൃത്യനിഷ്ഠ (Punctuality)" },
-      "ഹോസ്റ്റൽ അച്ചടക്കം": { en: "Hostel Discipline", ml: "ഹോസ്റ്റൽ അച്ചടക്കം", bi: "ഹോസ്റ്റൽ അച്ചടക്കം (Hostel Discipline)" },
-      "Hostel Discipline": { en: "Hostel Discipline", ml: "ഹോസ്റ്റൽ അച്ചടക്കം", bi: "ഹോസ്റ്റൽ അച്ചടക്കം (Hostel Discipline)" },
-      "സഹായമനസ്സ്": { en: "Helpfulness", ml: "സഹായമനസ്സ്", bi: "സഹായമനസ്സ് (Helpfulness)" },
-      "ശ്രദ്ധക്കുറവ്": { en: "Lack of Focus", ml: "ശ്രദ്ധക്കുറവ്", bi: "ശ്രദ്ധക്കുറവ് (Lack of Focus)" },
-      "Lack of Focus": { en: "Lack of Focus", ml: "ശ്രദ്ധക്കുറവ്", bi: "ശ്രദ്ധക്കുറവ് (Lack of Focus)" },
-      "തർക്കം/വഴക്ക്": { en: "Argument / Misbehaviour", ml: "തർക്കം/വഴക്ക്", bi: "തർക്കം/വഴക്ക് (Argument / Misbehaviour)" },
-      "Argument / Misbehaviour": { en: "Argument / Misbehaviour", ml: "തർക്കം/വഴക്ക്", bi: "തർക്കം/വഴക്ക് (Argument / Misbehaviour)" },
-      "അലസത": { en: "Laziness", ml: "അലസത", bi: "അലസത (Laziness)" },
-      "Laziness": { en: "Laziness", ml: "അലസത", bi: "അലസത (Laziness)" },
-      "അനാവശ്യ സംസാരം": { en: "Unnecessary Talking", ml: "അനാവശ്യ സംസാരം", bi: "അനാവശ്യ സംസാരം (Unnecessary Talking)" },
-      "Unnecessary Talking": { en: "Unnecessary Talking", ml: "അനാവശ്യ സംസാരം", bi: "അനാവശ്യ സംസാരം (Unnecessary Talking)" },
-      "സംസാരിക്കുന്നു": { en: "Unnecessary Talking", ml: "സംസാരിക്കുന്നു", bi: "സംസാരിക്കുന്നു (Unnecessary Talking)" }
+      "അദബ് / മര്യാദ": { en: "Adab / Manners", ml: "അദബ് / മര്യാദ" },
+      "Adab / Manners": { en: "Adab / Manners", ml: "അദബ് / മര്യാദ" },
+      "ഏകാഗ്രത": { en: "Focus & Attention", ml: "ഏകാഗ്രത" },
+      "Focus & Attention": { en: "Focus & Attention", ml: "ഏകാഗ്രത" },
+      "ശുചിത്വം": { en: "Cleanliness", ml: "ശുചിത്വം" },
+      "Cleanliness": { en: "Cleanliness", ml: "ശുചിത്വം" },
+      "വൃത്തി": { en: "Cleanliness", ml: "വൃത്തി" },
+      "തജ്വീദ് & ശ്രദ്ധ": { en: "Tajweed & Focus", ml: "തജ്വീദ് & ശ്രദ്ധ" },
+      "Tajweed & Focus": { en: "Tajweed & Focus", ml: "തജ്വീദ് & ശ്രദ്ധ" },
+      "കൃത്യനിഷ്ഠ": { en: "Punctuality", ml: "കൃത്യനിഷ്ഠ" },
+      "Punctuality": { en: "Punctuality", ml: "കൃത്യനിഷ്ഠ" },
+      "ഹോസ്റ്റൽ അച്ചടക്കം": { en: "Hostel Discipline", ml: "ഹോസ്റ്റൽ അച്ചടക്കം" },
+      "Hostel Discipline": { en: "Hostel Discipline", ml: "ഹോസ്റ്റൽ അച്ചടക്കം" },
+      "സഹായമനസ്സ്": { en: "Helpfulness", ml: "സഹായമനസ്സ്" },
+      "ശ്രദ്ധക്കുറവ്": { en: "Lack of Focus", ml: "ശ്രദ്ധക്കുറവ്" },
+      "Lack of Focus": { en: "Lack of Focus", ml: "ശ്രദ്ധക്കുറവ്" },
+      "തർക്കം/വഴക്ക്": { en: "Argument / Misbehaviour", ml: "തർക്കം/വഴക്ക്" },
+      "Argument / Misbehaviour": { en: "Argument / Misbehaviour", ml: "തർക്കം/വഴക്ക്" },
+      "അലസത": { en: "Laziness", ml: "അലസത" },
+      "Laziness": { en: "Laziness", ml: "അലസത" },
+      "അനാവശ്യ സംസാരം": { en: "Unnecessary Talking", ml: "അനാവശ്യ സംസാരം" },
+      "Unnecessary Talking": { en: "Unnecessary Talking", ml: "അനാവശ്യ സംസാരം" },
+      "സംസാരിക്കുന്നു": { en: "Unnecessary Talking", ml: "സംസാരിക്കുന്നു" }
     };
 
     function formatTraitDisplayLabel(rawLabel) {
-      const clean = String(rawLabel || "").trim();
+      let clean = String(rawLabel || "").trim();
       if (!clean) return "";
-      const lang = (typeof appLanguage === "string" && appLanguage) ? appLanguage : "bi";
+      const lang = appLanguage === "en" ? "en" : "ml";
+      const activeMode = (typeof campusMode === "string" && campusMode) ? campusMode : "day";
+      if (activeMode === "online" && (clean === "ശുചിത്വം" || clean === "Cleanliness" || clean === "വൃത്തി")) {
+        clean = "തജ്വീദ് & ശ്രദ്ധ";
+      }
       if (TRAIT_I18N_MAP[clean]) {
         return TRAIT_I18N_MAP[clean][lang] || TRAIT_I18N_MAP[clean].en;
       }
-      if (clean.includes("/") && lang !== "bi") {
+      if (clean.includes("/")) {
         const parts = clean.split("/").map((p) => p.trim()).filter(Boolean);
         const mlPart = parts.find((p) => /[\u0D00-\u0D7F]/.test(p));
         const enPart = parts.find((p) => !/[\u0D00-\u0D7F]/.test(p));
         if (lang === "en" && enPart) return enPart;
         if (lang === "ml" && mlPart) return mlPart;
+      }
+      if (lang === "en") {
+        return clean.replace(/\s*\([^)]*[\u0D00-\u0D7F][^)]*\)/g, "").trim() || clean;
+      }
+      if (lang === "ml" && /[\u0D00-\u0D7F]/.test(clean)) {
+        return clean.replace(/\s*\([A-Za-z0-9\s/&+-]+\)/g, "").trim() || clean;
       }
       return clean;
     }
@@ -3720,10 +3762,12 @@
     }
     loadPrincipalAuthForMadrasa(currentMadrasaId);
 
-    // App Language ("bi" = Bilingual, "en" = English, "ml" = Malayalam), Salah & Shift/Transit Tracking Toggles
-    let appLanguage = localStorage.getItem("hifz_app_language") || "bi";
+    // App Language (Strict 2-Language Toggle: "ml" = Malayalam, "en" = English), Salah, Shift/Transit & Online Tracking Toggles
+    const rawSavedAppLang = localStorage.getItem("hifz_app_language");
+    let appLanguage = rawSavedAppLang === "en" ? "en" : "ml";
     let enableSalahTracking = localStorage.getItem("hifz_enable_salah") !== "false";
     let enableShiftTransitTracking = localStorage.getItem("hifz_enable_shift_transit") !== "false";
+    let enableOnlineFeatures = localStorage.getItem("hifz_enable_online_features") !== "false";
     let demoCleared = true;
     let cleanDatabaseMode = true;
 
@@ -3839,11 +3883,15 @@
       return id === "ALERT-SEED-1" || SAMPLE_STUDENT_IDS.has(sid);
     }
 
-    // Universal Translation Helper: returns Malayalam when 'ml' is active, English when 'en', Bilingual when 'bi'
-    function t(enText, mlText, biText) {
-      if (appLanguage === "ml") return mlText !== undefined ? mlText : enText;
-      if (appLanguage === "en") return enText;
-      return biText !== undefined ? biText : enText;
+    // Universal Translation Helper: strictly returns Malayalam when 'ml' is active, and clean English when 'en' is active
+    function t(enText, mlText) {
+      if (appLanguage === "en") {
+        if (typeof enText === "string") {
+          return enText.replace(/\s*\([^)]*[\u0D00-\u0D7F][^)]*\)/g, "").trim() || enText;
+        }
+        return enText;
+      }
+      return mlText !== undefined ? mlText : enText;
     }
 
     // Global State
@@ -4392,8 +4440,11 @@
       const dayShiftTransitBox = document.getElementById("day-shift-transit-box");
       const salahToggleCard = document.getElementById("cfg-salah-toggle-card");
       const shiftTransitToggleCard = document.getElementById("cfg-shift-transit-toggle-card");
+      const onlineAcademyCard = document.getElementById("cfg-online-academy-card");
       const salahCheckbox = document.getElementById("cfg-enable-salah");
       const shiftTransitCheckbox = document.getElementById("cfg-enable-shift-transit");
+      const onlineFeaturesCheckbox = document.getElementById("cfg-enable-online-features");
+      const cfgDefaultOnlineLink = document.getElementById("cfg-default-online-link");
 
       // 1. Principal Campus Settings Toggle Cards (Residential vs Day Madrasa vs Online)
       if (salahToggleCard) {
@@ -4402,11 +4453,20 @@
       if (shiftTransitToggleCard) {
         shiftTransitToggleCard.classList.toggle("hidden", campusMode !== "day");
       }
+      if (onlineAcademyCard) {
+        onlineAcademyCard.classList.toggle("hidden", campusMode !== "online");
+      }
       if (salahCheckbox) {
         salahCheckbox.checked = Boolean(enableSalahTracking);
       }
       if (shiftTransitCheckbox) {
         shiftTransitCheckbox.checked = Boolean(enableShiftTransitTracking);
+      }
+      if (onlineFeaturesCheckbox) {
+        onlineFeaturesCheckbox.checked = Boolean(enableOnlineFeatures);
+      }
+      if (cfgDefaultOnlineLink && currentOnlineClassLink) {
+        cfgDefaultOnlineLink.value = currentOnlineClassLink;
       }
 
       // 2. Ustadh Verification Desk Panels
@@ -4420,7 +4480,7 @@
         resControls.classList.toggle("hidden", campusMode !== "residential");
       }
       if (onlineControls) {
-        onlineControls.classList.toggle("hidden", campusMode !== "online");
+        onlineControls.classList.toggle("hidden", campusMode !== "online" || !enableOnlineFeatures);
       }
       if (homeRevSec) {
         homeRevSec.classList.toggle("hidden", campusMode === "residential");
@@ -4909,13 +4969,14 @@
       updateCampusBadgeUI();
     }
 
-    // Dynamic App Language Switcher ("en" | "ml" | "bi")
+    // Dynamic App Language Switcher (Strict 2-Language Toggle: "ml" | "en")
     function applyAppLanguageUI() {
-      const lang = appLanguage || "bi";
+      const lang = appLanguage === "en" ? "en" : "ml";
       const hdrLang = document.getElementById("header-lang-select");
       if (hdrLang && hdrLang.value !== lang) hdrLang.value = lang;
 
       const isDayMode = campusMode === "day";
+      const isOnlineMode = campusMode === "online";
 
       // Run generic static DOM dictionary first so explicit ID-targeted translations take precedence
       translateStaticDOMElements(lang);
@@ -5092,120 +5153,120 @@
           bi: "Residential Campus"
         },
         "opt-cfg-mode-online": {
-          en: "🌐 Online Hifz Academy (Online Hifz Mode)",
-          ml: "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി (Online Hifz Mode)",
-          bi: "🌐 Online Hifz Academy (ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി)"
+          en: "🌐 Online Hifz Academy",
+          ml: "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി"
         },
         "btn-quick-switch-mode": {
           en: "⚡ Quick Switch Mode",
-          ml: "⚡ മോഡ് മാറ്റുക",
-          bi: "⚡ Quick Switch Mode"
+          ml: "⚡ മോഡ് മാറ്റുക"
         },
         "lbl-cfg-salah-title": {
           en: "🕌 Enable 5-Time Jama'at Salah Tracking",
-          ml: "🕌 5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന സജീവമാക്കുക",
-          bi: "🕌 Enable 5-Time Jama'at Salah Tracking (5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന)"
+          ml: "🕌 5 വഖ്ത് ജമാഅത്ത് നമസ്കാര പരിശോധന സജീവമാക്കുക"
         },
         "lbl-cfg-salah-sub": {
           en: "Residential Campus: Turn OFF to hide 5-Time Jama'at Salah fields from Ustadh Desk, Parent Portal & Report Card",
-          ml: "റെസിഡൻഷ്യൽ ക്യാമ്പസ്: ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും നമസ്കാര വിവരങ്ങൾ മറയ്ക്കപ്പെടും",
-          bi: "Residential Campus: Turn OFF to hide 5-Time Jama'at Salah fields from Ustadh Desk, Parent Portal & Report Card"
+          ml: "റെസിഡൻഷ്യൽ ക്യാമ്പസ്: ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും നമസ്കാര വിവരങ്ങൾ മറയ്ക്കപ്പെടും"
         },
         "lbl-cfg-shift-transit-title": {
           en: "🌅 Enable Morning / Evening Shift & Transit Tracking",
-          ml: "🌅 രാവിലെ / വൈകുന്നേരം ഷിഫ്റ്റ് & യാത്രാ സമയം പരിശോധന സജീവമാക്കുക",
-          bi: "🌅 Enable Morning / Evening Shift & Transit Tracking (രാവിലെ / വൈകുന്നേരം ഷിഫ്റ്റ് & യാത്രാ സമയം പരിശോധന സജീവമാക്കുക)"
+          ml: "🌅 രാവിലെ / വൈകുന്നേരം ഷിഫ്റ്റ് & യാത്രാ സമയം പരിശോധന സജീവമാക്കുക"
         },
         "lbl-cfg-shift-transit-sub": {
           en: "Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal & Report Card",
-          ml: "ഡേ സ്കൂൾ: ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും ഷിഫ്റ്റും യാത്രാ സമയ വിവരങ്ങളും മറയ്ക്കപ്പെടും",
-          bi: "Day School: Turn OFF to hide shift buttons, commute mode, and campus departure timestamps from Ustadh Desk, Parent Portal & Report Card"
+          ml: "ഡേ സ്കൂൾ: ഇത് ഓഫ് ചെയ്താൽ ഉസ്താദ് ഡെസ്കിലും രക്ഷിതാക്കളുടെ പോർട്ടലിലും റിപ്പോർട്ട് കാർഡിലും ഷിഫ്റ്റും യാത്രാ സമയ വിവരങ്ങളും മറയ്ക്കപ്പെടും"
+        },
+        "lbl-cfg-online-features-title": {
+          en: "🎥 Enable Live Class Link, Voice Recitation & Dual Time-Zone",
+          ml: "🎥 ഓൺലൈൻ ലൈവ് ക്ലാസ് ലിങ്ക് & വോയ്സ് റെക്കോർഡിംഗ് സജീവമാക്കുക"
+        },
+        "lbl-cfg-online-features-sub": {
+          en: "Online Hifz Academy: Configure live video class link, dual time-zone slot (IST & UAE/Gulf), Qari audio, and voice recitation",
+          ml: "ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി: ലൈവ് ക്ലാസ് ലിങ്ക്, ഇന്ത്യ/ഗൾഫ് സമയം, ഖാരി ഓഡിയോ, വോയ്സ് റെക്കോർഡിംഗ് എന്നിവ ക്രമീകരിക്കുക"
+        },
+        "lbl-cfg-default-online-link": {
+          en: "Default Online Class Link (Google Meet / Zoom / WhatsApp)",
+          ml: "ഡിഫോൾട്ട് ഓൺലൈൻ ക്ലാസ് ലിങ്ക് (Google Meet / Zoom / WhatsApp)"
         },
         "lbl-cfg-browser-notif-title": {
           en: "🔔 Real-Time Browser Notifications",
-          ml: "🔔 തത്സമയ സിസ്റ്റം അറിയിപ്പുകൾ",
-          bi: "🔔 Real-Time Browser Notifications (സിസ്റ്റം അറിയിപ്പുകൾ)"
+          ml: "🔔 തത്സമയ സിസ്റ്റം അറിയിപ്പുകൾ"
         },
         "lbl-cfg-madrasa-id": {
           en: "Madrasa Code / ID (Multi-Campus Isolation)",
-          ml: "മദ്രസ കോഡ് / ഐഡി (മൾട്ടി-ക്യാമ്പസ് സുരക്ഷ)",
-          bi: "Madrasa Code / ഐഡി (Multi-Campus Isolation)"
+          ml: "മദ്രസ കോഡ് / ഐഡി (മൾട്ടി-ക്യാമ്പസ് സുരക്ഷ)"
         },
         "lbl-cfg-madrasa-id-sub": {
           en: "Unique Madrasa Code to keep this campus data, teachers, and students strictly isolated from other institutions",
-          ml: "മറ്റ് സ്ഥാപനങ്ങളിൽ നിന്ന് ഈ ക്യാമ്പസിലെ വിദ്യാർത്ഥികളുടെയും ഉസ്താദുമാരുടെയും വിവരങ്ങൾ വേർതിരിച്ചു സൂക്ഷിക്കാനുള്ള പ്രത്യേക കോഡ്",
-          bi: "Unique Madrasa Code to keep this campus data, teachers, and students strictly isolated from other institutions"
+          ml: "മറ്റ് സ്ഥാപനങ്ങളിൽ നിന്ന് ഈ ക്യാമ്പസിലെ വിദ്യാർത്ഥികളുടെയും ഉസ്താദുമാരുടെയും വിവരങ്ങൾ വേർതിരിച്ചു സൂക്ഷിക്കാനുള്ള പ്രത്യേക കോഡ്"
         },
         "lbl-cfg-college-name": {
           en: "College Name",
-          ml: "സ്ഥാപനത്തിന്റെ പേര്",
-          bi: "College Name"
+          ml: "സ്ഥാപനത്തിന്റെ പേര്"
         },
         "lbl-cfg-college-sub": {
           en: "Location / Subtitle",
-          ml: "സ്ഥലം / ഉപശീർഷകം",
-          bi: "Location / Subtitle"
+          ml: "സ്ഥലം / ഉപശീർഷകം"
         },
         "lbl-cfg-academic-term": {
           en: "Academic Term",
-          ml: "അധ്യയന വർഷം / ടേം",
-          bi: "Academic Term"
+          ml: "അധ്യയന വർഷം / ടേം"
         },
         "btn-save-settings": {
           en: "Save & Sync Campus Settings",
-          ml: "ക്രമീകരണങ്ങൾ സേവ് ചെയ്യുക",
-          bi: "Save & Sync Campus Settings"
+          ml: "ക്രമീകരണങ്ങൾ സേവ് ചെയ്യുക"
         },
         "cfg-security-card-title": {
           en: "🔐 Principal Account Security",
-          ml: "🔐 പ്രിൻസിപ്പൽ അക്കൗണ്ട് സുരക്ഷ",
-          bi: "🔐 Principal Account Security"
+          ml: "🔐 പ്രിൻസിപ്പൽ അക്കൗണ്ട് സുരക്ഷ"
         },
         "cfg-security-card-sub": {
           en: "Change Principal Login ID & Password for this Madrasa workspace",
-          ml: "ഈ മദ്രസയിലെ പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡിയും പാസ്‌വേഡും മാറ്റുക",
-          bi: "Change Principal Login ID & Password for this Madrasa workspace"
+          ml: "ഈ മദ്രസയിലെ പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡിയും പാസ്‌വേഡും മാറ്റുക"
         },
         "lbl-cfg-principal-user": {
           en: "Principal Login ID / Username",
-          ml: "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി / യൂസർനെയിം",
-          bi: "Principal Login ID / Username"
+          ml: "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി / യൂസർനെയിം"
         },
         "lbl-cfg-principal-pass": {
           en: "New Password / PIN",
-          ml: "പുതിയ പാസ്‌വേഡ് / പിൻ",
-          bi: "New Password / PIN"
+          ml: "പുതിയ പാസ്‌വേഡ് / പിൻ"
         },
         "lbl-cfg-principal-pass-conf": {
           en: "Confirm New Password / PIN",
-          ml: "പുതിയ പാസ്‌വേഡ് ഉറപ്പുവരുത്തുക",
-          bi: "Confirm New Password / PIN"
+          ml: "പുതിയ പാസ്‌വേഡ് ഉറപ്പുവരുത്തുക"
         },
         "btn-update-principal-auth": {
           en: "Update Principal Login Credentials",
-          ml: "പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങൾ മാറ്റുക",
-          bi: "Update Principal Login Credentials"
+          ml: "പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങൾ മാറ്റുക"
         },
         "cfg-traits-card-title": {
-          en: isDayMode
-            ? "✨ Student Behaviour, Cleanliness & Akhlaq Traits Manager"
-            : "✨ Hostel Behaviour, Cleanliness & Akhlaq Traits Manager",
-          ml: isDayMode
-            ? "✨ സ്വഭാവം, ശുചിത്വം & അഖ്ലാഖ് പോയിന്റ് ക്രമീകരണം"
-            : "✨ ഹോസ്റ്റൽ സ്വഭാവം, ശുചിത്വം & അഖ്ലാഖ് പോയിന്റ് ക്രമീകരണം",
-          bi: isDayMode
-            ? "✨ Student Behaviour, Cleanliness & Akhlaq Traits Manager"
-            : "✨ Hostel Behaviour, Cleanliness & Akhlaq Traits Manager"
+          en: isOnlineMode
+            ? "✨ Online Class Behaviour & Tajweed Traits"
+            : isDayMode
+            ? "✨ Student Behaviour & Akhlaq Traits"
+            : "✨ Hostel Behaviour, Cleanliness & Akhlaq Traits",
+          ml: isOnlineMode
+            ? "✨ ഓൺലൈൻ ക്ലാസ് അച്ചടക്കം & തജ്വീദ് ക്രമീകരണം"
+            : isDayMode
+            ? "✨ വിദ്യാർത്ഥി സ്വഭാവം & അഖ്ലാഖ് ക്രമീകരണം"
+            : "✨ ഹോസ്റ്റൽ സ്വഭാവം, ശുചിത്വം & അഖ്ലാഖ് ക്രമീകരണം"
         },
         "cfg-traits-card-sub": {
           en: "Add or delete custom positive/negative traits shown as chips on the Ustadh Desk",
-          ml: "ഉസ്താദ് ഡെസ്കിൽ കാണിക്കുന്ന നല്ല സ്വഭാവങ്ങളും പോരായ്മകളും ഇവിടെ ചേർക്കുകയോ ഒഴിവാക്കുകയോ ചെയ്യാം",
-          bi: "Add or delete custom positive/negative traits shown as chips on the Ustadh Desk"
+          ml: "ഉസ്താദ് ഡെസ്കിൽ കാണിക്കുന്ന നല്ല സ്വഭാവങ്ങളും പോരായ്മകളും ഇവിടെ ചേർക്കുകയോ ഒഴിവാക്കുകയോ ചെയ്യാം"
         },
         "lbl-add-trait-heading": {
-          en: "Add New Behaviour / Cleanliness Tag",
-          ml: "പുതിയ സ്വഭാവം / ശുചിത്വ ടാഗ് ചേർക്കുക",
-          bi: "Add New Behaviour / Cleanliness Tag"
+          en: isOnlineMode
+            ? "Add New Online Class / Tajweed Tag"
+            : isDayMode
+            ? "Add New Behaviour / Akhlaq Tag"
+            : "Add New Behaviour / Cleanliness Tag",
+          ml: isOnlineMode
+            ? "പുതിയ ഓൺലൈൻ അച്ചടക്കം / തജ്വീദ് ടാഗ് ചേർക്കുക"
+            : isDayMode
+            ? "പുതിയ സ്വഭാവം / അഖ്ലാഖ് ടാഗ് ചേർക്കുക"
+            : "പുതിയ സ്വഭാവം / ശുചിത്വ ടാഗ് ചേർക്കുക"
         },
         "lbl-new-trait-label": {
           en: "Trait Label",
@@ -5273,20 +5334,21 @@
 
       const newTraitInp = document.getElementById("new-trait-label");
       if (newTraitInp) {
-        if (isDayMode) {
+        if (isOnlineMode) {
           newTraitInp.placeholder =
             lang === "en"
-              ? "e.g. Punctuality"
-              : lang === "ml"
-              ? "ഉദാ: കൃത്യനിഷ്ഠ"
-              : "e.g. Punctuality / കൃത്യനിഷ്ഠ";
+              ? "e.g. Camera & Mic Readiness"
+              : "ഉദാ: ക്യാമറ & മൈക്ക് വ്യക്തത";
+        } else if (isDayMode) {
+          newTraitInp.placeholder =
+            lang === "en"
+              ? "e.g. Class Punctuality"
+              : "ഉദാ: കൃത്യസമയത്ത് ക്ലാസ്സിലെത്തൽ";
         } else {
           newTraitInp.placeholder =
             lang === "en"
               ? "e.g. Room Cleanliness"
-              : lang === "ml"
-              ? "ഉദാ: റൂം ശുചിത്വം"
-              : "e.g. റൂം ശുചിത്വം / Cleanliness";
+              : "ഉദാ: റൂം ശുചിത്വം";
         }
       }
 
@@ -5295,18 +5357,14 @@
         posTraitInp.placeholder =
           lang === "en"
             ? "Add positive trait..."
-            : lang === "ml"
-            ? "പുതിയ നല്ല സ്വഭാവം ചേർക്കുക..."
-            : "പുതിയ നല്ല സ്വഭാവം ചേർക്കുക... (Add positive trait...)";
+            : "പുതിയ നല്ല സ്വഭാവം ചേർക്കുക...";
       }
       const negTraitInp = document.getElementById("ustadh-new-neg-trait-label");
       if (negTraitInp) {
         negTraitInp.placeholder =
           lang === "en"
             ? "Add area of concern..."
-            : lang === "ml"
-            ? "പുതിയ പോരായ്മ ചേർക്കുക..."
-            : "പുതിയ പോരായ്മ ചേർക്കുക... (Add area of concern...)";
+            : "പുതിയ പോരായ്മ ചേർക്കുക...";
       }
 
       const navAnalytics = document.getElementById("nav-analytics");
@@ -5345,7 +5403,7 @@
     }
 
     window.handleLanguageChange = function(newLang) {
-      appLanguage = newLang || "bi";
+      appLanguage = newLang === "en" ? "en" : "ml";
       try {
         localStorage.setItem("hifz_app_language", appLanguage);
       } catch (e) {}
@@ -5354,7 +5412,7 @@
       populateStudentSelectors();
       renderAllViews();
       if (window.showToast) {
-        const label = appLanguage === "en" ? "English" : appLanguage === "ml" ? "മലയാളം (Malayalam)" : "Bilingual (English + മലയാളം)";
+        const label = appLanguage === "en" ? "English" : "മലയാളം";
         window.showToast(t(`App language updated to ${label}`, `ഭാഷ മാറ്റി: ${label}`));
       }
     };
@@ -5388,6 +5446,45 @@
           t(
             `Morning/Evening Shift & Transit Tracking turned ${enableShiftTransitTracking ? "ON" : "OFF"}`,
             `ഷിഫ്റ്റ് & യാത്രാ പരിശോധന ${enableShiftTransitTracking ? "സജീവമാക്കി" : "ഓഫ് ചെയ്തു"}`
+          )
+        );
+      }
+    };
+
+    window.handleOnlineFeaturesToggle = async function(enabled) {
+      enableOnlineFeatures = Boolean(enabled);
+      try {
+        localStorage.setItem("hifz_enable_online_features", String(enableOnlineFeatures));
+      } catch (e) {}
+      applyCampusModeUI();
+      await syncCampusConfigToFirestore();
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `Online Live Class Link & Voice Recitation turned ${enableOnlineFeatures ? "ON" : "OFF"}`,
+            `ഓൺലൈൻ ലൈവ് ക്ലാസ് ലിങ്ക് & വോയ്സ് റെക്കോർഡിംഗ് ${enableOnlineFeatures ? "സജീവമാക്കി" : "ഓഫ് ചെയ്തു"}`
+          )
+        );
+      }
+    };
+
+    window.handleDefaultOnlineLinkSettingChange = async function(val) {
+      const cleanVal = (val || "https://meet.google.com/new").trim();
+      currentOnlineClassLink = cleanVal;
+      try {
+        localStorage.setItem("hifz_online_link", currentOnlineClassLink);
+      } catch (e) {}
+      const deskLinkInp = document.getElementById("online-class-link");
+      if (deskLinkInp) {
+        deskLinkInp.value = currentOnlineClassLink;
+      }
+      renderAllViews();
+      await syncCampusConfigToFirestore();
+      if (window.showToast) {
+        window.showToast(
+          t(
+            "✓ Default Online Class Link updated!",
+            "✓ ഡിഫോൾട്ട് ഓൺലൈൻ ക്ലാസ് ലിങ്ക് സേവ് ചെയ്തു!"
           )
         );
       }
@@ -5554,6 +5651,8 @@
             madrasaId: mId,
             enableSalahTracking,
             enableShiftTransitTracking,
+            enableOnlineFeatures,
+            defaultOnlineLink: currentOnlineClassLink || "https://meet.google.com/new",
             customTraits,
             cleanDatabaseMode: Boolean(demoCleared || cleanDatabaseMode),
             demoCleared: Boolean(demoCleared || cleanDatabaseMode),
@@ -7571,6 +7670,16 @@
       if (shiftTransitCb) {
         enableShiftTransitTracking = Boolean(shiftTransitCb.checked);
       }
+      const onlineFeaturesCb = document.getElementById("cfg-enable-online-features");
+      if (onlineFeaturesCb) {
+        enableOnlineFeatures = Boolean(onlineFeaturesCb.checked);
+      }
+      const defaultOnlineLinkInp = document.getElementById("cfg-default-online-link");
+      if (defaultOnlineLinkInp && defaultOnlineLinkInp.value.trim()) {
+        currentOnlineClassLink = defaultOnlineLinkInp.value.trim();
+        const deskLinkInp = document.getElementById("online-class-link");
+        if (deskLinkInp) deskLinkInp.value = currentOnlineClassLink;
+      }
 
       const madrasaIdInp = document.getElementById("cfg-madrasa-id");
       const rawInputMadrasaId = (madrasaIdInp && madrasaIdInp.value ? madrasaIdInp.value : "")
@@ -7613,6 +7722,8 @@
         localStorage.setItem("hifz_app_language", appLanguage);
         localStorage.setItem("hifz_enable_salah", String(enableSalahTracking));
         localStorage.setItem("hifz_enable_shift_transit", String(enableShiftTransitTracking));
+        localStorage.setItem("hifz_enable_online_features", String(enableOnlineFeatures));
+        localStorage.setItem("hifz_online_link", currentOnlineClassLink);
         setWorkspaceCampusIdentity(currentMadrasaId, name, sub, academicTerm);
         saveLiveCollectionsToLocal();
       } catch (err) {}
@@ -7739,6 +7850,10 @@
     };
 
     window.switchPrincipalTab = function(tab) {
+      const subTabsBar = document.getElementById("principal-sub-tabs");
+      if (subTabsBar) {
+        subTabsBar.classList.toggle("hidden", tab === "notices");
+      }
       ["portfolios", "enroll", "notices", "settings"].forEach((tKey) => {
         const el = document.getElementById("p-tab-" + tKey);
         const btn = document.getElementById("ptab-btn-" + tKey);
@@ -11977,6 +12092,18 @@
       if (typeof cfg.enableShiftTransitTracking === "boolean") {
         enableShiftTransitTracking = cfg.enableShiftTransitTracking;
         try { localStorage.setItem("hifz_enable_shift_transit", String(enableShiftTransitTracking)); } catch (e) {}
+      }
+      if (typeof cfg.enableOnlineFeatures === "boolean") {
+        enableOnlineFeatures = cfg.enableOnlineFeatures;
+        try { localStorage.setItem("hifz_enable_online_features", String(enableOnlineFeatures)); } catch (e) {}
+      }
+      if (cfg.defaultOnlineLink && typeof cfg.defaultOnlineLink === "string") {
+        currentOnlineClassLink = cfg.defaultOnlineLink.trim();
+        try { localStorage.setItem("hifz_online_link", currentOnlineClassLink); } catch (e) {}
+        const deskLinkInp = document.getElementById("online-class-link");
+        if (deskLinkInp) deskLinkInp.value = currentOnlineClassLink;
+        const cfgLinkInp = document.getElementById("cfg-default-online-link");
+        if (cfgLinkInp) cfgLinkInp.value = currentOnlineClassLink;
       }
       if (Array.isArray(cfg.customTraits) && cfg.customTraits.length > 0) {
         customTraits = cfg.customTraits;
