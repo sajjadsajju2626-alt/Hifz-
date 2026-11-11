@@ -9951,17 +9951,20 @@
                   ▶ ${t("Suggested Next Sabaq:", "ഇന്നത്തെ സബഖ്:")} <strong style="color:#064e3b;">${nextSabaq}</strong>
                 </span>
                 ${
-                  campusMode === "day"
+                  campusMode === "online"
+                    ? `<span class="tag tag-present" style="font-size:0.7rem; padding:2px 8px; background:#e0f2fe; color:#0369a1; border:1px solid #7dd3fc;">${t("🌐 Online Hifz Mode", "🌐 ഓൺലൈൻ ഹിഫ്ള് മോഡ്")}</span>`
+                    : campusMode === "day"
                     ? isParentVerified
                       ? `<span class="tag tag-home-verified" style="font-size:0.7rem; padding:2px 8px;">${t("✓ Verified at Home (വീട്ടിൽ വെച്ച് കേട്ടു)", "✓ വീട്ടിൽ വെച്ച് കേട്ടു")}</span>`
-                      : `<span class="tag tag-late" style="font-size:0.7rem; padding:2px 8px;">${t("⏳ Pending Parent Home Sign-Off", "⏳ രക്ഷിതാവിന്റെ ഒപ്പ് ബാക്കി")}</span>`
-                    : `<span class="tag tag-present" style="font-size:0.7rem; padding:2px 8px;">${t("🕌 Residential Campus Mode", "🕌 റെസിഡൻഷ്യൽ ക്യാമ്പസ് മോഡ്")}</span>`
+                      : `<span class="tag tag-late" style="font-size:0.7rem; padding:2px 8px;">${t("🚌 Day Madrasa / Shift Mode", "🚌 ഡേ മദ്രസ / ഷിഫ്റ്റ് മോഡ്")}</span>`
+                    : `<span class="tag tag-present" style="font-size:0.7rem; padding:2px 8px;">${t("🏠 Residential Campus Mode", "🏠 റെസിഡൻഷ്യൽ ക്യാമ്പസ് മോഡ്")}</span>`
                 }
               </div>
             </div>
           `;
         }
       }
+
 
       // Check for active parent leave / school exam notification for this student (today or tomorrow or open)
       const alertBanner = document.getElementById("teacher-parent-alert-banner");
