@@ -1548,7 +1548,7 @@
 <body>
 
   <!-- TOP HEADER -->
-  <header class="no-print">
+  <header class="no-print hidden" id="main-app-header">
     <div class="header-inner">
       <div class="brand" id="header-brand-container" onclick="handleBrandClick()" title="Hifz Institution Portal" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -1706,7 +1706,7 @@
   </div>
 
   <!-- CAMPUS CONTEXT BAR -->
-  <div class="sub-context-bar no-print">
+  <div class="sub-context-bar no-print hidden" id="main-sub-context-bar">
     <div class="sub-context-inner">
       <div class="context-pills">
         <strong style="color: var(--text);" id="college-sub-display">Hifz Tracker Portal</strong>
@@ -1735,17 +1735,11 @@
       <div class="auth-container">
         <div class="auth-card">
           <div style="text-align: center; margin-bottom: 1.25rem;">
-            <div style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.25rem;">
-              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-            </div>
-            <h1 id="auth-portal-title" style="font-family: var(--font-display); font-size: 1.45rem; color: var(--primary-deep); line-height: 1.2; margin-bottom: 0.35rem;">
-              Hifz Institution Portal
+            <h1 id="auth-portal-title" style="font-family: var(--font-display); font-size: 1.5rem; color: var(--primary-deep); line-height: 1.2; margin-bottom: 0.4rem;">
+              Hifz Tracker Portal
             </h1>
-            <p style="font-size: 0.84rem; color: var(--text-secondary); font-weight: 600;" id="auth-portal-subtitle">
-              Hifz College &amp; Day Madrasa Portal
-            </p>
-            <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4;" id="auth-portal-desc">
-              Please sign in to access daily Hifz verification, memorization schedules, transit/pickup monitoring, and student progress dossiers.
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.45;" id="auth-portal-desc">
+              Secure portal for daily Hifz tracking, student progress records, and parent updates.
             </p>
           </div>
 
@@ -1766,10 +1760,6 @@
                 autocomplete="off"
                 style="font-family: monospace; font-weight: 700; text-transform: uppercase;"
               />
-              <div id="auth-madrasa-code-hint" style="font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; line-height: 1.35;">
-                <span id="auth-madrasa-code-hint-text">Enter your institution's Madrasa Code, or leave blank for this device's workspace:</span>
-                <strong id="auth-device-madrasa-code-display" style="font-family: monospace; color: var(--primary);"></strong>
-              </div>
             </div>
 
             <div class="form-group">
@@ -1802,10 +1792,6 @@
               Sign In to Portal (പോർട്ടലിൽ പ്രവേശിക്കുക)
             </button>
           </form>
-
-          <div style="margin-top: 1.15rem; padding-top: 0.85rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted); text-align: center;" id="auth-footer-security-note">
-            🔒 Live Production Portal · Per-Madrasa Isolated Workspace · Role-Based Access Control
-          </div>
         </div>
       </div>
     </section>
@@ -3534,19 +3520,6 @@
 
   </main>
 
-  <footer class="no-print">
-    <div class="footer-inner">
-      <div id="footer-campus-summary">Hifz Institution Portal · Day Madrasa Transit, Parent Home Sign-Off &amp; Auto-Akhlaq System</div>
-      <div style="display:flex; gap:12px;" id="footer-nav-links">
-        <button type="button" id="footer-nav-teacher" onclick="switchWorkspace('teacher')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Ustadh Desk</button>
-        <button type="button" id="footer-nav-schedules" onclick="switchWorkspace('schedules')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Schedules Vault</button>
-        <button type="button" id="footer-nav-principal" onclick="switchWorkspace('principal')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Principal Portfolios</button>
-        <button type="button" id="footer-nav-analytics" onclick="switchWorkspace('analytics')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Analytics &amp; Alerts</button>
-        <button type="button" id="footer-nav-parent" onclick="switchWorkspace('parent')" style="background:none; border:none; color:var(--primary); font-weight:700; cursor:pointer; font-size:0.78rem;">Parent Portal</button>
-      </div>
-    </div>
-  </footer>
-
   <!-- APPLICATION LOGIC -->
   <script>
     // Initial Seed Data
@@ -4381,25 +4354,11 @@
 
       const authTitleEl = document.getElementById("auth-portal-title");
       if (authTitleEl) {
-        authTitleEl.innerText = t("Hifz Institution Portal", "ഹിഫ്ള് ട്രാക്കർ പോർട്ടൽ", "Hifz Institution Portal");
+        authTitleEl.innerText = "Hifz Tracker Portal";
       }
-      const devCodeEl = document.getElementById("auth-device-madrasa-code-display");
-      if (devCodeEl) {
-        devCodeEl.innerText = currentMadrasaId;
-      }
-
-      const footerSummaryEl = document.getElementById("footer-campus-summary");
-      if (footerSummaryEl) {
-        const sysDesc = t(
-          "Day Madrasa Transit, Parent Home Sign-Off & Auto-Akhlaq System",
-          "ഹിഫ്ള് പരിശോധന, രക്ഷിതാക്കളുടെ പോർട്ടൽ & അഖ്ലാഖ് സിസ്റ്റം",
-          "Day Madrasa Transit, Parent Home Sign-Off & Auto-Akhlaq System"
-        );
-        if (!currentUser) {
-          footerSummaryEl.innerText = `${t("Hifz Institution Portal", "ഹിഫ്ള് ട്രാക്കർ പോർട്ടൽ", "Hifz Institution Portal")} · ${sysDesc}`;
-        } else {
-          footerSummaryEl.innerText = `${displayTitle} · ${displaySub} · ${sysDesc}`;
-        }
+      const authDescEl = document.getElementById("auth-portal-desc");
+      if (authDescEl) {
+        authDescEl.innerText = "Secure portal for daily Hifz tracking, student progress records, and parent updates.";
       }
 
       const cfgMadrasa = document.getElementById("cfg-madrasa-id");
@@ -5306,6 +5265,7 @@
           el.id === "college-name-display" ||
           el.id === "college-sub-display" ||
           el.id === "auth-portal-title" ||
+          el.id === "auth-portal-desc" ||
           el.id === "footer-campus-summary" ||
           el.id === "auth-device-madrasa-code-display" ||
           el.id === "campus-badge" ||
@@ -8892,9 +8852,14 @@
       updateAuthDemoHelperUI();
       updateUnifiedAuthFormLabels();
 
+      const mInput = document.getElementById("auth-madrasa-code");
       const userInput = document.getElementById("auth-username");
       const passInput = document.getElementById("auth-password");
       if (!preserveInputs) {
+        if (mInput) {
+          mInput.value = "";
+          mInput.defaultValue = "";
+        }
         if (userInput) {
           userInput.value = "";
           userInput.defaultValue = "";
@@ -11371,6 +11336,11 @@
       const bar = document.getElementById("demo-preview-switcher-bar");
       if (bar) bar.classList.add("hidden");
 
+      const topHeader = document.getElementById("main-app-header");
+      if (topHeader) topHeader.classList.add("hidden");
+      const subBar = document.getElementById("main-sub-context-bar");
+      if (subBar) subBar.classList.add("hidden");
+
       const views = ["master", "teacher", "schedules", "analytics", "principal", "parent"];
       views.forEach((v) => {
         document.getElementById("view-" + v)?.classList.add("hidden");
@@ -11423,6 +11393,11 @@
 
     // Apply Authenticated View State
     window.applyAuthenticatedState = function(role) {
+      const topHeader = document.getElementById("main-app-header");
+      if (topHeader) topHeader.classList.remove("hidden");
+      const subBar = document.getElementById("main-sub-context-bar");
+      if (subBar) subBar.classList.remove("hidden");
+
       const navTabs = document.getElementById("main-nav-tabs");
       if (navTabs) navTabs.classList.remove("hidden");
 
