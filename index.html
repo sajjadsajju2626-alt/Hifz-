@@ -1550,9 +1550,9 @@
   <!-- TOP HEADER -->
   <header class="no-print">
     <div class="header-inner">
-      <div class="brand" id="header-brand-container" onclick="handleBrandClick()" title="Al-Furqan &amp; Asry Academy" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <div class="brand" id="header-brand-container" onclick="handleBrandClick()" title="Hifz Institution Portal" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-          <div class="brand-title" id="college-name-display">Al-Furqan &amp; Asry Academy</div>
+          <div class="brand-title" id="college-name-display">Hifz Institution Portal</div>
           <span
             id="header-demo-sandbox-badge"
             class="hidden"
@@ -4144,8 +4144,18 @@
     function getWorkspaceCampusName(madrasaId) {
       const mId = (madrasaId || currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
       try {
-        const val = (localStorage.getItem(`hifz_college_name_${mId}`) || "").trim();
+        const val = (
+          localStorage.getItem(`hifz_college_name_${mId}`) ||
+          localStorage.getItem(`hifz_campus_name_${mId}`) ||
+          ""
+        ).trim();
         if (val && !isLegacyHardcodedCampusText(val)) return val;
+        if (typeof getLocalMadrasaRegistry === "function") {
+          const reg = getLocalMadrasaRegistry();
+          if (reg && reg[mId] && reg[mId].name && !isLegacyHardcodedCampusText(reg[mId].name)) {
+            return String(reg[mId].name).trim();
+          }
+        }
       } catch (e) {}
       return "";
     }
@@ -4153,8 +4163,18 @@
     function getWorkspaceCampusLocation(madrasaId) {
       const mId = (madrasaId || currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
       try {
-        const val = (localStorage.getItem(`hifz_college_sub_${mId}`) || "").trim();
+        const val = (
+          localStorage.getItem(`hifz_college_sub_${mId}`) ||
+          localStorage.getItem(`hifz_campus_sub_${mId}`) ||
+          ""
+        ).trim();
         if (val && !isLegacyHardcodedCampusText(val)) return val;
+        if (typeof getLocalMadrasaRegistry === "function") {
+          const reg = getLocalMadrasaRegistry();
+          if (reg && reg[mId] && reg[mId].subtitle && !isLegacyHardcodedCampusText(reg[mId].subtitle)) {
+            return String(reg[mId].subtitle).trim();
+          }
+        }
       } catch (e) {}
       return "";
     }
@@ -4162,7 +4182,11 @@
     function getWorkspaceAcademicTerm(madrasaId) {
       const mId = (madrasaId || currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
       try {
-        const val = (localStorage.getItem(`hifz_academic_term_${mId}`) || "").trim();
+        const val = (
+          localStorage.getItem(`hifz_academic_term_${mId}`) ||
+          localStorage.getItem(`hifz_campus_term_${mId}`) ||
+          ""
+        ).trim();
         if (val) return val;
       } catch (e) {}
       return "1448 AH · Rabi Al-Thani Term";
@@ -4172,14 +4196,34 @@
       const mId = (madrasaId || currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
       if (!mId || mId === "MDR-01") return;
       try {
-        if (name && !isLegacyHardcodedCampusText(name)) {
-          localStorage.setItem(`hifz_college_name_${mId}`, String(name).trim());
+        if (name && String(name).trim()) {
+          const cleanN = String(name).trim();
+          localStorage.setItem(`hifz_college_name_${mId}`, cleanN);
+          localStorage.setItem(`hifz_campus_name_${mId}`, cleanN);
         }
-        if (sub && !isLegacyHardcodedCampusText(sub)) {
-          localStorage.setItem(`hifz_college_sub_${mId}`, String(sub).trim());
+        if (sub && String(sub).trim()) {
+          const cleanS = String(sub).trim();
+          localStorage.setItem(`hifz_college_sub_${mId}`, cleanS);
+          localStorage.setItem(`hifz_campus_sub_${mId}`, cleanS);
         }
-        if (academicTerm) {
-          localStorage.setItem(`hifz_academic_term_${mId}`, String(academicTerm).trim());
+        if (academicTerm && String(academicTerm).trim()) {
+          const cleanT = String(academicTerm).trim();
+          localStorage.setItem(`hifz_academic_term_${mId}`, cleanT);
+          localStorage.setItem(`hifz_campus_term_${mId}`, cleanT);
+        }
+        if (typeof getLocalMadrasaRegistry === "function" && typeof saveLocalMadrasaRegistry === "function") {
+          const reg = getLocalMadrasaRegistry();
+          if (reg[mId]) {
+            if (name && String(name).trim()) reg[mId].name = String(name).trim();
+            if (sub && String(sub).trim()) reg[mId].subtitle = String(sub).trim();
+            saveLocalMadrasaRegistry(reg);
+          }
+        }
+        if (typeof masterMadrasasMap !== "undefined" && masterMadrasasMap && masterMadrasasMap.has(mId)) {
+          const item = masterMadrasasMap.get(mId);
+          if (name && String(name).trim()) item.name = String(name).trim();
+          if (sub && String(sub).trim()) item.subtitle = String(sub).trim();
+          masterMadrasasMap.set(mId, item);
         }
       } catch (e) {}
     }
@@ -4289,14 +4333,20 @@
     let globalParentAlerts = [];
 
     function getActiveCampusName() {
-      if (!currentUser) {
-        return "Al-Furqan & Asry Academy";
-      }
       if (isDemoSandbox) {
-        return demoSandboxCampusName || "Al-Furqan & Asry Academy";
+        return demoSandboxCampusName || t("Hifz Institution (Demo)", "ഹിഫ്ള് സ്ഥാപനം (ഡെമോ)");
       }
       const savedName = getWorkspaceCampusName(currentMadrasaId);
-      return savedName || "Al-Furqan & Asry Academy";
+      if (savedName) {
+        return savedName;
+      }
+      if (!currentUser) {
+        return t("Hifz Institution Portal", "ഹിഫ്ള് ട്രാക്കർ പോർട്ടൽ");
+      }
+      const activeCode = (currentMadrasaId || deviceMadrasaId || "").trim().toUpperCase();
+      return activeCode
+        ? `${t("Hifz Institution", "ഹിഫ്ള് സ്ഥാപനം")} (${activeCode})`
+        : t("Hifz Institution Portal", "ഹിഫ്ള് ട്രാക്കർ പോർട്ടൽ");
     }
 
     function getActiveCampusLocation() {
@@ -8303,9 +8353,11 @@
         if (window.fDb && window.fSetDoc && window.fDoc) {
           const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
           const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
+          const safeFirestoreMode = campusMode === "residential" ? "residential" : "day";
           const payload = {
             madrasaId: mId,
-            mode: campusMode,
+            mode: safeFirestoreMode,
+            campusModeFull: campusMode,
             name,
             sub,
             academicTerm,
@@ -8314,14 +8366,24 @@
             updatedAt: nowTs
           };
           await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`), payload, { merge: true });
+          window.fSetDoc(window.fDoc(window.fDb, "madrasas", mId), {
+            madrasaId: mId,
+            name,
+            subtitle: sub,
+            academicTerm,
+            mode: campusMode,
+            updatedAt: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
           window.fSetDoc(window.fDoc(window.fDb, "madrasas", mId, "settings", "general"), payload, { merge: true }).catch(() => {});
           await syncCampusConfigToFirestore();
         }
+        renderAllViews();
         if (window.showToast) {
           window.showToast(t("✓ Campus settings saved & synced to isolated workspace!", "✓ ക്യാമ്പസ് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു!"));
         }
       } catch (err) {
         console.warn("Settings save note:", err);
+        renderAllViews();
         if (window.showToast) {
           window.showToast(t("✓ Campus settings saved locally!", "✓ ക്യാമ്പസ് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു!"));
         }
@@ -12313,17 +12375,48 @@
         metricSelect.value = portfolioTrendSelectedMetric;
       }
 
-      // Sync student dropdown options
-      const studentsSource = globalStudents.length > 0
-        ? globalStudents
-        : [
-            {
-              studentId: "CAMPUS-TARGET",
-              name: t("Standard Hifz Target Pace", "ഹിഫ്ള് മാതൃകാ പുരോഗതി"),
-              batch: "Benchmark",
-              juzCompleted: 6
-            }
-          ];
+      // Separate Demo Mode (rich sample data) vs Live Madrasa Mode (empty state if 0 students)
+      if (!isDemoSandbox && globalStudents.length === 0) {
+        if (stdSelect) {
+          stdSelect.innerHTML = `<option value="ALL">${t("No students enrolled yet", "വിദ്യാർത്ഥികളെ ചേർത്തിട്ടില്ല")}</option>`;
+          stdSelect.disabled = true;
+        }
+        if (metricSelect) {
+          metricSelect.disabled = true;
+        }
+        if (kpiHost) {
+          kpiHost.innerHTML = "";
+        }
+        if (legendHost) {
+          legendHost.innerHTML = "";
+        }
+        chartHost.innerHTML = `
+          <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:32px 18px; text-align:center;">
+            <div style="font-size:1.8rem; margin-bottom:8px;">📈</div>
+            <h3 style="font-size:0.95rem; font-weight:800; color:#0f172a; margin-bottom:6px;">
+              ${t("No Student Memorization Trends Available Yet", "വിദ്യാർത്ഥികളുടെ പഠന പുരോഗതി ഗ്രാഫ് ലഭ്യമല്ല")}
+            </h3>
+            <p style="font-size:0.8rem; color:#64748b; max-width:460px; margin:0 auto 14px; line-height:1.5;">
+              ${t(
+                "This live Madrasa workspace currently has 0 enrolled students. Enroll your first student to visualize real 6-month Hifz memorization progress trends here.",
+                "ഈ മദ്രസ വർക്ക്സ്പേസിൽ നിലവിൽ വിദ്യാർത്ഥികളെ ചേർത്തിട്ടില്ല. 6 മാസത്തെ യഥാർത്ഥ ഹിഫ്ള് പുരോഗതി ഗ്രാഫ് കാണുന്നതിന് പുതിയ വിദ്യാർത്ഥികളെ ചേർക്കുക."
+              )}
+            </p>
+            <button type="button" class="btn-primary" style="width:auto; padding:9px 18px; font-size:0.8rem;" onclick="switchPrincipalTab('enroll')">
+              ${t("+ Add First Student to View Trend Chart", "+ ആദ്യ വിദ്യാർത്ഥിയെ ചേർക്കുക")}
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      if (stdSelect) stdSelect.disabled = false;
+      if (metricSelect) metricSelect.disabled = false;
+
+      // Sync student dropdown options (in Demo Sandbox use INITIAL_STUDENTS if needed; in Live Mode use globalStudents)
+      const studentsSource = isDemoSandbox
+        ? (globalStudents.length > 0 ? globalStudents : INITIAL_STUDENTS)
+        : globalStudents;
 
       if (stdSelect) {
         const validIds = new Set(studentsSource.map((s) => s.studentId));
