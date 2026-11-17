@@ -1853,14 +1853,14 @@
             <!-- 1. Last Recorded Session (കഴിഞ്ഞ ക്ലാസ്സിലെ പാഠം) Quick-Reference Card -->
             <div id="teacher-last-session-banner" style="margin-bottom:1.1rem;"></div>
 
-            <!-- Day College / Day Madrasa Shift, Transit & Exam Balance Panel -->
+            <!-- Day College / Day Hifz Madrasa Shift, Transit & Exam Balance Panel -->
             <div id="day-college-controls" class="day-madrasa-panel">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                <span style="font-size:0.82rem; font-weight:700; color:#92400e;">
-                  Day College / Day Madrasa Session &amp; Transit Controls
+                <span style="font-size:0.82rem; font-weight:700; color:#92400e;" id="lbl-day-panel-title">
+                  🚌 Day Hifz Madrasa · Shift, Transit &amp; Daily Hifz Controls
                 </span>
-                <span style="font-size:0.72rem; color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-weight:700;">
-                  Day Mode Active
+                <span style="font-size:0.72rem; color:#b45309; background:#fef3c7; padding:2px 8px; border-radius:6px; font-weight:700;" id="lbl-day-mode-pill">
+                  🚌 Day Hifz Mode Active
                 </span>
               </div>
 
@@ -1869,7 +1869,7 @@
                 <!-- 1. Shift / Session Logging -->
                 <div class="form-group" style="margin-bottom:0.85rem;">
                   <label>Session Shift (ഷിഫ്റ്റ് തിരഞ്ഞെടുക്കുക)</label>
-                  <div class="shift-box">
+                  <div class="shift-box" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(165px, 1fr)); gap:8px;">
                     <button
                       type="button"
                       class="shift-btn active"
@@ -1877,6 +1877,14 @@
                       onclick="setShift('Morning Shift (Before School)')"
                     >
                       🌅 Morning Shift (Before School)
+                    </button>
+                    <button
+                      type="button"
+                      class="shift-btn"
+                      id="btn-shift-daytime"
+                      onclick="setShift('Daytime Hifz Session (പകൽ ഹിഫ്ള് ക്ലാസ്)')"
+                    >
+                      ☀️ Daytime Hifz (പകൽ ഹിഫ്ള് ക്ലാസ്)
                     </button>
                     <button
                       type="button"
@@ -1895,8 +1903,9 @@
                     <label for="commute-mode">Commute / Pickup Mode (യാത്രാ രീതി)</label>
                     <select id="commute-mode">
                       <option value="Parent Pickup">Parent Pickup (രക്ഷിതാവ് നേരിട്ട്)</option>
-                      <option value="Self / Walking">Self / Walking (നടന്ന് / സൈക്കിൾ)</option>
+                      <option value="Madrasa Van / Campus Bus">Madrasa Bus / Van (മദ്രസ ബസ് / വാൻ)</option>
                       <option value="Shared Auto / Van">Shared Auto / Van (ഓട്ടോ / വാൻ)</option>
+                      <option value="Self / Walking">Self / Walking (നടന്ന് / സൈക്കിൾ)</option>
                       <option value="Public Transport">Public Transport (ബസ്)</option>
                     </select>
                   </div>
@@ -1920,7 +1929,7 @@
                     onclick="handleOneTapDeparture()"
                     title="Stamp current departure time and sync to Parent Portal"
                   >
-                    Mark Departed / Handed Over to Parent
+                    🚐 Mark Departed / Handed Over to Parent
                   </button>
                 </div>
               </div>
@@ -4872,12 +4881,16 @@
       "Dismiss": "ഒഴിവാക്കുക",
       "Select Student": "വിദ്യാർത്ഥിയെ തിരഞ്ഞെടുക്കുക",
       "Day College / Day Madrasa Session & Transit Controls": "ഡേ മദ്രസ ഷിഫ്റ്റ് & യാത്രാ നിയന്ത്രണങ്ങൾ",
+      "🚌 Day Hifz Madrasa · Shift, Transit & Daily Hifz Controls": "🚌 ഡേ ഹിഫ്ള് മദ്രസ · ഷിഫ്റ്റ്, യാത്ര & ഹിഫ്ള് നിയന്ത്രണങ്ങൾ",
       "Day Mode Active": "ഡേ മോഡ് സജീവം",
+      "🚌 Day Hifz Mode Active": "🚌 ഡേ ഹിഫ്ള് മോഡ് സജീവം",
       "Session Shift (ഷിഫ്റ്റ് തിരഞ്ഞെടുക്കുക)": "ക്ലാസ്സ് ഷിഫ്റ്റ് തിരഞ്ഞെടുക്കുക",
       "🌅 Morning Shift (Before School)": "🌅 രാവിലെ ഷിഫ്റ്റ് (സ്കൂളിന് മുമ്പ്)",
+      "☀️ Daytime Hifz (പകൽ ഹിഫ്ള് ക്ലാസ്)": "☀️ പകൽ ഹിഫ്ള് ക്ലാസ്",
       "🌇 Evening Shift (After School)": "🌇 വൈകുന്നേരം ഷിഫ്റ്റ് (സ്കൂളിന് ശേഷം)",
       "Commute / Pickup Mode (യാത്രാ രീതി)": "യാത്രാ രീതി",
       "Parent Pickup (രക്ഷിതാവ് നേരിട്ട്)": "രക്ഷിതാവ് നേരിട്ട്",
+      "Madrasa Bus / Van (മദ്രസ ബസ് / വാൻ)": "മദ്രസ ബസ് / വാൻ",
       "Self / Walking (നടന്ന് / സൈക്കിൾ)": "നടന്ന് / സൈക്കിൾ",
       "Shared Auto / Van (ഓട്ടോ / വാൻ)": "ഓട്ടോ / വാൻ",
       "Public Transport (ബസ്)": "പൊതുഗതാഗതം (ബസ്)",
@@ -4885,6 +4898,7 @@
       "1-Tap Campus Handover logs real-time departure status to the Parent Portal:":
         "കുട്ടി ക്യാമ്പസിൽ നിന്ന് പുറപ്പെട്ട സമയം ഒറ്റ ക്ലിക്കിൽ രക്ഷിതാവിനെ അറിയിക്കാം:",
       "Mark Departed / Handed Over to Parent": "പുറപ്പെട്ടു / രക്ഷിതാവിന് കൈമാറി",
+      "🚐 Mark Departed / Handed Over to Parent": "🚐 പുറപ്പെട്ടു / രക്ഷിതാവിന് കൈമാറി",
       "Sabaq Optional": "സബഖ് നിർബന്ധമില്ല",
       "🕌 5-Time Jama'at Salah Status (നമസ്കാരം ജമാഅത്തായി)": "🕌 5 വഖ്ത് ജമാഅത്ത് നമസ്കാര നില",
       "✓ Mark All 5 in Jama'at": "✓ അഞ്ചും ജമാഅത്തായി രേഖപ്പെടുത്തുക",
@@ -6492,12 +6506,14 @@
       }
     };
 
-    // Shift Selection ("Morning Shift (Before School)" vs "Evening Shift (After School)")
+    // Shift Selection ("Morning Shift (Before School)" vs "Daytime Hifz Session" vs "Evening Shift (After School)")
     window.setShift = function(shiftValue) {
       currentShift = shiftValue;
       const mBtn = document.getElementById("btn-shift-morning");
+      const dBtn = document.getElementById("btn-shift-daytime");
       const eBtn = document.getElementById("btn-shift-evening");
       if (mBtn) mBtn.classList.toggle("active", shiftValue.includes("Morning"));
+      if (dBtn) dBtn.classList.toggle("active", shiftValue.includes("Daytime"));
       if (eBtn) eBtn.classList.toggle("active", shiftValue.includes("Evening"));
     };
 
@@ -11206,7 +11222,7 @@
                 </div>
               </div>
 
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:6px 12px; font-size:0.77rem; color:#1e293b; line-height:1.45;">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(195px, 1fr)); gap:6px 12px; font-size:0.77rem; color:#1e293b; line-height:1.45;">
                 <div>
                   <span style="color:#64748b; font-weight:600;">${t("Last Sabaq & Grade:", "കഴിഞ്ഞ സബഖും ഗ്രേഡും:")}</span>
                   <div style="font-weight:700; color:#064e3b;">
@@ -11223,6 +11239,20 @@
                     ${t("Sabqi", "സബ്ഖി")}: ${refLog.sabqiTarget || "—"} · ${t("Manzil", "മൻസിൽ")}: ${refLog.manzilTarget || "—"}
                   </div>
                 </div>
+                ${
+                  campusMode === "day"
+                    ? `<div>
+                        <span style="color:#92400e; font-weight:600;">${t("Transit & Shift:", "യാത്ര & ഷിഫ്റ്റ്:")}</span>
+                        <div style="font-weight:700; color:#78350f;">
+                          ${
+                            latestLog.departureTime
+                              ? `${t("Left campus at", "ക്യാമ്പസിൽ നിന്നിറങ്ങിയത്:")} ${latestLog.departureTime}`
+                              : t("On Campus · In Session", "ക്യാമ്പസിലുണ്ട്")
+                          } · ${formatShiftDisplay(latestLog.shift || currentShift)}
+                        </div>
+                      </div>`
+                    : ""
+                }
               </div>
 
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-top:8px; padding-top:6px; border-top:1px solid #dcfce7; font-size:0.73rem;">
@@ -11346,7 +11376,74 @@
         </div>
 
         ${
-          latestLog
+          campusMode === "day"
+            ? `
+          <div style="margin-top:12px; display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:10px;">
+            <!-- Left Side-by-Side Card: Transit, Shift & Pickup Status -->
+            <div style="padding:10px 12px; border-radius:10px; background:#fffbeb; border:1px solid #fde68a; font-size:0.76rem; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
+                  <strong style="color:#92400e;">🚌 ${t("Transit & Pickup Status", "യാത്രാ & പിക്ക്-അപ്പ് നില")}</strong>
+                  ${
+                    isLatestAbsent
+                      ? `<span class="tag tag-absent" style="font-size:0.68rem;">${t("Absent", "ആബ്സെന്റ്")}</span>`
+                      : latestLog && latestLog.departureTime
+                      ? `<span class="tag tag-present" style="font-size:0.68rem;">${t("Left at", "ഇറങ്ങിയത്:")} ${latestLog.departureTime}</span>`
+                      : `<span class="tag tag-late" style="font-size:0.68rem;">${t("Currently On Campus", "ഇപ്പോൾ ക്യാമ്പസിലുണ്ട്")}</span>`
+                  }
+                </div>
+                <div style="font-weight:700; color:#78350f; margin-bottom:4px;">
+                  ${
+                    isLatestAbsent
+                      ? t("Student marked absent today", "വിദ്യാർത്ഥി ഇന്ന് ആബ്സെന്റ് ആണ്")
+                      : latestLog && latestLog.departureTime
+                      ? `${t("Left campus at", "ക്യാമ്പസിൽ നിന്ന് ഇറങ്ങിയത്:")} <span style="font-family:var(--font-mono); color:#065f46;">${latestLog.departureTime}</span>`
+                      : t("In Daytime Hifz Session on Campus", "മദ്രസ ക്യാമ്പസിൽ പഠനത്തിലാണ്")
+                  }
+                </div>
+                <div style="color:#92400e; line-height:1.45;">
+                  <div><strong>${t("Shift:", "ഷിഫ്റ്റ്:")}</strong> ${formatShiftDisplay((latestLog && latestLog.shift) || currentShift)}</div>
+                  <div><strong>${t("Commute / Bus:", "യാത്രാ രീതി:")}</strong> ${formatCommuteDisplay((latestLog && latestLog.commuteMode) || "Parent Pickup")}</div>
+                </div>
+              </div>
+              ${
+                !isLatestAbsent && !(latestLog && latestLog.departureTime)
+                  ? `<div style="margin-top:8px; padding-top:6px; border-top:1px dashed #fcd34d; display:flex; justify-content:flex-end;">
+                      <button type="button" onclick="handleOneTapDeparture('${latestLog ? latestLog.id : ""}')" style="background:#d97706; color:#ffffff; border:none; border-radius:6px; padding:4px 9px; font-size:0.71rem; font-weight:700; cursor:pointer;">
+                        🚐 ${t("Mark Departed Now", "ഇറങ്ങിയ സമയം ചേർക്കുക")}
+                      </button>
+                    </div>`
+                  : ""
+              }
+            </div>
+
+            <!-- Right Side-by-Side Card: Daily Hifz Progress (Sabaq, Sabqi, Manzil) -->
+            <div style="padding:10px 12px; border-radius:10px; background:${isParentVerified ? "#f0fdf4" : "#f8fafc"}; border:1px solid ${isParentVerified ? "#86efac" : "#cbd5e1"}; font-size:0.76rem; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:6px;">
+                  <strong style="color:#064e3b;">📖 ${t("Daily Hifz Progress", "ഇന്നത്തെ ഹിഫ്ള് പുരോഗതി")}</strong>
+                  <span class="tag ${isParentVerified ? "tag-home-verified" : "tag-mumtaz"}" style="font-size:0.68rem;">
+                    ${
+                      isParentVerified
+                        ? t("✓ Home Verified", "✓ വീട്ടിൽ കേട്ടു")
+                        : latestLog
+                        ? formatShortGradeDisplay(latestLog.sabaqGrade || "Mumtaz")
+                        : `${t("Juz", "ജുസ്അ്")} ${std.currentJuz}`
+                    }
+                  </span>
+                </div>
+                <div style="color:#1e293b; line-height:1.5;">
+                  <div><strong>${t("New Sabaq:", "പുതിയ സബഖ്:")}</strong> ${latestLog ? formatSurahDisplay(latestLog.sabaqTarget) : formatSurahDisplay(std.currentSurah)}</div>
+                  <div><strong>${t("Sabqi:", "സബ്ഖി:")}</strong> ${latestLog && latestLog.sabqiTarget ? formatHomeTargetDisplay(latestLog.sabqiTarget) : `${t("Juz", "ജുസ്അ്")} ${std.currentJuz}`}</div>
+                  <div><strong>${t("Manzil:", "മൻസിൽ:")}</strong> ${latestLog && latestLog.manzilTarget ? formatHomeTargetDisplay(latestLog.manzilTarget) : `${t("Juz", "ജുസ്അ്")} ${Math.max(1, std.currentJuz - 1)}`}</div>
+                </div>
+              </div>
+              <div style="margin-top:6px; padding-top:5px; border-top:1px dashed #cbd5e1; color:#065f46; font-size:0.72rem; font-weight:600;">
+                🏡 <strong>${t("Home Target:", "വീട്ടിൽ ഓതാൻ:")}</strong> ${latestLog && latestLog.homeRevisionTarget ? formatHomeTargetDisplay(latestLog.homeRevisionTarget) : formatSurahDisplay(std.currentSurah)}
+              </div>
+            </div>
+          </div>`
+            : latestLog
             ? campusMode === "online"
               ? `
           <div style="margin-top:10px; padding:9px 11px; border-radius:8px; background:#eff6ff; border:1px solid #93c5fd; font-size:0.76rem;">
@@ -11361,31 +11458,6 @@
               ${Array.isArray(latestLog.tajweedTags) && latestLog.tajweedTags.length > 0
                 ? latestLog.tajweedTags.map((tj) => `<span style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; padding:1px 6px; border-radius:99px; font-size:0.68rem; font-weight:700;">${tj}</span>`).join("")
                 : ""}
-            </div>
-          </div>`
-              : campusMode === "day"
-              ? `
-          <div style="margin-top:10px; padding:9px 11px; border-radius:8px; background:${
-            isParentVerified ? "#f0fdf4" : "#fffbeb"
-          }; border:1px solid ${isParentVerified ? "#86efac" : "#fde68a"}; font-size:0.76rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
-              <strong style="color:${isParentVerified ? "#166534" : "#92400e"};">
-                ${
-                  isParentVerified
-                    ? t("✓ Parent Verified Home Revision (വീട്ടിൽ വെച്ച് കേട്ടു)", "✓ രക്ഷിതാവ് വീട്ടിൽ വെച്ച് കേട്ടു")
-                    : t("⏳ Awaiting Parent Home-Revision Sign-Off", "⏳ രക്ഷിതാവിന്റെ ഡിജിറ്റൽ ഒപ്പ് ബാക്കി")
-                }
-              </strong>
-              ${
-                isLatestAbsent
-                  ? `<span style="color:#991b1b; font-weight:600;">${t("Absent", "ആബ്സെന്റ്")} (${latestLog.dateStr})</span>`
-                  : latestLog.departureTime
-                  ? `<span style="font-family:var(--font-mono); font-weight:700; color:#065f46;">${t("Left campus:", "ക്യാമ്പസിൽ നിന്ന് ഇറങ്ങിയത്:")} ${latestLog.departureTime}</span>`
-                  : `<span style="color:#b45309; font-weight:600;">${t("On Campus", "ക്യാമ്പസിലുണ്ട്")}</span>`
-              }
-            </div>
-            <div style="color:var(--text-secondary); margin-top:3px;">
-              <strong>${t("Assigned Home Target:", "വീട്ടിൽ ഓതേണ്ട ഭാഗം:")}</strong> ${latestLog.homeRevisionTarget || t("Not assigned", "നൽകിയിട്ടില്ല")} · <strong>${t("Commute:", "യാത്ര:")}</strong> ${latestLog.commuteMode || "Parent Pickup"}
             </div>
           </div>`
               : `
@@ -11894,6 +11966,9 @@
       if (s === "Morning Shift (Before School)" || s.toLowerCase().includes("morning shift")) {
         return t("Morning Shift (Before School)", "രാവിലെ ഷിഫ്റ്റ് (സ്കൂളിന് മുമ്പ്)");
       }
+      if (s.toLowerCase().includes("daytime hifz") || s.includes("പകൽ ഹിഫ്ള്")) {
+        return t("Daytime Hifz Session", "പകൽ ഹിഫ്ള് ക്ലാസ്");
+      }
       if (s === "Evening Shift (After School)" || s.toLowerCase().includes("evening shift")) {
         return t("Evening Shift (After School)", "വൈകുന്നേരം ഷിഫ്റ്റ് (സ്കൂളിന് ശേഷം)");
       }
@@ -12368,20 +12443,36 @@
                 </button>
               </div>
             </div>`
-            : enableShiftTransitTracking
-            ? `
+            : `
             <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:14px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
-                <span style="font-size:0.74rem; font-weight:700; color:#92400e;">${t("REAL-TIME CAMPUS TRANSIT & PICKUP STATUS", "ക്യാമ്പസ് യാത്രാ & പിക്ക്-അപ്പ് വിവരങ്ങൾ")}</span>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:0.74rem; font-weight:700; color:#92400e;">🚌 ${t("REAL-TIME CAMPUS TRANSIT & DEPARTURE UPDATE", "ക്യാമ്പസ് യാത്രാ & പുറപ്പെട്ട സമയം")}</span>
                 <span class="tag ${depTime ? "tag-present" : "tag-late"}">
                   ${depTime ? t("Left campus at ", "ക്യാമ്പസിൽ നിന്നിറങ്ങിയത്: ") + depTime : t("Currently On Campus", "ഇപ്പോൾ ക്യാമ്പസിലുണ്ട്")}
                 </span>
               </div>
-              <div style="font-size:0.95rem; font-weight:700; color:#78350f; margin-bottom:4px;">
-                ${depTime ? t(`Left campus at ${depTime}`, `ക്യാമ്പസിൽ നിന്ന് ഇറങ്ങിയത്: ${depTime}`) : t("In Session at Madrasa Campus", "മദ്രസ ക്യാമ്പസിൽ ക്ലാസ്സിലാണ്")}
+              <div style="font-size:0.96rem; font-weight:800; color:#78350f; margin-bottom:6px;">
+                ${depTime ? t(`Left campus at ${depTime}`, `ക്യാമ്പസിൽ നിന്ന് ഇറങ്ങിയത്: ${depTime}`) : t("In Daytime Hifz Session at Madrasa Campus", "മദ്രസ ക്യാമ്പസിൽ ഹിഫ്ള് പഠനത്തിലാണ്")}
               </div>
-              <div style="font-size:0.78rem; color:#92400e;">
-                <strong>${t("Commute Mode:", "യാത്രാ രീതി:")}</strong> ${commute} · <strong>${t("Shift:", "ഷിഫ്റ്റ്:")}</strong> ${shift}
+              <div style="font-size:0.78rem; color:#92400e; line-height:1.5;">
+                <div><strong>${t("Commute / Bus Mode:", "യാത്രാ രീതി:")}</strong> ${commute}</div>
+                <div><strong>${t("Session Shift:", "ക്ലാസ് ഷിഫ്റ്റ്:")}</strong> ${shift} · <strong>${t("Attendance:", "ഹാജർ:")}</strong> ${formatAttendanceDisplay(latestLog ? latestLog.attendanceStatus || "Present" : "Present")}</div>
+              </div>
+            </div>`;
+
+          const dayHifzSummaryCardHtml = campusMode === "day"
+            ? `
+            <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                <span style="font-size:0.74rem; font-weight:700; color:#065f46;">📖 ${t("DAILY HIFZ MEMORIZATION SUMMARY", "ഇന്നത്തെ ഹിഫ്ള് പഠന സംഗ്രഹം")}</span>
+                <span class="tag tag-mumtaz">
+                  ${latestLog ? formatShortGradeDisplay(latestLog.sabaqGrade || "Mumtaz") : `${t("Juz", "ജുസ്അ്")} ${std.currentJuz}`}
+                </span>
+              </div>
+              <div style="font-size:0.8rem; color:#1e293b; line-height:1.55;">
+                <div><strong>${t("1. New Sabaq (പുതിയ പാഠം):", "1. പുതിയ സബഖ്:")}</strong> <span style="color:#064e3b; font-weight:700;">${latestLog ? formatSurahDisplay(latestLog.sabaqTarget) : formatSurahDisplay(std.currentSurah)}</span></div>
+                <div><strong>${t("2. Sabqi (സമീപകാല പാഠം):", "2. സബ്ഖി (സമീപകാല പാഠം):")}</strong> ${latestLog && latestLog.sabqiTarget ? formatHomeTargetDisplay(latestLog.sabqiTarget) : `${t("Juz", "ജുസ്അ്")} ${std.currentJuz}`} <span style="color:#047857; font-weight:600;">[${latestLog ? formatShortGradeDisplay(latestLog.sabqiGrade || "Mumtaz") : t("Active", "സജീവം")}]</span></div>
+                <div><strong>${t("3. Manzil (പഴയ ജുസ്അ്):", "3. മൻസിൽ (പഴയ ജുസ്അ്):")}</strong> ${latestLog && latestLog.manzilTarget ? formatHomeTargetDisplay(latestLog.manzilTarget) : `${t("Juz", "ജുസ്അ്")} ${Math.max(1, std.currentJuz - 1)}`} <span style="color:#0369a1; font-weight:600;">[${latestLog ? formatShortGradeDisplay(latestLog.manzilGrade || "Mumtaz") : t("Active", "സജീവം")}]</span></div>
               </div>
             </div>`
             : "";
@@ -12390,9 +12481,10 @@
 
           dayCardsContainer.innerHTML = `
             ${leftCardHtml}
+            ${dayHifzSummaryCardHtml}
             <div style="background:${isVerified ? "#f0fdf4" : "#ffffff"}; border:1px solid ${
               isVerified ? "#86efac" : "#cbd5e1"
-            }; border-radius:10px; padding:14px; ${(campusMode === "online" || enableShiftTransitTracking) ? "" : "grid-column: 1 / -1;"}">
+            }; border-radius:10px; padding:14px; ${campusMode === "day" ? "grid-column: 1 / -1;" : ""}">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
                 <span style="font-size:0.74rem; font-weight:700; color:#065f46;">${t("HOME REVISION & AUDIO RECITATION PRACTICE", "വീട്ടിൽ നിന്ന് ഓതേണ്ട ഭാഗവും ഓഡിയോ പരിശീലനവും")}</span>
                 ${
@@ -12675,10 +12767,21 @@
                 </div>
               </div>
 
-              <div id="p-log-body-${idx}" class="hidden" style="padding:12px; border-top:1px solid #f1f5f9; background:#ffffff;">
+              <div id="p-log-body-${idx}" class="${idx === 0 ? "" : "hidden"}" style="padding:12px; border-top:1px solid #f1f5f9; background:#ffffff;">
                 ${
                   displayAtt !== "Absent"
                     ? `
+                  ${
+                    campusMode === "day"
+                      ? `<div style="margin-bottom:8px; padding:6px 10px; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; font-size:0.76rem; color:#78350f; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                          <span>🚌 <strong>${r.departureTime ? `${t("Left campus at", "ക്യാമ്പസിൽ നിന്നിറങ്ങിയത്:")} ${r.departureTime}` : t("Currently On Campus", "ക്യാമ്പസിലുണ്ട്")}</strong></span>
+                          <span>·</span>
+                          <span><strong>${t("Shift:", "ഷിഫ്റ്റ്:")}</strong> ${formatShiftDisplay(r.shift)}</span>
+                          <span>·</span>
+                          <span><strong>${t("Commute:", "യാത്ര:")}</strong> ${formatCommuteDisplay(r.commuteMode || "Parent Pickup")}</span>
+                        </div>`
+                      : ""
+                  }
                   <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.55;">
                     <div><strong>${t("Sabaq (New Lesson):", "സബഖ് (പുതിയ പാഠം):")}</strong> ${formatSurahDisplay(r.sabaqTarget)} <span class="tag tag-mumtaz" style="font-size:0.68rem; padding:1px 6px;">${cleanSabaqGrade}</span></div>
                     <div style="margin-top:2px;"><strong>${t("Sabqi (Recent):", "സബ്ഖി (സമീപകാല ജുസ്അ്):")}</strong> ${formatHomeTargetDisplay(r.sabqiTarget)} <span style="font-size:0.75rem; color:#065f46; font-weight:600;">[${cleanSabqiGrade}]</span></div>
