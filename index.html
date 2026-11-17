@@ -1556,6 +1556,9 @@
       </div>
 
       <nav class="nav-tabs hidden" id="main-nav-tabs" aria-label="Primary Workspace Navigation">
+        <button type="button" class="nav-tab-btn hidden" id="nav-master" onclick="switchWorkspace('master')" style="background:linear-gradient(135deg,#fef3c7,#fde68a); color:#78350f; border:1px solid #f59e0b; font-weight:800;">
+          🛡️ Master Admin
+        </button>
         <button type="button" class="nav-tab-btn" id="nav-teacher" onclick="switchWorkspace('teacher')">
           Verification Desk
         </button>
@@ -3149,6 +3152,281 @@
         </div>
       </div>
     </div>
+
+    <!-- =====================================================================
+         VIEW 6: MASTER SYSTEM ADMINISTRATION DASHBOARD (മാസ്റ്റർ അഡ്മിൻ ഡാഷ്‌ബോർഡും മദ്രസ ലിസ്റ്റും)
+         ===================================================================== -->
+    <section id="view-master" class="hidden">
+      <div class="workspace-header" style="background:linear-gradient(135deg,#064e3b 0%,#0f172a 100%); color:#ffffff; padding:20px 22px; border-radius:16px; margin-bottom:18px; border:1px solid #047857; box-shadow:0 10px 25px rgba(6,78,59,0.18);">
+        <div>
+          <span style="display:inline-flex; align-items:center; gap:6px; background:rgba(253,230,138,0.16); color:#fde68a; border:1px solid rgba(251,191,36,0.4); padding:4px 10px; border-radius:6px; font-size:0.72rem; font-weight:800; letter-spacing:0.04em; margin-bottom:6px;" id="master-badge-pill">
+            🛡️ MASTER SUPER ADMIN · MULTI-TENANT CONTROL CENTER
+          </span>
+          <h1 class="workspace-title" id="master-dashboard-title" style="color:#ffffff; margin:0; font-size:1.35rem;">
+            🛡️ മാസ്റ്റർ അഡ്മിൻ ഡാഷ്‌ബോർഡും മദ്രസ ലിസ്റ്റും
+          </h1>
+          <p class="workspace-subtitle" id="master-dashboard-subtitle" style="color:#cbd5e1; margin-top:4px; font-size:0.84rem;">
+            എല്ലാ മദ്രസകളുടെയും (madrasas/{madrasaId}) വിവരങ്ങൾ കാണാനും, പുതിയ മദ്രസ കോഡുകൾ നിർമ്മിക്കാനും, പ്രിൻസിപ്പൽ പാസ്‌വേഡുകൾ പുതുക്കാനുമുള്ള സംവിധാനം
+          </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <button
+            type="button"
+            class="btn-secondary"
+            id="btn-master-refresh"
+            onclick="fetchAllMadrasasForMasterAdmin(true)"
+            style="background:#fde68a; color:#064e3b; border:1px solid #f59e0b; font-weight:800; padding:9px 14px;"
+          >
+            🔄 മദ്രസ ലിസ്റ്റ് പുതുക്കുക
+          </button>
+        </div>
+      </div>
+
+      <!-- Global Multi-Campus KPI Summary Strip -->
+      <div class="kpi-strip" style="margin-bottom:18px;">
+        <div class="kpi-card" style="border-left:4px solid #047857; background:#f0fdf4;">
+          <div class="kpi-label" id="master-kpi-lbl-madrasas" style="color:#065f46; font-weight:700;">ആകെ രജിസ്റ്റർ ചെയ്ത മദ്രസകൾ</div>
+          <div class="kpi-value" id="master-kpi-madrasas" style="color:#064e3b;">0</div>
+          <div class="kpi-meta" id="master-kpi-sub-madrasas" style="color:#047857;">സജീവ സ്ഥാപനങ്ങൾ (madrasas/{id})</div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #0284c7; background:#f0f9ff;">
+          <div class="kpi-label" id="master-kpi-lbl-students" style="color:#075985; font-weight:700;">ആകെ ഹിഫ്ള് വിദ്യാർത്ഥികൾ</div>
+          <div class="kpi-value" id="master-kpi-students" style="color:#0c4a6e;">0</div>
+          <div class="kpi-meta" id="master-kpi-sub-students" style="color:#0369a1;">എല്ലാ ക്യാമ്പസുകളിലുമായി പഠിക്കുന്നവർ</div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #7c3aed; background:#f5f3ff;">
+          <div class="kpi-label" id="master-kpi-lbl-ustadhs" style="color:#5b21b6; font-weight:700;">ആകെ ഉസ്താദുമാർ / അധ്യാപകർ</div>
+          <div class="kpi-value" id="master-kpi-ustadhs" style="color:#4c1d95;">0</div>
+          <div class="kpi-meta" id="master-kpi-sub-ustadhs" style="color:#6d28d9;">എല്ലാ മദ്രസകളിലുമുള്ള ഉസ്താദുമാർ</div>
+        </div>
+        <div class="kpi-card" style="border-left:4px solid #d97706; background:#fffbeb;">
+          <div class="kpi-label" id="master-kpi-lbl-status" style="color:#92400e; font-weight:700;">ഗ്ലോബൽ സിസ്റ്റം &amp; ക്ലൗഡ് അവസ്ഥ</div>
+          <div class="kpi-value" id="master-kpi-status" style="color:#047857; font-size:1.05rem;">🟢 സജീവം (Active ✓)</div>
+          <div class="kpi-meta" id="master-kpi-sub-status" style="color:#b45309;">Multi-Tenant Isolation · Cloud Sync</div>
+        </div>
+      </div>
+
+      <!-- 2-Column Management Grid: Create New Madrasa + Global Announcements & System Config -->
+      <div class="grid-2" style="margin-bottom:20px; align-items:start;">
+        <!-- LEFT CARD: CREATE NEW MADRASA WORKSPACE -->
+        <div class="card" style="border:2px solid #a7f3d0; background:linear-gradient(135deg,#ffffff 0%,#f0fdf4 100%);">
+          <div class="card-header-row">
+            <div>
+              <h3 class="card-title" id="master-create-card-title" style="color:#064e3b;">
+                ➕ പുതിയ മദ്രസ വർക്ക്സ്പേസ് സൃഷ്ടിക്കുക
+              </h3>
+              <p class="card-subtitle" id="master-create-card-sub">
+                പുതിയ മദ്രസ കോഡും (ഉദാ: MDR-03) പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങളും സജ്ജീകരിക്കുക
+              </p>
+            </div>
+            <span class="badge badge-juz" id="master-create-badge">madrasas/{code}</span>
+          </div>
+
+          <form onsubmit="handleMasterCreateMadrasa(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="master-new-mcode" id="lbl-master-new-mcode">മദ്രസ കോഡ് (Madrasa Code)</label>
+                <div style="display:flex; gap:6px;">
+                  <input
+                    type="text"
+                    id="master-new-mcode"
+                    placeholder="ഉദാ: MDR-03"
+                    required
+                    style="text-transform:uppercase; font-family:monospace; font-weight:800; letter-spacing:0.05em;"
+                  />
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="generateRandomMasterMadrasaCode()"
+                    title="Auto-generate Madrasa Code"
+                    style="white-space:nowrap; padding:8px 10px; font-size:0.74rem;"
+                  >
+                    ⚡ Auto
+                  </button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="master-new-mmode" id="lbl-master-new-mmode">പഠന രീതി (Campus Mode)</label>
+                <select id="master-new-mmode">
+                  <option value="day">🚌 ഡേ മദ്രസ / ഷിഫ്റ്റ് മോഡ്</option>
+                  <option value="residential">🏠 റെസിഡൻഷ്യൽ ക്യാമ്പസ് മോഡ്</option>
+                  <option value="online">🌐 ഓൺലൈൻ ഹിഫ്ള് മോഡ്</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="master-new-mname" id="lbl-master-new-mname">സ്ഥാപനത്തിന്റെ / മദ്രസയുടെ പേര്</label>
+                <input
+                  type="text"
+                  id="master-new-mname"
+                  placeholder="ഉദാ: Al-Huda Hifz Academy"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="master-new-msub" id="lbl-master-new-msub">സ്ഥലം / വിലാസം (Location)</label>
+                <input
+                  type="text"
+                  id="master-new-msub"
+                  placeholder="ഉദാ: Kasaragod, Kerala"
+                />
+              </div>
+            </div>
+
+            <div style="background:#ecfdf5; border:1px solid #6ee7b7; border-radius:10px; padding:12px; margin-bottom:12px;">
+              <div style="font-size:0.78rem; font-weight:800; color:#065f46; margin-bottom:8px;" id="master-init-principal-hdr">
+                🔑 പ്രാരംഭ പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങൾ (Initial Principal Credentials)
+              </div>
+              <div class="form-row" style="margin-bottom:0;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="master-new-puser" id="lbl-master-new-puser">പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി</label>
+                  <input
+                    type="text"
+                    id="master-new-puser"
+                    value="admin"
+                    placeholder="admin"
+                    required
+                  />
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label for="master-new-ppass" id="lbl-master-new-ppass">പ്രിൻസിപ്പൽ പാസ്‌വേഡ്</label>
+                  <input
+                    type="text"
+                    id="master-new-ppass"
+                    value="admin786"
+                    placeholder="admin786"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btn-master-create-submit" style="width:100%;">
+              ➕ പുതിയ മദ്രസ വർക്ക്സ്പേസ് സൃഷ്ടിച്ച് സേവ് ചെയ്യുക
+            </button>
+          </form>
+        </div>
+
+        <!-- RIGHT CARD: GLOBAL ANNOUNCEMENTS, SYSTEM STATUS & MASTER CREDENTIALS -->
+        <div class="card" style="border:2px solid #fde68a; background:linear-gradient(135deg,#ffffff 0%,#fffbeb 100%);">
+          <div class="card-header-row">
+            <div>
+              <h3 class="card-title" id="master-global-card-title" style="color:#78350f;">
+                📢 ഗ്ലോബൽ സിസ്റ്റം അറിയിപ്പുകളും മാസ്റ്റർ ക്രമീകരണങ്ങളും
+              </h3>
+              <p class="card-subtitle" id="master-global-card-sub">
+                എല്ലാ മദ്രസകളിലേക്കും പൊതു അറിയിപ്പുകൾ അയക്കാനും സിസ്റ്റം സുരക്ഷ നിയന്ത്രിക്കാനും
+              </p>
+            </div>
+            <span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b;">System Broadcast</span>
+          </div>
+
+          <!-- Global System Announcement Form -->
+          <form onsubmit="handleMasterBroadcastNotice(event)" style="margin-bottom:14px; padding-bottom:14px; border-bottom:1px dashed #fcd34d;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="master-global-notice-title" id="lbl-master-notice-title">അറിയിപ്പിന്റെ തലക്കെട്ട് (Announcement Title)</label>
+                <input
+                  type="text"
+                  id="master-global-notice-title"
+                  placeholder="ഉദാ: സിസ്റ്റം അപ്ഡേറ്റ് / പൊതു അറിയിപ്പ്"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="master-global-notice-priority" id="lbl-master-notice-priority">പ്രാധാന്യം (Priority)</label>
+                <select id="master-global-notice-priority">
+                  <option value="normal">📌 സാധാരണ അറിയിപ്പ് (Standard)</option>
+                  <option value="urgent">🚨 അടിയന്തര അറിയിപ്പ് (Urgent Alert)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="master-global-notice-body" id="lbl-master-notice-body">അറിയിപ്പ് സന്ദേശം (Broadcast Message)</label>
+              <textarea
+                id="master-global-notice-body"
+                rows="2"
+                placeholder="എല്ലാ ക്യാമ്പസുകളിലെയും പ്രിൻസിപ്പൽമാർക്കും ഉസ്താദുമാർക്കും രക്ഷിതാക്കൾക്കും കാണാനുള്ള സന്ദേശം..."
+                required
+              ></textarea>
+            </div>
+            <button type="submit" class="btn-primary" id="btn-master-broadcast-submit" style="width:100%; background:#b45309;">
+              📢 എല്ലാ മദ്രസകളിലേക്കും അറിയിപ്പ് പ്രസിദ്ധീകരിക്കുക
+            </button>
+          </form>
+
+          <!-- Recent Global Announcements List -->
+          <div id="master-global-notices-list" style="margin-bottom:14px; max-height:140px; overflow-y:auto;"></div>
+
+          <!-- Master Super Admin Credentials Update -->
+          <form onsubmit="handleUpdateMasterAuth(event)" style="background:#fef3c7; border:1px solid #fde68a; border-radius:10px; padding:12px;">
+            <div style="font-size:0.78rem; font-weight:800; color:#78350f; margin-bottom:8px;" id="master-auth-cfg-hdr">
+              🔐 മാസ്റ്റർ അഡ്മിൻ ലോഗിൻ വിവരങ്ങൾ മാറ്റുക (Master Admin Credentials)
+            </div>
+            <div class="form-row" style="margin-bottom:8px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="master-cfg-user" id="lbl-master-cfg-user" style="font-size:0.72rem;">മാസ്റ്റർ യൂസർനെയിം</label>
+                <input type="text" id="master-cfg-user" value="master" required style="padding:7px 10px; font-size:0.8rem;" />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label for="master-cfg-pass" id="lbl-master-cfg-pass" style="font-size:0.72rem;">മാസ്റ്റർ പാസ്‌വേഡ്</label>
+                <input type="text" id="master-cfg-pass" value="master786" required style="padding:7px 10px; font-size:0.8rem;" />
+              </div>
+            </div>
+            <button type="submit" class="btn-secondary" id="btn-master-auth-save" style="width:100%; font-size:0.78rem; padding:7px 12px; background:#78350f; color:#ffffff; border:none;">
+              💾 മാസ്റ്റർ പാസ്‌വേഡ് സേവ് ചെയ്യുക
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- FULL-WIDTH REGISTERED MADRASA WORKSPACES DIRECTORY & PASSWORD RESET TABLE -->
+      <div class="card" style="border:2px solid #cbd5e1;">
+        <div class="card-header-row" style="flex-wrap:wrap; gap:12px;">
+          <div>
+            <h3 class="card-title" id="master-directory-title">
+              🏛️ രജിസ്റ്റർ ചെയ്ത മദ്രസകളുടെ ലിസ്റ്റും പ്രിൻസിപ്പൽ പാസ്‌വേഡ് നിയന്ത്രണവും
+            </h3>
+            <p class="card-subtitle" id="master-directory-sub">
+              എല്ലാ മദ്രസ വർക്ക്സ്പേസുകളും (madrasas/{madrasaId}), വിദ്യാർത്ഥി-ഉസ്താദ് കണക്കുകളും, പ്രിൻസിപ്പൽ പാസ്‌വേഡ് റീസെറ്റ് സംവിധാനവും
+            </p>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <input
+              type="text"
+              id="master-search-input"
+              oninput="renderMasterAdminDashboard()"
+              placeholder="🔍 മദ്രസ കോഡ് അല്ലെങ്കിൽ പേര് തിരയുക..."
+              style="min-width:240px; padding:8px 12px; font-size:0.82rem; border-radius:8px; border:1px solid #cbd5e1;"
+            />
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th id="th-master-code">മദ്രസ കോഡ്</th>
+                <th id="th-master-name">സ്ഥാപനത്തിന്റെ പേരും സ്ഥലവും</th>
+                <th id="th-master-mode">പഠന രീതി (Mode)</th>
+                <th id="th-master-counts">വിദ്യാർത്ഥികൾ &amp; ഉസ്താദുമാർ</th>
+                <th id="th-master-creds">പ്രിൻസിപ്പൽ ഐഡി &amp; പാസ്‌വേഡ് പുതുക്കൽ</th>
+                <th id="th-master-actions">പ്രവർത്തനങ്ങൾ</th>
+              </tr>
+            </thead>
+            <tbody id="master-madrasas-tbody">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:24px; color:#64748b;">
+                  മദ്രസ വിവരങ്ങൾ ശേഖരിക്കുന്നു...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
     <!-- PORTAL SIGN IN MODAL -->
     <div id="login-modal" class="modal-backdrop hidden no-print" onclick="if(event.target===this) closeLoginModal()">
@@ -4982,6 +5260,201 @@
       translateStaticDOMElements(lang);
 
       const translations = {
+        "nav-master": {
+          en: "🛡️ Master System Admin",
+          ml: "🛡️ മാസ്റ്റർ അഡ്മിൻ ഡാഷ്‌ബോർഡ്",
+          bi: "🛡️ Master System Admin"
+        },
+        "master-dashboard-title": {
+          en: "🛡️ Master System Administration Dashboard",
+          ml: "🛡️ മാസ്റ്റർ അഡ്മിൻ ഡാഷ്‌ബോർഡും മദ്രസ ലിസ്റ്റും",
+          bi: "🛡️ Master System Administration Dashboard (മാസ്റ്റർ അഡ്മിൻ ഡാഷ്‌ബോർഡും മദ്രസ ലിസ്റ്റും)"
+        },
+        "master-dashboard-subtitle": {
+          en: "Centralized oversight of all registered Madrasa workspaces (madrasas/{madrasaId}), institution creation, Principal password recovery, and global system announcements.",
+          ml: "എല്ലാ മദ്രസകളുടെയും (madrasas/{madrasaId}) വിവരങ്ങൾ കാണാനും, പുതിയ മദ്രസ കോഡുകൾ നിർമ്മിക്കാനും, പ്രിൻസിപ്പൽ പാസ്‌വേഡുകൾ പുതുക്കാനുമുള്ള സംവിധാനം",
+          bi: "Centralized oversight of all registered Madrasa workspaces (madrasas/{madrasaId})"
+        },
+        "btn-master-refresh": {
+          en: "🔄 Refresh Workspaces",
+          ml: "🔄 മദ്രസ ലിസ്റ്റ് പുതുക്കുക",
+          bi: "🔄 Refresh Workspaces"
+        },
+        "master-kpi-lbl-madrasas": {
+          en: "Total Active Institutions",
+          ml: "ആകെ രജിസ്റ്റർ ചെയ്ത മദ്രസകൾ",
+          bi: "Total Active Institutions"
+        },
+        "master-kpi-sub-madrasas": {
+          en: "Connected Madrasa Workspaces (madrasas/{id})",
+          ml: "സജീവ സ്ഥാപനങ്ങൾ (madrasas/{id})",
+          bi: "Connected Madrasa Workspaces"
+        },
+        "master-kpi-lbl-students": {
+          en: "Total Enrolled Students",
+          ml: "ആകെ ഹിഫ്ള് വിദ്യാർത്ഥികൾ",
+          bi: "Total Enrolled Students"
+        },
+        "master-kpi-sub-students": {
+          en: "Across all connected campuses",
+          ml: "എല്ലാ ക്യാമ്പസുകളിലുമായി പഠിക്കുന്നവർ",
+          bi: "Across all connected campuses"
+        },
+        "master-kpi-lbl-ustadhs": {
+          en: "Total Registered Ustadhs",
+          ml: "ആകെ ഉസ്താദുമാർ / അധ്യാപകർ",
+          bi: "Total Registered Ustadhs"
+        },
+        "master-kpi-sub-ustadhs": {
+          en: "Verified faculty across campuses",
+          ml: "എല്ലാ മദ്രസകളിലുമുള്ള ഉസ്താദുമാർ",
+          bi: "Verified faculty across campuses"
+        },
+        "master-kpi-lbl-status": {
+          en: "Global App & Cloud Status",
+          ml: "ഗ്ലോബൽ സിസ്റ്റം & ക്ലൗഡ് അവസ്ഥ",
+          bi: "Global App & Cloud Status"
+        },
+        "master-create-card-title": {
+          en: "➕ Create New Madrasa Workspace",
+          ml: "➕ പുതിയ മദ്രസ വർക്ക്സ്പേസ് സൃഷ്ടിക്കുക",
+          bi: "➕ Create New Madrasa Workspace"
+        },
+        "master-create-card-sub": {
+          en: "Provision a new institution workspace with custom code (e.g., MDR-03) and initial Principal credentials",
+          ml: "പുതിയ മദ്രസ കോഡും (ഉദാ: MDR-03) പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങളും സജ്ജീകരിക്കുക",
+          bi: "Provision a new institution workspace"
+        },
+        "lbl-master-new-mcode": {
+          en: "Madrasa Code",
+          ml: "മദ്രസ കോഡ്",
+          bi: "Madrasa Code"
+        },
+        "lbl-master-new-mmode": {
+          en: "Campus Mode",
+          ml: "പഠന രീതി",
+          bi: "Campus Mode"
+        },
+        "lbl-master-new-mname": {
+          en: "Institution / Madrasa Name",
+          ml: "സ്ഥാപനത്തിന്റെ / മദ്രസയുടെ പേര്",
+          bi: "Institution / Madrasa Name"
+        },
+        "lbl-master-new-msub": {
+          en: "Location / Address",
+          ml: "സ്ഥലം / വിലാസം",
+          bi: "Location / Address"
+        },
+        "master-init-principal-hdr": {
+          en: "🔑 Initial Principal Login Credentials",
+          ml: "🔑 പ്രാരംഭ പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങൾ",
+          bi: "🔑 Initial Principal Login Credentials"
+        },
+        "lbl-master-new-puser": {
+          en: "Principal Login ID",
+          ml: "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി",
+          bi: "Principal Login ID"
+        },
+        "lbl-master-new-ppass": {
+          en: "Principal Password",
+          ml: "പ്രിൻസിപ്പൽ പാസ്‌വേഡ്",
+          bi: "Principal Password"
+        },
+        "btn-master-create-submit": {
+          en: "➕ Create & Provision Madrasa Workspace",
+          ml: "➕ പുതിയ മദ്രസ വർക്ക്സ്പേസ് സൃഷ്ടിച്ച് സേവ് ചെയ്യുക",
+          bi: "➕ Create & Provision Madrasa Workspace"
+        },
+        "master-global-card-title": {
+          en: "📢 Global System Announcements & Master Settings",
+          ml: "📢 ഗ്ലോബൽ സിസ്റ്റം അറിയിപ്പുകളും മാസ്റ്റർ ക്രമീകരണങ്ങളും",
+          bi: "📢 Global System Announcements & Master Settings"
+        },
+        "master-global-card-sub": {
+          en: "Monitor global app status, broadcast announcements, and configure Master Admin login",
+          ml: "എല്ലാ മദ്രസകളിലേക്കും പൊതു അറിയിപ്പുകൾ അയക്കാനും സിസ്റ്റം സുരക്ഷ നിയന്ത്രിക്കാനും",
+          bi: "Monitor global app status and broadcast announcements"
+        },
+        "lbl-master-notice-title": {
+          en: "Announcement Title",
+          ml: "അറിയിപ്പിന്റെ തലക്കെട്ട്",
+          bi: "Announcement Title"
+        },
+        "lbl-master-notice-priority": {
+          en: "Priority Level",
+          ml: "പ്രാധാന്യം",
+          bi: "Priority Level"
+        },
+        "lbl-master-notice-body": {
+          en: "Broadcast Message",
+          ml: "അറിയിപ്പ് സന്ദേശം",
+          bi: "Broadcast Message"
+        },
+        "btn-master-broadcast-submit": {
+          en: "📢 Publish Global Announcement to All Campuses",
+          ml: "📢 എല്ലാ മദ്രസകളിലേക്കും അറിയിപ്പ് പ്രസിദ്ധീകരിക്കുക",
+          bi: "📢 Publish Global Announcement to All Campuses"
+        },
+        "master-auth-cfg-hdr": {
+          en: "🔐 Configure Master Admin Credentials",
+          ml: "🔐 മാസ്റ്റർ അഡ്മിൻ ലോഗിൻ വിവരങ്ങൾ മാറ്റുക",
+          bi: "🔐 Configure Master Admin Credentials"
+        },
+        "lbl-master-cfg-user": {
+          en: "Master Username",
+          ml: "മാസ്റ്റർ യൂസർനെയിം",
+          bi: "Master Username"
+        },
+        "lbl-master-cfg-pass": {
+          en: "Master Password",
+          ml: "മാസ്റ്റർ പാസ്‌വേഡ്",
+          bi: "Master Password"
+        },
+        "btn-master-auth-save": {
+          en: "💾 Update Master Credentials",
+          ml: "💾 മാസ്റ്റർ പാസ്‌വേഡ് സേവ് ചെയ്യുക",
+          bi: "💾 Update Master Credentials"
+        },
+        "master-directory-title": {
+          en: "🏛️ Registered Madrasa Workspaces & Principal Password Control",
+          ml: "🏛️ രജിസ്റ്റർ ചെയ്ത മദ്രസകളുടെ ലിസ്റ്റും പ്രിൻസിപ്പൽ പാസ്‌വേഡ് നിയന്ത്രണവും",
+          bi: "🏛️ Registered Madrasa Workspaces & Principal Password Control"
+        },
+        "master-directory-sub": {
+          en: "All registered Madrasa workspaces across Firestore (madrasas/{madrasaId}), student/ustadh totals, and instant Principal password reset",
+          ml: "എല്ലാ മദ്രസ വർക്ക്സ്പേസുകളും (madrasas/{madrasaId}), വിദ്യാർത്ഥി-ഉസ്താദ് കണക്കുകളും, പ്രിൻസിപ്പൽ പാസ്‌വേഡ് റീസെറ്റ് സംവിധാനവും",
+          bi: "All registered Madrasa workspaces across Firestore (madrasas/{madrasaId})"
+        },
+        "th-master-code": {
+          en: "Madrasa Code",
+          ml: "മദ്രസ കോഡ്",
+          bi: "Madrasa Code"
+        },
+        "th-master-name": {
+          en: "Institution Name & Location",
+          ml: "സ്ഥാപനത്തിന്റെ പേരും സ്ഥലവും",
+          bi: "Institution Name & Location"
+        },
+        "th-master-mode": {
+          en: "Campus Mode",
+          ml: "പഠന രീതി",
+          bi: "Campus Mode"
+        },
+        "th-master-counts": {
+          en: "Students & Ustadhs",
+          ml: "വിദ്യാർത്ഥികൾ & ഉസ്താദുമാർ",
+          bi: "Students & Ustadhs"
+        },
+        "th-master-creds": {
+          en: "Principal Login & Password Reset",
+          ml: "പ്രിൻസിപ്പൽ ഐഡി & പാസ്‌വേഡ് പുതുക്കൽ",
+          bi: "Principal Login & Password Reset"
+        },
+        "th-master-actions": {
+          en: "Actions",
+          ml: "പ്രവർത്തനങ്ങൾ",
+          bi: "Actions"
+        },
         "nav-teacher": {
           en: "Verification Desk",
           ml: "വെരിഫിക്കേഷൻ ഡെസ്ക്",
@@ -7775,6 +8248,7 @@
       const role = currentUser.role;
 
       const roleAllowedViews = {
+        master: ["master", "principal", "analytics", "notices", "settings", "teacher", "schedules", "parent"],
         teacher: ["teacher", "schedules"],
         parent: ["parent"],
         principal: ["principal", "analytics", "notices", "settings"]
@@ -7784,7 +8258,8 @@
       let targetView = view;
 
       if (!allowed.includes(targetView)) {
-        if (role === "teacher") targetView = "teacher";
+        if (role === "master") targetView = "master";
+        else if (role === "teacher") targetView = "teacher";
         else if (role === "parent") targetView = "parent";
         else if (role === "principal") targetView = "principal";
         else {
@@ -7794,7 +8269,11 @@
       }
 
       let activePrincipalSubTab = null;
-      if (role === "principal") {
+      if (role === "master" && targetView === "master") {
+        masterInspectingMadrasaId = null;
+        updateNavVisibilityForRole("master");
+        updateSessionHeader();
+      } else if (role === "principal" || role === "master") {
         if (targetView === "notices") {
           targetView = "principal";
           activePrincipalSubTab = "notices";
@@ -7811,7 +8290,7 @@
 
       document.getElementById("view-auth")?.classList.add("hidden");
 
-      const allPrimaryViews = ["teacher", "schedules", "analytics", "principal", "parent"];
+      const allPrimaryViews = ["master", "teacher", "schedules", "analytics", "principal", "parent"];
       allPrimaryViews.forEach((v) => {
         const sec = document.getElementById("view-" + v);
         if (sec) {
@@ -7831,6 +8310,7 @@
       }
 
       const navTabs = [
+        { id: "nav-master", active: targetView === "master" },
         { id: "nav-teacher", active: targetView === "teacher" },
         { id: "nav-schedules", active: targetView === "schedules" },
         { id: "nav-principal", active: targetView === "principal" && (!activePrincipalSubTab || activePrincipalSubTab === "portfolios" || activePrincipalSubTab === "enroll") },
@@ -7870,7 +8350,7 @@
         if (btn) btn.classList.toggle("active", tKey === tab);
       });
 
-      if (currentUser && currentUser.role === "principal") {
+      if (currentUser && (currentUser.role === "principal" || currentUser.role === "master")) {
         const navPrincipal = document.getElementById("nav-principal");
         const navNotices = document.getElementById("nav-notices");
         const navSettings = document.getElementById("nav-settings");
@@ -7894,6 +8374,8 @@
     window.handleBrandClick = function() {
       if (!currentUser) {
         showAuthView();
+      } else if (currentUser.role === "master") {
+        switchWorkspace("master");
       } else if (currentUser.role === "parent") {
         switchWorkspace("parent");
       } else if (currentUser.role === "principal") {
@@ -9051,6 +9533,741 @@
       }
     }
 
+    // ============================================================================
+    // MASTER SUPER ADMIN / SYSTEM ADMIN STATE & HELPERS
+    // ============================================================================
+    let masterInspectingMadrasaId = null;
+    let masterMadrasasMap = {};
+    let masterGlobalAnnouncements = [];
+
+    function getMasterAuth() {
+      try {
+        const raw = localStorage.getItem("hifz_master_auth");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.username && parsed.password) {
+            return {
+              username: String(parsed.username).trim(),
+              password: String(parsed.password).trim()
+            };
+          }
+        }
+      } catch (e) {}
+      return { username: "master", password: "master786" };
+    }
+
+    function getLocalMadrasaRegistry() {
+      try {
+        const raw = localStorage.getItem("hifz_registered_madrasas_registry");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") return parsed;
+        }
+      } catch (e) {}
+      return {};
+    }
+
+    function saveLocalMadrasaRegistry(reg) {
+      try {
+        localStorage.setItem("hifz_registered_madrasas_registry", JSON.stringify(reg || {}));
+      } catch (e) {}
+    }
+
+    window.generateRandomMasterMadrasaCode = function() {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let suffix = "";
+      for (let i = 0; i < 4; i++) {
+        suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      const inp = document.getElementById("master-new-mcode");
+      if (inp) inp.value = "MDR-" + suffix;
+    };
+
+    window.fetchAllMadrasasForMasterAdmin = async function(showFeedbackToast) {
+      const registry = getLocalMadrasaRegistry();
+      const map = {};
+
+      function ensureEntry(mId) {
+        const cleanId = String(mId || "").trim().toUpperCase();
+        if (!cleanId || cleanId === "MDR-01") return null;
+        if (!map[cleanId]) {
+          const regItem = registry[cleanId] || {};
+          let localName = regItem.name || "";
+          let localSub = regItem.subtitle || "";
+          let localMode = regItem.mode || "day";
+          let localPUser = regItem.principalUser || "admin";
+          let localPPass = regItem.principalPass || "admin786";
+          let localStudents = [];
+          let localTeachers = [];
+
+          try {
+            localName = localStorage.getItem("hifz_campus_name_" + cleanId) || localName;
+            localSub = localStorage.getItem("hifz_campus_sub_" + cleanId) || localSub;
+            localMode = localStorage.getItem("hifz_campus_mode_" + cleanId) || localMode;
+            const pRaw = localStorage.getItem("hifz_principal_auth_" + cleanId);
+            if (pRaw) {
+              const pObj = JSON.parse(pRaw);
+              if (pObj && pObj.username) localPUser = pObj.username;
+              if (pObj && pObj.password) localPPass = pObj.password;
+            }
+            const sRaw = localStorage.getItem("hifz_live_students_" + cleanId);
+            if (sRaw) {
+              const sArr = JSON.parse(sRaw);
+              if (Array.isArray(sArr)) localStudents = sArr;
+            }
+            const tRaw = localStorage.getItem("hifz_live_teachers_" + cleanId);
+            if (tRaw) {
+              const tArr = JSON.parse(tRaw);
+              if (Array.isArray(tArr)) localTeachers = tArr;
+            }
+          } catch (e) {}
+
+          map[cleanId] = {
+            madrasaId: cleanId,
+            name: localName || (cleanId === currentMadrasaId ? campusName : "Hifz Institution Portal"),
+            subtitle: localSub || (cleanId === currentMadrasaId ? campusSubtitle : "Hifz Academy Campus"),
+            mode: localMode === "residential" ? "residential" : localMode === "online" ? "online" : "day",
+            principalUser: localPUser,
+            principalPass: localPPass,
+            studentIds: new Set(localStudents.map((s) => s.studentId).filter(Boolean)),
+            teacherIds: new Set(localTeachers.map((t) => (t.username || t.teacherId || "").toLowerCase()).filter(Boolean)),
+            updatedAt: regItem.updatedAt || ""
+          };
+        }
+        return map[cleanId];
+      }
+
+      // 1. Seed from current device & local registry & localStorage keys
+      ensureEntry(deviceMadrasaId);
+      ensureEntry(currentMadrasaId);
+      Object.keys(registry).forEach((k) => ensureEntry(k));
+
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i) || "";
+          const prefixes = [
+            "hifz_campus_name_",
+            "hifz_principal_auth_",
+            "hifz_live_students_",
+            "hifz_live_teachers_"
+          ];
+          prefixes.forEach((pref) => {
+            if (key.startsWith(pref)) {
+              const extracted = key.slice(pref.length).trim().toUpperCase();
+              if (extracted && extracted !== "MDR-01") ensureEntry(extracted);
+            }
+          });
+        }
+      } catch (e) {}
+
+      // Load local global announcements
+      try {
+        const rawAnn = localStorage.getItem("hifz_master_global_announcements");
+        if (rawAnn) {
+          const parsedAnn = JSON.parse(rawAnn);
+          if (Array.isArray(parsedAnn)) masterGlobalAnnouncements = parsedAnn;
+        }
+      } catch (e) {}
+
+      // 2. Query Firestore collections if online
+      if (window.fDb && window.fGetDocs && window.fCollection) {
+        // 2a. Query madrasas/{madrasaId} collection (if accessible)
+        try {
+          const madrasasSnap = await window.fGetDocs(window.fCollection(window.fDb, "madrasas"));
+          madrasasSnap.forEach((docSnap) => {
+            const d = docSnap.data() || {};
+            const mId = (d.madrasaId || docSnap.id || "").trim().toUpperCase();
+            const entry = ensureEntry(mId);
+            if (entry) {
+              if (d.name) entry.name = d.name;
+              if (d.subtitle) entry.subtitle = d.subtitle;
+              if (d.mode) entry.mode = d.mode === "residential" ? "residential" : d.mode === "online" ? "online" : "day";
+              if (d.principalUser) entry.principalUser = d.principalUser;
+              if (d.principalPass) entry.principalPass = d.principalPass;
+              if (d.updatedAt) entry.updatedAt = d.updatedAt;
+            }
+          });
+        } catch (e) {}
+
+        // 2b. Query settings collection for general_{mId}, campus_data_{mId}, campus_config_{mId}, principal_auth_{mId}
+        try {
+          const settingsSnap = await window.fGetDocs(window.fCollection(window.fDb, "settings"));
+          settingsSnap.forEach((docSnap) => {
+            const docId = docSnap.id || "";
+            const d = docSnap.data() || {};
+            if (docId === "master_system_auth" && d.username && d.password) {
+              try {
+                localStorage.setItem("hifz_master_auth", JSON.stringify({ username: d.username, password: d.password }));
+              } catch (err) {}
+              return;
+            }
+            if (docId === "global_system_announcements" && Array.isArray(d.items)) {
+              masterGlobalAnnouncements = d.items;
+              try {
+                localStorage.setItem("hifz_master_global_announcements", JSON.stringify(masterGlobalAnnouncements));
+              } catch (err) {}
+              return;
+            }
+            const prefixes = ["general_", "campus_data_", "campus_config_", "principal_auth_"];
+            for (const pref of prefixes) {
+              if (docId.startsWith(pref)) {
+                const mId = (d.madrasaId || docId.slice(pref.length) || "").trim().toUpperCase();
+                const entry = ensureEntry(mId);
+                if (!entry) break;
+                if (d.name) entry.name = d.name;
+                if (d.subtitle) entry.subtitle = d.subtitle;
+                if (d.mode) entry.mode = d.mode === "residential" ? "residential" : d.mode === "online" ? "online" : "day";
+                if (pref === "principal_auth_") {
+                  if (d.username) entry.principalUser = d.username;
+                  if (d.password) entry.principalPass = d.password;
+                }
+                if (d.updatedAt) entry.updatedAt = d.updatedAt;
+                break;
+              }
+            }
+          });
+        } catch (e) {}
+
+        // 2c. Query students and teachers across all workspaces
+        if (window.fQuery && window.fWhere) {
+          const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
+          try {
+            const stdSnap = await window.fGetDocs(window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter));
+            stdSnap.forEach((docSnap) => {
+              const s = docSnap.data() || {};
+              if (isSampleStudent(s)) return;
+              let mId = (s.madrasaId || "").trim().toUpperCase();
+              if (!mId && docSnap.id.includes("__")) {
+                mId = docSnap.id.split("__")[0].trim().toUpperCase();
+              }
+              if (!mId || mId === "MDR-01") return;
+              const entry = ensureEntry(mId);
+              if (entry) {
+                const cleanStdId = s.studentId || stripScopedDocIdPrefix(docSnap.id, mId);
+                if (cleanStdId) entry.studentIds.add(cleanStdId);
+              }
+            });
+          } catch (e) {}
+
+          try {
+            const tchSnap = await window.fGetDocs(window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter));
+            tchSnap.forEach((docSnap) => {
+              const tr = docSnap.data() || {};
+              if (isSampleTeacher(tr)) return;
+              let mId = (tr.madrasaId || "").trim().toUpperCase();
+              if (!mId && docSnap.id.includes("__")) {
+                mId = docSnap.id.split("__")[0].trim().toUpperCase();
+              }
+              if (!mId || mId === "MDR-01") return;
+              const entry = ensureEntry(mId);
+              if (entry) {
+                const cleanTchId = (tr.username || tr.teacherId || stripScopedDocIdPrefix(docSnap.id, mId) || "").toLowerCase();
+                if (cleanTchId) entry.teacherIds.add(cleanTchId);
+              }
+            });
+          } catch (e) {}
+        }
+      }
+
+      // Sync discovered entries back into local registry cache
+      Object.values(map).forEach((item) => {
+        registry[item.madrasaId] = {
+          madrasaId: item.madrasaId,
+          name: item.name,
+          subtitle: item.subtitle,
+          mode: item.mode,
+          principalUser: item.principalUser,
+          principalPass: item.principalPass,
+          updatedAt: item.updatedAt || new Date().toISOString()
+        };
+      });
+      saveLocalMadrasaRegistry(registry);
+
+      masterMadrasasMap = map;
+      renderMasterAdminDashboard();
+
+      if (showFeedbackToast && window.showToast) {
+        window.showToast(
+          t(
+            `✓ Synced ${Object.keys(map).length} Madrasa workspaces from Cloud.`,
+            `✓ ${Object.keys(map).length} മദ്രസ വർക്ക്സ്പേസുകളുടെ വിവരങ്ങൾ പുതുക്കി.`
+          )
+        );
+      }
+    };
+
+    window.renderMasterAdminDashboard = function() {
+      const sec = document.getElementById("view-master");
+      if (!sec) return;
+
+      const creds = getMasterAuth();
+      const cfgUser = document.getElementById("master-cfg-user");
+      const cfgPass = document.getElementById("master-cfg-pass");
+      if (cfgUser && document.activeElement !== cfgUser) cfgUser.value = creds.username;
+      if (cfgPass && document.activeElement !== cfgPass) cfgPass.value = creds.password;
+
+      const allItems = Object.values(masterMadrasasMap).sort((a, b) => a.madrasaId.localeCompare(b.madrasaId));
+      let totalStudents = 0;
+      let totalUstadhs = 0;
+      allItems.forEach((m) => {
+        totalStudents += m.studentIds ? m.studentIds.size : 0;
+        totalUstadhs += m.teacherIds ? m.teacherIds.size : 0;
+      });
+
+      const elMadrasas = document.getElementById("master-kpi-madrasas");
+      const elStudents = document.getElementById("master-kpi-students");
+      const elUstadhs = document.getElementById("master-kpi-ustadhs");
+      const elStatus = document.getElementById("master-kpi-status");
+      if (elMadrasas) elMadrasas.innerText = String(allItems.length);
+      if (elStudents) elStudents.innerText = String(totalStudents);
+      if (elUstadhs) elUstadhs.innerText = String(totalUstadhs);
+      if (elStatus) {
+        elStatus.innerText = window.fDb
+          ? t("🟢 Online · Cloud Sync Active", "🟢 ഓൺലൈൻ · ക്ലൗഡ് സിങ്ക് സജീവം")
+          : t("🟡 Local Offline Mode", "🟡 ഓഫ്‌ലൈൻ മോഡ്");
+      }
+
+      // Render Global Announcements list
+      const noticesBox = document.getElementById("master-global-notices-list");
+      if (noticesBox) {
+        if (!masterGlobalAnnouncements || masterGlobalAnnouncements.length === 0) {
+          noticesBox.innerHTML = `<div style="font-size:0.76rem; color:#78350f; background:rgba(254,243,199,0.5); padding:8px 10px; border-radius:8px; text-align:center;">
+            ${t("No global system broadcasts sent yet.", "ഗ്ലോബൽ അറിയിപ്പുകൾ ഒന്നും നിലവിലില്ല.")}
+          </div>`;
+        } else {
+          noticesBox.innerHTML = masterGlobalAnnouncements
+            .slice(0, 5)
+            .map(
+              (ann) => `
+              <div style="background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:8px 10px; margin-bottom:6px; font-size:0.76rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:800; color:#78350f;">
+                  <span>${ann.priority === "urgent" ? "🚨" : "📢"} ${ann.title}</span>
+                  <span style="font-size:0.68rem; color:#92400e;">${ann.dateDisplay || ""}</span>
+                </div>
+                <div style="color:#451a03; margin-top:3px;">${ann.body}</div>
+              </div>
+            `
+            )
+            .join("");
+        }
+      }
+
+      // Render Madrasas Table
+      const tbody = document.getElementById("master-madrasas-tbody");
+      if (!tbody) return;
+
+      const q = (document.getElementById("master-search-input")?.value || "").trim().toLowerCase();
+      const filtered = allItems.filter((item) => {
+        if (!q) return true;
+        return (
+          item.madrasaId.toLowerCase().includes(q) ||
+          (item.name || "").toLowerCase().includes(q) ||
+          (item.subtitle || "").toLowerCase().includes(q) ||
+          (item.principalUser || "").toLowerCase().includes(q)
+        );
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr>
+          <td colspan="6" style="text-align:center; padding:24px; color:#64748b;">
+            ${t("No matching Madrasa workspaces found.", "മദ്രസ വർക്ക്സ്പേസുകൾ ഒന്നും കണ്ടെത്തിയില്ല.")}
+          </td>
+        </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered
+        .map((item) => {
+          const mId = item.madrasaId;
+          const stdCount = item.studentIds ? item.studentIds.size : 0;
+          const tchCount = item.teacherIds ? item.teacherIds.size : 0;
+          const isCurrentDevice = mId === deviceMadrasaId;
+
+          let modeBadge = "";
+          if (item.mode === "residential") {
+            modeBadge = `<span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #f59e0b;">${t("🏠 Residential", "🏠 റെസിഡൻഷ്യൽ")}</span>`;
+          } else if (item.mode === "online") {
+            modeBadge = `<span class="badge" style="background:#e0f2fe; color:#075985; border:1px solid #38bdf8;">${t("🌐 Online Hifz", "🌐 ഓൺലൈൻ ഹിഫ്ള്")}</span>`;
+          } else {
+            modeBadge = `<span class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #34d399;">${t("🚌 Day Madrasa", "🚌 ഡേ മദ്രസ")}</span>`;
+          }
+
+          return `
+            <tr style="border-bottom:1px solid #e2e8f0;">
+              <td>
+                <div style="font-family:monospace; font-weight:800; font-size:0.9rem; color:#064e3b; background:#ecfdf5; border:1px solid #6ee7b7; padding:4px 8px; border-radius:6px; display:inline-block;">
+                  ${mId}
+                </div>
+                ${
+                  isCurrentDevice
+                    ? `<div style="font-size:0.66rem; color:#047857; font-weight:700; margin-top:3px;">📱 ${t("This Device", "ഈ ഫോൺ")}</div>`
+                    : ""
+                }
+              </td>
+              <td>
+                <div style="font-weight:800; color:#0f172a; font-size:0.9rem;">${item.name || "Hifz Institution Portal"}</div>
+                <div style="font-size:0.75rem; color:#64748b;">📍 ${item.subtitle || "—"}</div>
+              </td>
+              <td>${modeBadge}</td>
+              <td>
+                <div style="display:flex; flex-direction:column; gap:4px; font-size:0.78rem; font-weight:700;">
+                  <span style="color:#0369a1;">👨‍🎓 ${stdCount} ${t("Students", "വിദ്യാർത്ഥികൾ")}</span>
+                  <span style="color:#6d28d9;">👳‍♂️ ${tchCount} ${t("Ustadhs", "ഉസ്താദുമാർ")}</span>
+                </div>
+              </td>
+              <td>
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                  <input
+                    type="text"
+                    id="master-puser-${mId}"
+                    value="${(item.principalUser || "admin").replace(/"/g, "&quot;")}"
+                    placeholder="Login ID"
+                    title="${t("Principal Login ID", "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി")}"
+                    style="width:95px; padding:6px 8px; font-size:0.78rem; border:1px solid #cbd5e1; border-radius:6px; font-weight:700;"
+                  />
+                  <input
+                    type="text"
+                    id="master-ppass-${mId}"
+                    value="${(item.principalPass || "admin786").replace(/"/g, "&quot;")}"
+                    placeholder="Password"
+                    title="${t("Principal Password", "പ്രിൻസിപ്പൽ പാസ്‌വേഡ്")}"
+                    style="width:105px; padding:6px 8px; font-size:0.78rem; border:1px solid #cbd5e1; border-radius:6px; font-family:monospace; font-weight:700;"
+                  />
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="handleMasterUpdatePrincipalPass('${mId}')"
+                    style="padding:6px 10px; font-size:0.74rem; background:#047857; color:#ffffff; border:none; font-weight:700;"
+                  >
+                    💾 ${t("Save / Reset", "പാസ്‌വേഡ് മാറ്റുക")}
+                  </button>
+                </div>
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  onclick="handleMasterInspectMadrasa('${mId}')"
+                  style="padding:7px 11px; font-size:0.75rem; font-weight:800; background:#f8fafc; color:#0f172a; border:1px solid #94a3b8;"
+                >
+                  🔑 ${t("Open Portal", "പോർട്ടൽ തുറക്കുക")}
+                </button>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+    };
+
+    window.handleMasterCreateMadrasa = async function(e) {
+      if (e && typeof e.preventDefault === "function") e.preventDefault();
+      const rawCode = (document.getElementById("master-new-mcode")?.value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9_-]/g, "");
+      const mName = (document.getElementById("master-new-mname")?.value || "").trim();
+      const mSub = (document.getElementById("master-new-msub")?.value || "").trim() || "Kerala · India";
+      const mModeVal = document.getElementById("master-new-mmode")?.value || "day";
+      const mMode = mModeVal === "residential" ? "residential" : mModeVal === "online" ? "online" : "day";
+      const pUser = (document.getElementById("master-new-puser")?.value || "admin").trim() || "admin";
+      const pPass = (document.getElementById("master-new-ppass")?.value || "admin786").trim() || "admin786";
+
+      if (!rawCode || rawCode === "MDR-01") {
+        if (window.showToast) {
+          window.showToast(t("Please enter a valid unique Madrasa Code (e.g., MDR-03).", "ദയവായി ശരിയായ ഒരു മദ്രസ കോഡ് നൽകുക (ഉദാ: MDR-03)."));
+        }
+        return;
+      }
+      if (!mName) {
+        if (window.showToast) {
+          window.showToast(t("Please enter the Institution / Madrasa Name.", "ദയവായി സ്ഥാപനത്തിന്റെ പേര് നൽകുക."));
+        }
+        return;
+      }
+
+      const nowIso = new Date().toISOString();
+
+      // 1. Save to local storage for that madrasaId
+      try {
+        localStorage.setItem("hifz_campus_name_" + rawCode, mName);
+        localStorage.setItem("hifz_campus_sub_" + rawCode, mSub);
+        localStorage.setItem("hifz_campus_mode_" + rawCode, mMode);
+        localStorage.setItem("hifz_principal_auth_" + rawCode, JSON.stringify({ username: pUser, password: pPass }));
+      } catch (err) {}
+
+      // 2. Update local registry & in-memory map
+      const registry = getLocalMadrasaRegistry();
+      registry[rawCode] = {
+        madrasaId: rawCode,
+        name: mName,
+        subtitle: mSub,
+        mode: mMode,
+        principalUser: pUser,
+        principalPass: pPass,
+        updatedAt: nowIso
+      };
+      saveLocalMadrasaRegistry(registry);
+
+      masterMadrasasMap[rawCode] = {
+        madrasaId: rawCode,
+        name: mName,
+        subtitle: mSub,
+        mode: mMode,
+        principalUser: pUser,
+        principalPass: pPass,
+        studentIds: masterMadrasasMap[rawCode]?.studentIds || new Set(),
+        teacherIds: masterMadrasasMap[rawCode]?.teacherIds || new Set(),
+        updatedAt: nowIso
+      };
+
+      // 3. Persist to Firestore settings/*_{rawCode} and madrasas/{rawCode}
+      if (window.fDb && window.fSetDoc && window.fDoc) {
+        const safeFirestoreMode = mMode === "residential" ? "residential" : "day";
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", `general_${rawCode}`),
+          { mode: safeFirestoreMode, campusModeFull: mMode, madrasaId: rawCode, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", `campus_data_${rawCode}`),
+          { name: mName, subtitle: mSub, mode: safeFirestoreMode, campusModeFull: mMode, madrasaId: rawCode, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", `principal_auth_${rawCode}`),
+          { username: pUser, password: pPass, madrasaId: rawCode, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+
+        window.fSetDoc(
+          window.fDoc(window.fDb, "madrasas", rawCode),
+          { madrasaId: rawCode, name: mName, subtitle: mSub, mode: mMode, principalUser: pUser, principalPass: pPass, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+      }
+
+      // Clear form inputs
+      const cInp = document.getElementById("master-new-mcode");
+      const nInp = document.getElementById("master-new-mname");
+      const sInp = document.getElementById("master-new-msub");
+      if (cInp) cInp.value = "";
+      if (nInp) nInp.value = "";
+      if (sInp) sInp.value = "";
+
+      renderMasterAdminDashboard();
+
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `✓ Created Madrasa Workspace [${rawCode}] (${mName}) with Principal ID: ${pUser}`,
+            `✓ പുതിയ മദ്രസ വർക്ക്സ്പേസ് [${rawCode}] (${mName}) വിജയകരമായി സൃഷ്ടിച്ചു!`
+          )
+        );
+      }
+    };
+
+    window.handleMasterUpdatePrincipalPass = function(madrasaId) {
+      const mId = String(madrasaId || "").trim().toUpperCase();
+      if (!mId) return;
+
+      const uInp = document.getElementById("master-puser-" + mId);
+      const pInp = document.getElementById("master-ppass-" + mId);
+      const newU = (uInp ? uInp.value : "admin").trim() || "admin";
+      const newP = (pInp ? pInp.value : "admin786").trim() || "admin786";
+      const nowIso = new Date().toISOString();
+
+      try {
+        localStorage.setItem("hifz_principal_auth_" + mId, JSON.stringify({ username: newU, password: newP }));
+      } catch (e) {}
+
+      if (mId === currentMadrasaId) {
+        principalAuth = { username: newU, password: newP };
+      }
+
+      const registry = getLocalMadrasaRegistry();
+      if (!registry[mId]) registry[mId] = { madrasaId: mId };
+      registry[mId].principalUser = newU;
+      registry[mId].principalPass = newP;
+      registry[mId].updatedAt = nowIso;
+      saveLocalMadrasaRegistry(registry);
+
+      if (masterMadrasasMap[mId]) {
+        masterMadrasasMap[mId].principalUser = newU;
+        masterMadrasasMap[mId].principalPass = newP;
+        masterMadrasasMap[mId].updatedAt = nowIso;
+      }
+
+      if (window.fDb && window.fSetDoc && window.fDoc) {
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", `principal_auth_${mId}`),
+          { username: newU, password: newP, madrasaId: mId, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+
+        window.fSetDoc(
+          window.fDoc(window.fDb, "madrasas", mId),
+          { madrasaId: mId, principalUser: newU, principalPass: newP, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+      }
+
+      renderMasterAdminDashboard();
+
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `✓ Updated Principal credentials for [${mId}] → ID: ${newU} / Pass: ${newP}`,
+            `✓ [${mId}] മദ്രസയുടെ പ്രിൻസിപ്പൽ പാസ്‌വേഡ് വിജയകരമായി പുതുക്കി (${newU} / ${newP})`
+          )
+        );
+      }
+    };
+
+    window.handleMasterInspectMadrasa = async function(madrasaId) {
+      const mId = String(madrasaId || "").trim().toUpperCase();
+      if (!mId) return;
+
+      masterInspectingMadrasaId = mId;
+      currentMadrasaId = mId;
+      try {
+        localStorage.setItem("hifz_custom_madrasa_id", mId);
+      } catch (e) {}
+
+      loadLiveCollectionsFromLocal(mId);
+      if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
+        try {
+          await window.fetchMadrasaWorkspaceFromFirestore(mId);
+        } catch (e) {}
+      }
+      if (typeof window.subscribeToMadrasaWorkspace === "function") {
+        window.subscribeToMadrasaWorkspace(mId);
+      }
+
+      populateStudentSelectors();
+      renderPrincipalTeachersDirectory();
+      applyCampusModeUI();
+      updateNavVisibilityForRole("master");
+      updateSessionHeader();
+      switchWorkspace("principal");
+      switchPrincipalTab("portfolios");
+
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `🔑 Opened [${mId}] workspace. Click "🛡️ Master System Admin" in the top bar to return.`,
+            `🔑 [${mId}] മദ്രസ പോർട്ടൽ തുറന്നു. തിരികെ പോകാൻ മുകളിലെ "🛡️ മാസ്റ്റർ അഡ്മിൻ ഡാഷ്‌ബോർഡ്" ക്ലിക്ക് ചെയ്യുക.`
+          )
+        );
+      }
+    };
+
+    window.handleMasterBroadcastNotice = function(e) {
+      if (e && typeof e.preventDefault === "function") e.preventDefault();
+      const titleInp = document.getElementById("master-global-notice-title");
+      const bodyInp = document.getElementById("master-global-notice-body");
+      const prioInp = document.getElementById("master-global-notice-priority");
+
+      const title = (titleInp?.value || "").trim();
+      const body = (bodyInp?.value || "").trim();
+      const priority = prioInp?.value === "urgent" ? "urgent" : "normal";
+      if (!title || !body) return;
+
+      const now = new Date();
+      const dateDisplay = now.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+      const noticeItem = {
+        id: "GLOBAL-ANN-" + Date.now(),
+        title,
+        body,
+        priority,
+        author: "Master System Admin",
+        dateDisplay,
+        createdAt: now.toISOString()
+      };
+
+      masterGlobalAnnouncements.unshift(noticeItem);
+      try {
+        localStorage.setItem("hifz_master_global_announcements", JSON.stringify(masterGlobalAnnouncements));
+      } catch (err) {}
+
+      // Save to global_system_announcements and broadcast to all known Madrasas
+      if (window.fDb && window.fSetDoc && window.fDoc) {
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", "global_system_announcements"),
+          { items: masterGlobalAnnouncements.slice(0, 20), updatedAt: now.toISOString() },
+          { merge: true }
+        ).catch(() => {});
+
+        Object.keys(masterMadrasasMap).forEach((mId) => {
+          const scopedDocId = `${mId}__${noticeItem.id}`;
+          window.fSetDoc(
+            window.fDoc(window.fDb, "notices", scopedDocId),
+            {
+              ...noticeItem,
+              madrasaId: mId,
+              ownerId: "portal-session"
+            },
+            { merge: true }
+          ).catch(() => {});
+        });
+      }
+
+      // Also push into current workspace notices
+      globalNotices.unshift({ ...noticeItem, madrasaId: currentMadrasaId });
+      saveLiveCollectionsToLocal();
+
+      if (titleInp) titleInp.value = "";
+      if (bodyInp) bodyInp.value = "";
+
+      renderMasterAdminDashboard();
+      renderAllViews();
+
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `📢 Global system announcement broadcasted across ${Object.keys(masterMadrasasMap).length || 1} campuses!`,
+            `📢 എല്ലാ മദ്രസകളിലേക്കും ഗ്ലോബൽ അറിയിപ്പ് വിജയകരമായി പ്രസിദ്ധീകരിച്ചു!`
+          )
+        );
+      }
+    };
+
+    window.handleUpdateMasterAuth = function(e) {
+      if (e && typeof e.preventDefault === "function") e.preventDefault();
+      const u = (document.getElementById("master-cfg-user")?.value || "").trim();
+      const p = (document.getElementById("master-cfg-pass")?.value || "").trim();
+      if (!u || !p) return;
+
+      try {
+        localStorage.setItem("hifz_master_auth", JSON.stringify({ username: u, password: p }));
+      } catch (err) {}
+
+      if (window.fDb && window.fSetDoc && window.fDoc) {
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", "master_system_auth"),
+          { username: u, password: p, updatedAt: new Date().toISOString() },
+          { merge: true }
+        ).catch(() => {});
+      }
+
+      if (currentUser && currentUser.role === "master") {
+        currentUser.username = u;
+        try {
+          localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
+        } catch (err) {}
+      }
+
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `✓ Master Super Admin credentials updated (${u}).`,
+            `✓ മാസ്റ്റർ അഡ്മിൻ ലോഗിൻ വിവരങ്ങൾ പുതുക്കി (${u}).`
+          )
+        );
+      }
+    };
+
     window.handleAuthSubmit = async function(e) {
       if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
@@ -9065,7 +10282,11 @@
       const u = (document.getElementById("auth-username")?.value || "").trim();
       const p = (document.getElementById("auth-password")?.value || "").trim();
 
-      if (u.toLowerCase() !== "demo" && rawMadrasaCode && rawMadrasaCode !== "MDR-01") {
+      const masterCreds = getMasterAuth();
+      const isMasterAttempt =
+        u.toLowerCase() === masterCreds.username.toLowerCase() || u.toLowerCase() === "master";
+
+      if (!isMasterAttempt && u.toLowerCase() !== "demo" && rawMadrasaCode && rawMadrasaCode !== "MDR-01") {
         currentMadrasaId = rawMadrasaCode;
         try {
           localStorage.setItem("hifz_custom_madrasa_id", currentMadrasaId);
@@ -9076,7 +10297,7 @@
             await window.fetchMadrasaWorkspaceFromFirestore(currentMadrasaId);
           } catch (err) {}
         }
-      } else if (u.toLowerCase() !== "demo" && typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
+      } else if (!isMasterAttempt && u.toLowerCase() !== "demo" && typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
         try {
           await window.fetchMadrasaWorkspaceFromFirestore(currentMadrasaId);
         } catch (err) {}
@@ -9208,7 +10429,43 @@
         };
       }
 
-      // 0. Check Master Demo Sandbox Login ("demo" / "demo786") — Unlocks All 3 Portals in Sandbox without touching Live Data
+      // 0A. Check Master Super Admin Credentials ("master" / "master786" or configured Master credentials)
+      const masterCreds = getMasterAuth();
+      if (
+        (u.toLowerCase() === masterCreds.username.toLowerCase() && p === masterCreds.password) ||
+        (u.toLowerCase() === "master" && p === "master786")
+      ) {
+        if (isDemoSandbox) {
+          isDemoSandbox = false;
+          const bar = document.getElementById("demo-preview-switcher-bar");
+          if (bar) bar.classList.add("hidden");
+        }
+        masterInspectingMadrasaId = null;
+        currentUser = {
+          role: "master",
+          username: masterCreds.username,
+          name: "Master Super Admin",
+          loginTime: new Date().toISOString()
+        };
+        try {
+          localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
+        } catch (err) {}
+        applyAuthenticatedState("master");
+        if (typeof window.fetchAllMadrasasForMasterAdmin === "function") {
+          window.fetchAllMadrasasForMasterAdmin(false);
+        }
+        if (window.showToast) {
+          window.showToast(
+            t(
+              "🛡️ Signed in as Master Super Admin — System Administration Dashboard ready.",
+              "🛡️ മാസ്റ്റർ സൂപ്പർ അഡ്മിനായി പ്രവേശിച്ചു — മദ്രസ ലിസ്റ്റും സിസ്റ്റം ഡാഷ്‌ബോർഡും സജ്ജമാണ്."
+            )
+          );
+        }
+        return { success: true, role: "master" };
+      }
+
+      // 0B. Check Master Demo Sandbox Login ("demo" / "demo786") — Unlocks All 3 Portals in Sandbox without touching Live Data
       if (u.toLowerCase() === "demo" && p === "demo786") {
         isDemoSandbox = true;
         loadDemoSandboxDataInMemory();
@@ -9362,6 +10619,7 @@
         console.warn("localStorage removal notice:", err);
       }
       currentUser = null;
+      masterInspectingMadrasaId = null;
       const mInp = document.getElementById("auth-madrasa-code");
       const uInp = document.getElementById("auth-username");
       const pInp = document.getElementById("auth-password");
@@ -9387,6 +10645,7 @@
 
     // Strict Role-Based Navigation & Tab Visibility
     function updateNavVisibilityForRole(role) {
+      const navMaster = document.getElementById("nav-master");
       const navTeacher = document.getElementById("nav-teacher");
       const navSchedules = document.getElementById("nav-schedules");
       const navPrincipal = document.getElementById("nav-principal");
@@ -9395,12 +10654,23 @@
       const navSettings = document.getElementById("nav-settings");
       const navParent = document.getElementById("nav-parent");
 
-      const allNavs = [navTeacher, navSchedules, navPrincipal, navAnalytics, navNotices, navSettings, navParent];
+      const allNavs = [navMaster, navTeacher, navSchedules, navPrincipal, navAnalytics, navNotices, navSettings, navParent];
       allNavs.forEach((btn) => {
         if (btn) btn.classList.add("hidden");
       });
 
-      if (role === "teacher") {
+      if (role === "master") {
+        if (navMaster) navMaster.classList.remove("hidden");
+        if (masterInspectingMadrasaId) {
+          if (navPrincipal) navPrincipal.classList.remove("hidden");
+          if (navAnalytics) navAnalytics.classList.remove("hidden");
+          if (navNotices) navNotices.classList.remove("hidden");
+          if (navSettings) navSettings.classList.remove("hidden");
+          if (navTeacher) navTeacher.classList.remove("hidden");
+          if (navSchedules) navSchedules.classList.remove("hidden");
+          if (navParent) navParent.classList.remove("hidden");
+        }
+      } else if (role === "teacher") {
         if (navTeacher) navTeacher.classList.remove("hidden");
         if (navSchedules) navSchedules.classList.remove("hidden");
       } else if (role === "parent") {
@@ -9419,20 +10689,21 @@
       const fAnalytics = document.getElementById("footer-nav-analytics");
       const fParent = document.getElementById("footer-nav-parent");
 
-      if (fTeacher) fTeacher.style.display = (role === "teacher") ? "inline" : "none";
-      if (fSchedules) fSchedules.style.display = (role === "teacher") ? "inline" : "none";
-      if (fPrincipal) fPrincipal.style.display = (role === "principal") ? "inline" : "none";
-      if (fAnalytics) fAnalytics.style.display = (role === "principal") ? "inline" : "none";
-      if (fParent) fParent.style.display = (role === "parent") ? "inline" : "none";
+      if (fTeacher) fTeacher.style.display = (role === "teacher" || (role === "master" && masterInspectingMadrasaId)) ? "inline" : "none";
+      if (fSchedules) fSchedules.style.display = (role === "teacher" || (role === "master" && masterInspectingMadrasaId)) ? "inline" : "none";
+      if (fPrincipal) fPrincipal.style.display = (role === "principal" || (role === "master" && masterInspectingMadrasaId)) ? "inline" : "none";
+      if (fAnalytics) fAnalytics.style.display = (role === "principal" || (role === "master" && masterInspectingMadrasaId)) ? "inline" : "none";
+      if (fParent) fParent.style.display = (role === "parent" || (role === "master" && masterInspectingMadrasaId)) ? "inline" : "none";
     }
 
     // Show ONLY Portal Sign In View (Initial View Lock)
     window.showAuthView = function() {
       currentUser = null;
+      masterInspectingMadrasaId = null;
       const bar = document.getElementById("demo-preview-switcher-bar");
       if (bar) bar.classList.add("hidden");
 
-      const views = ["teacher", "schedules", "analytics", "principal", "parent"];
+      const views = ["master", "teacher", "schedules", "analytics", "principal", "parent"];
       views.forEach((v) => {
         document.getElementById("view-" + v)?.classList.add("hidden");
         document.getElementById("nav-" + v)?.classList.remove("active");
@@ -9502,7 +10773,12 @@
       updateSessionHeader();
       updateNavVisibilityForRole(currentUser ? currentUser.role : role);
 
-      if (role === "parent") {
+      if (role === "master") {
+        switchWorkspace("master");
+        if (typeof window.fetchAllMadrasasForMasterAdmin === "function") {
+          window.fetchAllMadrasasForMasterAdmin(false);
+        }
+      } else if (role === "parent") {
         currentParentStudentId = (currentUser && currentUser.studentId) || "STD-101";
         const switcher = document.getElementById("parent-student-switcher");
         if (switcher) switcher.value = currentParentStudentId;
@@ -9573,7 +10849,10 @@
       }
       if (lbl) {
         const demoSuffix = isDemoSandbox ? t(" (Demo Preview)", " (ഡെമോ പ്രിവ്യൂ)") : "";
-        if (currentUser.role === "principal") {
+        if (currentUser.role === "master") {
+          const inspectSuffix = masterInspectingMadrasaId ? ` · [${masterInspectingMadrasaId}]` : "";
+          lbl.innerText = t("🛡️ Master Super Admin", "🛡️ മാസ്റ്റർ സൂപ്പർ അഡ്മിൻ") + inspectSuffix;
+        } else if (currentUser.role === "principal") {
           lbl.innerText = t("Principal Admin", "പ്രിൻസിപ്പൽ അഡ്മിൻ") + demoSuffix;
         } else if (currentUser.role === "parent" && (currentUser.name || "").startsWith("Parent of ")) {
           const childName = currentUser.name.replace("Parent of ", "");
@@ -12034,6 +13313,7 @@
       renderPrincipalPortfolios();
       renderPrincipalTeachersDirectory();
       renderParentPortal();
+      if (window.renderMasterAdminDashboard) window.renderMasterAdminDashboard();
       updateDbResetStatusBanner();
       updateAuthDemoHelperUI();
       translateStaticDOMElements(appLanguage);
