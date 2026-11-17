@@ -1550,9 +1550,16 @@
   <!-- TOP HEADER -->
   <header class="no-print">
     <div class="header-inner">
-      <div class="brand" id="header-brand-container" onclick="handleBrandClick()" title="Hifz Institution Portal">
-        <div>
-          <div class="brand-title" id="college-name-display">Hifz Institution Portal</div>
+      <div class="brand" id="header-brand-container" onclick="handleBrandClick()" title="Al-Furqan &amp; Asry Academy" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div class="brand-title" id="college-name-display">Al-Furqan &amp; Asry Academy</div>
+          <span
+            id="header-demo-sandbox-badge"
+            class="hidden"
+            style="display:none; align-items:center; gap:5px; background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color:#991b1b; border:1.5px solid #ef4444; box-shadow:0 2px 6px rgba(220,38,38,0.25); padding:3px 10px; border-radius:999px; font-size:0.72rem; font-weight:800; letter-spacing:0.01em; white-space:nowrap;"
+          >
+            🔑 Demo Preview Sandbox Active
+          </span>
         </div>
       </div>
 
@@ -1795,6 +1802,38 @@
               Sign In to Portal (പോർട്ടലിൽ പ്രവേശിക്കുക)
             </button>
           </form>
+
+          <!-- 🔑 Demo Sandbox Section (Styled after image_18.png) -->
+          <div
+            id="auth-demo-sandbox-section"
+            style="margin-top: 1.25rem; padding: 1rem 1.1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;"
+          >
+            <div
+              id="auth-demo-sandbox-title"
+              style="font-size: 0.88rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem; display: flex; align-items: center; justify-content: center; gap: 6px;"
+            >
+              <span>🔑</span>
+              <span>പരീക്ഷണാടിസ്ഥാനത്തിൽ കാണുക (Demo Sandbox)</span>
+            </div>
+            <p
+              id="auth-demo-sandbox-desc"
+              style="font-size: 0.76rem; color: #475569; line-height: 1.45; margin: 0 0 0.85rem 0;"
+            >
+              ഡെമോ കാണാൻ ലോഗിൻ ചെയ്യുക. നിങ്ങളുടെ യഥാർത്ഥ ഡാറ്റ പൂർണ്ണമായും സുരക്ഷിതമാണ്.<br />
+              <span style="font-size: 0.72rem; color: #64748b;">Sign in to explore the portal with sample data. Your real data remains 100% safe.</span>
+            </p>
+            <button
+              type="button"
+              id="btn-try-demo-sandbox"
+              onclick="handleQuickDemoLogin()"
+              style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 16px; font-size: 0.86rem; font-weight: 800; cursor: pointer; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); transition: all 0.15s ease;"
+              onmouseover="this.style.borderColor='#f59e0b'; this.style.background='#fffbeb'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.15)';"
+              onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#ffffff'; this.style.boxShadow='0 1px 3px rgba(15, 23, 42, 0.06)';"
+            >
+              <span style="color: #f59e0b; font-size: 1.05rem; line-height: 1;">✨</span>
+              <span id="btn-try-demo-sandbox-label">Try Demo Meet / ഡെമോ കാണുക</span>
+            </button>
+          </div>
 
           <div style="margin-top: 1.15rem; padding-top: 0.85rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted); text-align: center;" id="auth-footer-security-note">
             🔒 Live Production Portal · Per-Madrasa Isolated Workspace · Role-Based Access Control
@@ -4251,13 +4290,13 @@
 
     function getActiveCampusName() {
       if (!currentUser) {
-        return t("Hifz Institution Portal", "ഹിഫ്ള് ട്രാക്കർ പോർട്ടൽ", "Hifz Institution Portal");
+        return "Al-Furqan & Asry Academy";
       }
       if (isDemoSandbox) {
-        return demoSandboxCampusName || t("Hifz Institution (Demo)", "ഹിഫ്ള് സ്ഥാപനം (ഡെമോ)", "Hifz Institution (Demo)");
+        return demoSandboxCampusName || "Al-Furqan & Asry Academy";
       }
       const savedName = getWorkspaceCampusName(currentMadrasaId);
-      return savedName || t("Hifz Institution", "ഹിഫ്ള് സ്ഥാപനം", "Hifz Institution");
+      return savedName || "Al-Furqan & Asry Academy";
     }
 
     function getActiveCampusLocation() {
@@ -4285,6 +4324,17 @@
 
       const nameEl = document.getElementById("college-name-display");
       if (nameEl) nameEl.innerText = displayTitle;
+      const headerDemoBadge = document.getElementById("header-demo-sandbox-badge");
+      if (headerDemoBadge) {
+        if (isDemoSandbox) {
+          headerDemoBadge.classList.remove("hidden");
+          headerDemoBadge.style.display = "inline-flex";
+          headerDemoBadge.innerText = "🔑 Demo Preview Sandbox Active";
+        } else {
+          headerDemoBadge.classList.add("hidden");
+          headerDemoBadge.style.display = "none";
+        }
+      }
       const brandEl = document.getElementById("header-brand-container");
       if (brandEl) brandEl.setAttribute("title", displayTitle);
       const subEl = document.getElementById("college-sub-display");
@@ -4468,6 +4518,12 @@
     }
 
     window.handleQuickDemoLogin = function() {
+      try {
+        localStorage.setItem("demoMode", "true");
+        localStorage.setItem("hifz_demo_sandbox_active", "true");
+      } catch (e) {}
+      window.demoMode = true;
+      isDemoSandbox = true;
       const uInp = document.getElementById("auth-username");
       const pInp = document.getElementById("auth-password");
       if (uInp) uInp.value = "demo";
@@ -5231,6 +5287,9 @@
           el.id === "btn-request-browser-notif" ||
           el.id === "btn-clear-sample-data" ||
           el.id === "btn-exit-demo-sandbox-settings" ||
+          el.id === "header-demo-sandbox-badge" ||
+          el.id === "btn-try-demo-sandbox-label" ||
+          el.closest("#auth-demo-sandbox-section") ||
           el.closest("#header-notif-container")
         ) {
           return;
@@ -10633,9 +10692,19 @@
 
     window.exitDemoSandbox = function() {
       isDemoSandbox = false;
+      window.demoMode = false;
+      try {
+        localStorage.setItem("demoMode", "false");
+        localStorage.removeItem("hifz_demo_sandbox_active");
+      } catch (e) {}
       currentUser = null;
       const bar = document.getElementById("demo-preview-switcher-bar");
       if (bar) bar.classList.add("hidden");
+      const headerDemoBadge = document.getElementById("header-demo-sandbox-badge");
+      if (headerDemoBadge) {
+        headerDemoBadge.classList.add("hidden");
+        headerDemoBadge.style.display = "none";
+      }
 
       // Restore all saved Live Data and Campus Settings from localStorage for this device's workspace
       loadLiveCollectionsFromLocal(currentMadrasaId);
@@ -10647,6 +10716,7 @@
       if (uInp) uInp.value = "";
       if (pInp) pInp.value = "";
 
+      updateCampusIdentityUI();
       applyCampusModeUI();
       populateStudentSelectors();
       renderAllViews();
@@ -10721,8 +10791,14 @@
       // 0B. Check Master Demo Sandbox Login ("demo" / "demo786") — Unlocks All 3 Portals in Sandbox without touching Live Data
       if (u.toLowerCase() === "demo" && p === "demo786") {
         isDemoSandbox = true;
+        window.demoMode = true;
+        try {
+          localStorage.setItem("demoMode", "true");
+          localStorage.setItem("hifz_demo_sandbox_active", "true");
+        } catch (err) {}
         loadDemoSandboxDataInMemory();
         window.switchDemoPreviewPortal("principal");
+        updateCampusIdentityUI();
         if (window.showToast) {
           window.showToast(
             t(
@@ -10745,6 +10821,11 @@
       // Ensure any real login exits Demo Sandbox and loads real Live Data
       if (isDemoSandbox) {
         isDemoSandbox = false;
+        window.demoMode = false;
+        try {
+          localStorage.setItem("demoMode", "false");
+          localStorage.removeItem("hifz_demo_sandbox_active");
+        } catch (err) {}
         const bar = document.getElementById("demo-preview-switcher-bar");
         if (bar) bar.classList.add("hidden");
         loadLiveCollectionsFromLocal(currentMadrasaId);
