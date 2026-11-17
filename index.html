@@ -7393,6 +7393,9 @@
 
       resetModalPhotoView(std);
       if (modal) modal.classList.remove("hidden");
+      if (typeof window.pushAppHistoryState === "function") {
+        window.pushAppHistoryState({ modal: "student-photo", photoStudentId: std.studentId });
+      }
     };
 
     function resetModalPhotoView(std) {
@@ -7425,12 +7428,15 @@
       }
     }
 
-    window.closeStudentPhotoModal = function() {
+    window.closeStudentPhotoModal = function(fromPopState) {
       stopActiveCameraStream();
       currentPhotoStudentId = null;
       currentCapturedPhotoDataUrl = null;
       const modal = document.getElementById("student-photo-modal");
       if (modal) modal.classList.add("hidden");
+      if (!fromPopState && typeof window.syncHistoryModalClosed === "function") {
+        window.syncHistoryModalClosed("student-photo");
+      }
     };
 
     window.stopActiveCameraStream = function() {
@@ -8494,6 +8500,217 @@
       }
     };
 
+    // ============================================================================
+    // ANDROID HARDWARE / GESTURE BACK BUTTON & HISTORY STACK SYNCHRONIZATION
+    // ============================================================================
+    let currentActiveView = "auth";
+    let currentActivePrincipalTab = "portfolios";
+    let isHandlingPopState = false;
+
+    window.pushAppHistoryState = function(partialState, replaceOnly) {
+      if (isHandlingPopState) return;
+      try {
+        const prev = (window.history && window.history.state) || {};
+        const nextState = {
+          app: "hifz-portal",
+          view: partialState && partialState.view !== undefined ? partialState.view : currentActiveView,
+          subTab: partialState && partialState.subTab !== undefined ? partialState.subTab : currentActivePrincipalTab,
+          modal: partialState && partialState.modal !== undefined ? partialState.modal : null,
+          dossierId: partialState && partialState.dossierId !== undefined ? partialState.dossierId : null,
+          demoRole: partialState && partialState.demoRole !== undefined ? partialState.demoRole : (isDemoSandbox && currentUser ? currentUser.role : null),
+          inspectingMadrasa: masterInspectingMadrasaId || null,
+          ts: Date.now()
+        };
+
+        // Avoid pushing duplicate identical states back-to-back
+        if (
+          !replaceOnly &&
+          prev &&
+          prev.view === nextState.view &&
+          prev.subTab === nextState.subTab &&
+          prev.modal === nextState.modal &&
+          prev.dossierId === nextState.dossierId &&
+          prev.demoRole === nextState.demoRole &&
+          prev.inspectingMadrasa === nextState.inspectingMadrasa
+        ) {
+          return;
+        }
+
+        if (replaceOnly && window.history && typeof window.history.replaceState === "function") {
+          window.history.replaceState(nextState, "");
+        } else if (window.history && typeof window.history.pushState === "function") {
+          window.history.pushState(nextState, "");
+        }
+      } catch (e) {}
+    };
+
+    window.syncHistoryModalClosed = function(closedModalName) {
+      if (isHandlingPopState) return;
+      try {
+        const cur = (window.history && window.history.state) || {};
+        if (cur && cur.modal === closedModalName && typeof window.history.replaceState === "function") {
+          window.history.replaceState(
+            {
+              ...cur,
+              modal: null,
+              ts: Date.now()
+            },
+            ""
+          );
+        }
+      } catch (e) {}
+    };
+
+    window.toggleStudentDossier = function(studentId) {
+      if (!studentId) return;
+      const el = document.getElementById("dossier-" + studentId);
+      if (!el) return;
+      const willBeActive = !el.classList.contains("active");
+      el.classList.toggle("active", willBeActive);
+      if (willBeActive) {
+        window.pushAppHistoryState({
+          view: currentActiveView,
+          subTab: currentActivePrincipalTab,
+          dossierId: studentId,
+          modal: null
+        });
+      } else {
+        window.syncHistoryModalClosed(null);
+      }
+    };
+
+    function getRoleDefaultHomeView(role) {
+      if (role === "master") return { view: "master", subTab: "portfolios" };
+      if (role === "principal") return { view: "principal", subTab: "portfolios" };
+      if (role === "parent") return { view: "parent", subTab: "portfolios" };
+      return { view: "teacher", subTab: "portfolios" };
+    }
+
+    // Initialize base history entry so pressing hardware back never immediately exits the app
+    try {
+      if (window.history && typeof window.history.replaceState === "function") {
+        window.history.replaceState({ app: "hifz-portal", view: "auth", subTab: "portfolios", modal: null }, "");
+      }
+    } catch (e) {}
+
+    window.addEventListener("popstate", function(event) {
+      isHandlingPopState = true;
+      try {
+        // 1. Close Report Card Modal if open
+        const reportModal = document.getElementById("report-card-modal");
+        if (reportModal && !reportModal.classList.contains("hidden")) {
+          window.closeReportCardModal(true);
+          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, true);
+          isHandlingPopState = false;
+          return;
+        }
+
+        // 2. Close Student Photo Modal if open
+        const photoModal = document.getElementById("student-photo-modal");
+        if (photoModal && !photoModal.classList.contains("hidden")) {
+          window.closeStudentPhotoModal(true);
+          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, true);
+          isHandlingPopState = false;
+          return;
+        }
+
+        // 3. Close Notification Dropdown Drawer if open
+        const notifDrop = document.getElementById("notification-dropdown");
+        if (notifDrop && !notifDrop.classList.contains("hidden")) {
+          notifDrop.classList.add("hidden");
+          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, true);
+          isHandlingPopState = false;
+          return;
+        }
+
+        // 4. Close any open Student Dossier card if expanded
+        const openDossiers = document.querySelectorAll(".student-body.active");
+        const poppedState = event.state || {};
+        if (openDossiers.length > 0 && !poppedState.dossierId) {
+          openDossiers.forEach((dEl) => dEl.classList.remove("active"));
+          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, dossierId: null, modal: null }, true);
+          isHandlingPopState = false;
+          return;
+        }
+
+        // 5. If not signed in, keep on Auth View
+        if (!currentUser) {
+          window.showAuthView();
+          isHandlingPopState = false;
+          return;
+        }
+
+        const role = currentUser.role;
+
+        // 6. If Demo Sandbox role changed in history state, restore that Demo Portal
+        if (isDemoSandbox && poppedState.demoRole && poppedState.demoRole !== role) {
+          window.switchDemoPreviewPortal(poppedState.demoRole);
+          isHandlingPopState = false;
+          return;
+        }
+
+        // 7. Navigate to previous view / sub-tab if present in popped state
+        if (poppedState && poppedState.view && poppedState.view !== "auth") {
+          const targetView = poppedState.view;
+          const targetSubTab = poppedState.subTab || "portfolios";
+          if (targetView !== currentActiveView || (targetView === "principal" && targetSubTab !== currentActivePrincipalTab)) {
+            window.switchWorkspace(targetView);
+            if (targetView === "principal") {
+              window.switchPrincipalTab(targetSubTab);
+            }
+            isHandlingPopState = false;
+            return;
+          }
+        }
+
+        // 8. Fallback hierarchical back navigation (Sub-tab -> Main Dashboard -> Guard against accidental exit)
+        if (role === "master" && currentActiveView !== "master") {
+          window.switchWorkspace("master");
+          if (window.history && typeof window.history.pushState === "function") {
+            window.history.pushState({ app: "hifz-portal", view: "master", subTab: "portfolios", modal: null }, "");
+          }
+          isHandlingPopState = false;
+          return;
+        }
+
+        if ((role === "principal" || role === "master") && currentActiveView === "principal" && currentActivePrincipalTab !== "portfolios") {
+          window.switchPrincipalTab("portfolios");
+          if (window.history && typeof window.history.pushState === "function") {
+            window.history.pushState({ app: "hifz-portal", view: "principal", subTab: "portfolios", modal: null }, "");
+          }
+          isHandlingPopState = false;
+          return;
+        }
+
+        if ((role === "principal" || role === "master") && currentActiveView === "analytics") {
+          window.switchWorkspace("principal");
+          window.switchPrincipalTab("portfolios");
+          if (window.history && typeof window.history.pushState === "function") {
+            window.history.pushState({ app: "hifz-portal", view: "principal", subTab: "portfolios", modal: null }, "");
+          }
+          isHandlingPopState = false;
+          return;
+        }
+
+        if (role === "teacher" && currentActiveView === "schedules") {
+          window.switchWorkspace("teacher");
+          if (window.history && typeof window.history.pushState === "function") {
+            window.history.pushState({ app: "hifz-portal", view: "teacher", subTab: "portfolios", modal: null }, "");
+          }
+          isHandlingPopState = false;
+          return;
+        }
+
+        // 9. Already on the role's primary dashboard: re-push guard state so hardware back doesn't exit the app unexpectedly
+        const home = getRoleDefaultHomeView(role);
+        if (window.history && typeof window.history.pushState === "function") {
+          window.history.pushState({ app: "hifz-portal", view: home.view, subTab: home.subTab, modal: null }, "");
+        }
+      } finally {
+        isHandlingPopState = false;
+      }
+    });
+
     // Workspace & Tab Navigation with Active View Lock & Permission Enforcement
     window.switchWorkspace = function(view) {
       if (!currentUser) {
@@ -8561,8 +8778,12 @@
         }
       });
 
+      currentActiveView = targetView;
+
       if (activePrincipalSubTab) {
         switchPrincipalTab(activePrincipalSubTab);
+      } else {
+        window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null });
       }
 
       const navTabs = [
@@ -8586,6 +8807,7 @@
     };
 
     window.switchPrincipalTab = function(tab) {
+      currentActivePrincipalTab = tab || "portfolios";
       const subTabsBar = document.getElementById("principal-sub-tabs");
       if (subTabsBar) {
         subTabsBar.classList.toggle("hidden", tab === "notices");
@@ -8624,6 +8846,7 @@
           navSettings.classList.add("active");
         }
       }
+      window.pushAppHistoryState({ view: "principal", subTab: currentActivePrincipalTab, modal: null });
       if (tab === "portfolios" && typeof window.renderPrincipalPortfolioD3Chart === "function") {
         setTimeout(() => {
           window.renderPrincipalPortfolioD3Chart();
@@ -9422,8 +9645,14 @@
         window.updateNotificationsUI();
         window.adjustNotificationDropdownPosition();
         dropdown.classList.remove("hidden");
+        if (typeof window.pushAppHistoryState === "function") {
+          window.pushAppHistoryState({ modal: "notification-dropdown" });
+        }
       } else {
         dropdown.classList.add("hidden");
+        if (typeof window.syncHistoryModalClosed === "function") {
+          window.syncHistoryModalClosed("notification-dropdown");
+        }
       }
     };
 
@@ -12906,7 +13135,7 @@
 
               return `
                 <div class="student-card">
-                  <div class="student-card-header" onclick="document.getElementById('dossier-${std.studentId}').classList.toggle('active')">
+                  <div class="student-card-header" onclick="toggleStudentDossier('${std.studentId}')">
                     <div style="display:flex; align-items:center; gap:12px;">
                       <div style="position:relative; flex-shrink:0;">
                         ${getStudentPhotoAvatar(std, 44)}
@@ -14453,10 +14682,16 @@
       if (modalBody) modalBody.innerHTML = html;
       if (printContainer) printContainer.innerHTML = html;
       document.getElementById("report-card-modal").classList.remove("hidden");
+      if (typeof window.pushAppHistoryState === "function") {
+        window.pushAppHistoryState({ modal: "report-card", reportStudentId: studentId });
+      }
     };
 
-    window.closeReportCardModal = function() {
+    window.closeReportCardModal = function(fromPopState) {
       document.getElementById("report-card-modal").classList.add("hidden");
+      if (!fromPopState && typeof window.syncHistoryModalClosed === "function") {
+        window.syncHistoryModalClosed("report-card");
+      }
     };
 
     window.printMonthlyReport = function(studentId) {
