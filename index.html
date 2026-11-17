@@ -2904,36 +2904,55 @@
 
           <!-- Right Column: Student / Hostel Behaviour, Cleanliness & Akhlaq Traits Manager + Clean DB Reset -->
           <div style="display:flex; flex-direction:column; gap:1.25rem;">
-            <div class="card" style="margin-bottom:0;">
-              <div class="card-header-row">
+            <div class="card" id="cfg-traits-card" style="margin-bottom:0; border:1px solid #a7f3d0;">
+              <div class="card-header-row" style="flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:flex-start;">
                 <div>
                   <h2 class="card-title" id="cfg-traits-card-title">✨ Student Behaviour, Cleanliness &amp; Akhlaq Traits Manager</h2>
                   <p class="card-subtitle" id="cfg-traits-card-sub">Add or delete custom positive/negative traits shown as chips on the Ustadh Desk</p>
                 </div>
+                <span
+                  id="cfg-traits-live-count-badge"
+                  style="background:#ecfdf5; color:#065f46; border:1px solid #6ee7b7; padding:4px 10px; border-radius:99px; font-size:0.72rem; font-weight:800; white-space:nowrap;"
+                >
+                  ⚡ Live on Ustadh Desk
+                </span>
               </div>
 
-              <form onsubmit="handleAddCustomTrait(event)" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:14px;">
-                <div style="font-size:0.78rem; font-weight:700; color:#0f172a; margin-bottom:8px;" id="lbl-add-trait-heading">
+              <form onsubmit="handleAddCustomTrait(event)" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px; margin-bottom:14px;">
+                <div style="font-size:0.78rem; font-weight:800; color:#0f172a; margin-bottom:8px;" id="lbl-add-trait-heading">
                   Add New Behaviour / Cleanliness Tag
                 </div>
-                <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:8px; margin-bottom:10px;">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin-bottom:10px;">
                   <div>
-                    <label for="new-trait-label" id="lbl-new-trait-label" style="font-size:0.72rem;">Trait Label</label>
+                    <label for="new-trait-label" id="lbl-new-trait-label" style="font-size:0.72rem; font-weight:700;">Trait Label</label>
                     <input type="text" id="new-trait-label" placeholder="e.g. Punctuality" required />
                   </div>
                   <div>
-                    <label for="new-trait-points" id="lbl-new-trait-points" style="font-size:0.72rem;">Point Value (+ or -)</label>
-                    <select id="new-trait-points">
-                      <option value="2" id="opt-trait-pts-2">+2 pts (Positive Trait)</option>
+                    <label for="new-trait-polarity" id="lbl-new-trait-polarity" style="font-size:0.72rem; font-weight:700;">Type (+ Merit / - Deduction)</label>
+                    <select id="new-trait-polarity" onchange="handleTraitPolarityChange(this.value)">
+                      <option value="pos">➕ Positive Merit (+)</option>
+                      <option value="neg">➖ Negative Deduction (-)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="new-trait-points" id="lbl-new-trait-points" style="font-size:0.72rem; font-weight:700;">Point Value (+ or -)</label>
+                    <select id="new-trait-points" onchange="handleTraitPointsSelectChange(this.value)">
+                      <option value="1" id="opt-trait-pts-1">+1 pt (Positive Merit)</option>
+                      <option value="2" id="opt-trait-pts-2" selected>+2 pts (Positive Trait)</option>
                       <option value="3" id="opt-trait-pts-3">+3 pts (Exemplary Trait)</option>
+                      <option value="4" id="opt-trait-pts-4">+4 pts (High Merit)</option>
                       <option value="5" id="opt-trait-pts-5">+5 pts (Major Merit)</option>
+                      <option value="10" id="opt-trait-pts-10">+10 pts (Special Award)</option>
+                      <option value="-1" id="opt-trait-pts-m1">-1 pt (Minor Notice)</option>
                       <option value="-2" id="opt-trait-pts-m2">-2 pts (Minor Warning)</option>
                       <option value="-3" id="opt-trait-pts-m3">-3 pts (Negative Conduct)</option>
+                      <option value="-4" id="opt-trait-pts-m4">-4 pts (Repeated Warning)</option>
                       <option value="-5" id="opt-trait-pts-m5">-5 pts (Major Deduction)</option>
+                      <option value="-10" id="opt-trait-pts-m10">-10 pts (Serious Violation)</option>
                     </select>
                   </div>
                 </div>
-                <button type="submit" id="btn-add-trait-submit" class="btn-primary" style="padding:8px 12px; font-size:0.8rem;">
+                <button type="submit" id="btn-add-trait-submit" class="btn-primary" style="padding:9px 14px; font-size:0.8rem;">
                   + Add Trait &amp; Sync to Ustadh Desk
                 </button>
               </form>
@@ -6185,6 +6204,27 @@
                 .join("");
       }
 
+      // Update live chip count badge in Campus Settings
+      const liveCountBadge = document.getElementById("cfg-traits-live-count-badge");
+      if (liveCountBadge) {
+        liveCountBadge.innerText = t(
+          `⚡ ${posTraits.length} Positive (+) · ${negTraits.length} Negative (-) on Ustadh Desk`,
+          `⚡ ഉസ്താദ് ഡെസ്കിൽ: ${posTraits.length} നല്ലവ (+) · ${negTraits.length} പോരായ്മകൾ (-)`
+        );
+      }
+
+      const polarityLbl = document.getElementById("lbl-new-trait-polarity");
+      if (polarityLbl) {
+        polarityLbl.innerText = t("Type (+ Merit / - Deduction)", "വിഭാഗം (+ നല്ലത് / - പോരായ്മ)");
+      }
+      const polaritySel = document.getElementById("new-trait-polarity");
+      if (polaritySel) {
+        const optPos = polaritySel.querySelector('option[value="pos"]');
+        const optNeg = polaritySel.querySelector('option[value="neg"]');
+        if (optPos) optPos.textContent = t("➕ Positive Merit (+)", "➕ നല്ല സ്വഭാവം (+ പോയിന്റ്)");
+        if (optNeg) optNeg.textContent = t("➖ Negative Deduction (-)", "➖ പോരായ്മ / മുന്നറിയിപ്പ് (- പോയിന്റ്)");
+      }
+
       // 3. Removed Default Traits + "Restore All Default Traits"
       const removedBox = document.getElementById("settings-removed-default-traits-box");
       if (removedBox) {
@@ -6289,25 +6329,67 @@
       }
     }
 
+    window.handleTraitPolarityChange = function(polarity) {
+      const ptsSel = document.getElementById("new-trait-points");
+      if (!ptsSel) return;
+      const curVal = Number(ptsSel.value) || 2;
+      if (polarity === "neg" && curVal > 0) {
+        ptsSel.value = String(-Math.abs(curVal));
+        if (!ptsSel.value) ptsSel.value = "-3";
+      } else if (polarity === "pos" && curVal < 0) {
+        ptsSel.value = String(Math.abs(curVal));
+        if (!ptsSel.value) ptsSel.value = "2";
+      }
+    };
+
+    window.handleTraitPointsSelectChange = function(val) {
+      const polaritySel = document.getElementById("new-trait-polarity");
+      if (!polaritySel) return;
+      const num = Number(val) || 0;
+      polaritySel.value = num < 0 ? "neg" : "pos";
+    };
+
     window.handleAddCustomTrait = async function(e) {
       if (e && typeof e.preventDefault === "function") e.preventDefault();
       const labelInp = document.getElementById("new-trait-label");
       const ptsSel = document.getElementById("new-trait-points");
+      const polaritySel = document.getElementById("new-trait-polarity");
       const label = (labelInp ? labelInp.value : "").trim();
-      const points = Number(ptsSel ? ptsSel.value : 2);
+      let points = Number(ptsSel ? ptsSel.value : 2);
+      if (polaritySel && polaritySel.value === "neg" && points > 0) {
+        points = -Math.abs(points);
+      } else if (polaritySel && polaritySel.value === "pos" && points < 0) {
+        points = Math.abs(points);
+      }
       if (!label) return;
 
-      if (!customTraits.some((tr) => String(tr.label).trim() === label)) {
-        customTraits.push({ label, points });
+      const existingIdx = customTraits.findIndex(
+        (tr) => String(tr.label).trim().toLowerCase() === label.toLowerCase()
+      );
+      const traitRecord = {
+        label,
+        points,
+        type: points < 0 ? "negative" : "positive"
+      };
+      if (existingIdx >= 0) {
+        customTraits[existingIdx] = traitRecord;
+      } else {
+        customTraits.push(traitRecord);
       }
       removedDefaultTraits = removedDefaultTraits.filter((l) => l !== label);
       if (points >= 0 && !dailyAkhlaqTags.includes(label)) {
         dailyAkhlaqTags.push(label);
-        recalculateDailyAkhlaqDeltaFromTags();
+      } else if (points < 0) {
+        dailyAkhlaqTags = dailyAkhlaqTags.filter((tItem) => tItem !== label);
       }
+      recalculateDailyAkhlaqDeltaFromTags();
+      updateAkhlaqDeltaUI();
+
       if (!isDemoSandbox) {
         try {
+          const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
           localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
+          localStorage.setItem(`hifz_custom_traits_${mId}`, JSON.stringify(customTraits));
           localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
         } catch (err) {}
       }
@@ -6315,7 +6397,12 @@
       renderCustomTraitsUI();
       await syncCampusConfigToFirestore();
       if (window.showToast) {
-        window.showToast(t(`Added trait: ${label} (${points > 0 ? "+" + points : points} pts)`, `പുതിയ സ്വഭാവ ടാഗ് ചേർത്തു: ${label}`));
+        window.showToast(
+          t(
+            `✓ Added Akhlaq trait: ${label} (${points > 0 ? "+" + points : points} pts) — Synced to Ustadh Desk!`,
+            `✓ പുതിയ സ്വഭാവ ടാഗ് ചേർത്തു: ${label} (${points > 0 ? "+" + points : points} പോയിന്റ്) — ഉസ്താദ് ഡെസ്കിൽ ലഭ്യമാണ്!`
+          )
+        );
       }
     };
 
@@ -6329,17 +6416,20 @@
         }
         dailyAkhlaqTags = dailyAkhlaqTags.filter((tag) => tag !== lbl);
         recalculateDailyAkhlaqDeltaFromTags();
+        updateAkhlaqDeltaUI();
       }
       if (!isDemoSandbox) {
         try {
+          const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
           localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
+          localStorage.setItem(`hifz_custom_traits_${mId}`, JSON.stringify(customTraits));
           localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
         } catch (err) {}
       }
       renderCustomTraitsUI();
       await syncCampusConfigToFirestore();
       if (window.showToast && removed) {
-        window.showToast(t(`Removed trait: ${removed.label} (Can be recalled below)`, `ഒഴിവാക്കി: ${removed.label} (താഴെ നിന്ന് തിരികെ ചേർക്കാം)`));
+        window.showToast(t(`Removed trait: ${removed.label} (Updated Ustadh Desk)`, `ഒഴിവാക്കി: ${removed.label} (ഉസ്താദ് ഡെസ്കിൽ നിന്ന് നീക്കം ചെയ്തു)`));
       }
     };
 
@@ -6352,16 +6442,19 @@
           customTraits.splice(lastPosIdx + 1, 0, { ...target });
           if (!dailyAkhlaqTags.includes(target.label)) {
             dailyAkhlaqTags.push(target.label);
-            recalculateDailyAkhlaqDeltaFromTags();
           }
         } else {
           customTraits.push({ ...target });
         }
       }
+      recalculateDailyAkhlaqDeltaFromTags();
+      updateAkhlaqDeltaUI();
       removedDefaultTraits = removedDefaultTraits.filter((l) => l !== target.label);
       if (!isDemoSandbox) {
         try {
+          const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
           localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
+          localStorage.setItem(`hifz_custom_traits_${mId}`, JSON.stringify(customTraits));
           localStorage.setItem("hifz_removed_default_traits", JSON.stringify(removedDefaultTraits));
         } catch (err) {}
       }
@@ -6380,9 +6473,12 @@
       removedDefaultTraits = [];
       dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
       recalculateDailyAkhlaqDeltaFromTags();
+      updateAkhlaqDeltaUI();
       if (!isDemoSandbox) {
         try {
+          const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
           localStorage.setItem("hifz_custom_traits", JSON.stringify(customTraits));
+          localStorage.setItem(`hifz_custom_traits_${mId}`, JSON.stringify(customTraits));
           localStorage.setItem("hifz_removed_default_traits", JSON.stringify([]));
         } catch (err) {}
       }
@@ -7032,16 +7128,24 @@
     };
 
     function recalculateDailyAkhlaqDeltaFromTags() {
-      let delta = 0;
+      let negDelta = 0;
+      let bonusPosDelta = 0;
+      const defaultPosLabels = new Set(DEFAULT_TRAITS.filter((d) => Number(d.points) >= 0).map((d) => String(d.label).trim()));
       dailyAkhlaqTags.forEach((tag) => {
-        const traitObj = customTraits.find((tr) => tr.label === tag);
-        if (traitObj && traitObj.type === "negative") {
-          delta += Number(traitObj.points) || -3;
-        } else if (NEGATIVE_TAG_SET.has(tag)) {
-          delta -= 3;
+        const cleanTag = String(tag).trim();
+        const traitObj = customTraits.find((tr) => String(tr.label).trim() === cleanTag);
+        if (traitObj) {
+          const pts = Number(traitObj.points) || 0;
+          if (pts < 0) {
+            negDelta += pts;
+          } else if (!defaultPosLabels.has(cleanTag)) {
+            bonusPosDelta += pts;
+          }
+        } else if (NEGATIVE_TAG_SET.has(cleanTag)) {
+          negDelta -= 3;
         }
       });
-      dailyAkhlaqDelta = delta;
+      dailyAkhlaqDelta = negDelta < 0 ? negDelta + bonusPosDelta : bonusPosDelta;
     }
 
     // Add / Toggle Akhlaq Tag & Update Score Delta (Positive Traits Pre-Selected by Default)
