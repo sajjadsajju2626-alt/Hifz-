@@ -1803,38 +1803,6 @@
             </button>
           </form>
 
-          <!-- 🔑 Demo Sandbox Section (Styled after image_18.png) -->
-          <div
-            id="auth-demo-sandbox-section"
-            style="margin-top: 1.25rem; padding: 1rem 1.1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;"
-          >
-            <div
-              id="auth-demo-sandbox-title"
-              style="font-size: 0.88rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem; display: flex; align-items: center; justify-content: center; gap: 6px;"
-            >
-              <span>🔑</span>
-              <span>പരീക്ഷണാടിസ്ഥാനത്തിൽ കാണുക (Demo Sandbox)</span>
-            </div>
-            <p
-              id="auth-demo-sandbox-desc"
-              style="font-size: 0.76rem; color: #475569; line-height: 1.45; margin: 0 0 0.85rem 0;"
-            >
-              ഡെമോ കാണാൻ ലോഗിൻ ചെയ്യുക. നിങ്ങളുടെ യഥാർത്ഥ ഡാറ്റ പൂർണ്ണമായും സുരക്ഷിതമാണ്.<br />
-              <span style="font-size: 0.72rem; color: #64748b;">Sign in to explore the portal with sample data. Your real data remains 100% safe.</span>
-            </p>
-            <button
-              type="button"
-              id="btn-try-demo-sandbox"
-              onclick="handleQuickDemoLogin()"
-              style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #ffffff; color: #0f172a; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 16px; font-size: 0.86rem; font-weight: 800; cursor: pointer; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); transition: all 0.15s ease;"
-              onmouseover="this.style.borderColor='#f59e0b'; this.style.background='#fffbeb'; this.style.boxShadow='0 4px 12px rgba(245, 158, 11, 0.15)';"
-              onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#ffffff'; this.style.boxShadow='0 1px 3px rgba(15, 23, 42, 0.06)';"
-            >
-              <span style="color: #f59e0b; font-size: 1.05rem; line-height: 1;">✨</span>
-              <span id="btn-try-demo-sandbox-label">Try Demo Meet / ഡെമോ കാണുക</span>
-            </button>
-          </div>
-
           <div style="margin-top: 1.15rem; padding-top: 0.85rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted); text-align: center;" id="auth-footer-security-note">
             🔒 Live Production Portal · Per-Madrasa Isolated Workspace · Role-Based Access Control
           </div>
@@ -4587,17 +4555,7 @@
     }
 
     window.handleQuickDemoLogin = function() {
-      try {
-        localStorage.setItem("demoMode", "true");
-        localStorage.setItem("hifz_demo_sandbox_active", "true");
-      } catch (e) {}
-      window.demoMode = true;
-      isDemoSandbox = true;
-      const uInp = document.getElementById("auth-username");
-      const pInp = document.getElementById("auth-password");
-      if (uInp) uInp.value = "demo";
-      if (pInp) pInp.value = "demo786";
-      window.loginWithAutoRole("demo", "demo786");
+      // Demo sandbox login disabled in live production mode
     };
 
     function updateDbResetStatusBanner() {
@@ -11184,27 +11142,7 @@
         return { success: true, role: "master" };
       }
 
-      // 0B. Check Master Demo Sandbox Login ("demo" / "demo786") — Unlocks All 3 Portals in Sandbox without touching Live Data
-      if (u.toLowerCase() === "demo" && p === "demo786") {
-        isDemoSandbox = true;
-        window.demoMode = true;
-        try {
-          localStorage.setItem("demoMode", "true");
-          localStorage.setItem("hifz_demo_sandbox_active", "true");
-        } catch (err) {}
-        loadDemoSandboxDataInMemory();
-        window.switchDemoPreviewPortal("principal");
-        updateCampusIdentityUI();
-        if (window.showToast) {
-          window.showToast(
-            t(
-              "🔍 Demo Preview Active! Use the top bar to switch between Principal, Ustadh & Parent views.",
-              "🔍 ഡെമോ മോഡ് സജീവമായി! മുകളിലെ ബട്ടണുകൾ ഉപയോഗിച്ച് പ്രിൻസിപ്പൽ, ഉസ്താദ്, പാരന്റ് പോർട്ടലുകൾ കാണാം."
-            )
-          );
-        }
-        return { success: true, role: "principal", isDemoSandbox: true };
-      }
+      // Live production mode: Demo Sandbox bypass disabled to enforce strict multi-tenant authentication
 
       if (mCode && mCode !== "MDR-01" && mCode !== currentMadrasaId) {
         currentMadrasaId = mCode;
