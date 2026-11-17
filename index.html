@@ -2659,27 +2659,9 @@
                 </div>
               </div>
               <form onsubmit="handleSaveSettings(event)">
-                <div class="form-group">
-                  <label for="cfg-campus-mode">
-                    <span id="lbl-cfg-campus-mode-prefix">Campus Mode (Active:</span> <strong id="cfg-mode-status-text" style="color:var(--primary);">Day College / Day Madrasa</strong>)
-                  </label>
-                  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <select id="cfg-campus-mode" onchange="handleCampusModeSelectChange()" style="flex:1; min-width:180px;">
-                      <option value="day" id="opt-cfg-mode-day" selected>Day College / Day Madrasa</option>
-                      <option value="residential" id="opt-cfg-mode-res">Residential Campus</option>
-                      <option value="online" id="opt-cfg-mode-online">🌐 Online Hifz Academy</option>
-                    </select>
-                    <button
-                      type="button"
-                      id="btn-quick-switch-mode"
-                      class="btn-secondary"
-                      onclick="toggleCampusModeQuick()"
-                      style="white-space:nowrap; padding:9px 14px; font-weight:700;"
-                      title="1-Tap Switch between Day Madrasa, Residential Campus, and Online Hifz Academy"
-                    >
-                      ⚡ Quick Switch Mode
-                    </button>
-                  </div>
+                <div class="form-group" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                  <span id="lbl-cfg-campus-mode-prefix" style="font-size:0.82rem; font-weight:700; color:#334155;">Active Campus Mode:</span>
+                  <span id="cfg-mode-status-text" class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #6ee7b7; font-size:0.8rem; font-weight:800; padding:5px 12px; border-radius:99px;">🚌 Day College / Day Madrasa</span>
                 </div>
 
                 <!-- 1. Residential Mode: 5-Time Jama'at Salah Tracking Toggle Card -->
@@ -4689,12 +4671,12 @@
     function updateCampusBadgeUI() {
       const badge = document.getElementById("campus-badge");
       if (!badge) return;
-      const isPrincipal = Boolean(currentUser && currentUser.role === "principal");
-      badge.innerText = getCampusModeDisplayLabel(campusMode, isPrincipal);
-      if (isPrincipal) {
+      const isMaster = Boolean(currentUser && currentUser.role === "master");
+      badge.innerText = getCampusModeDisplayLabel(campusMode, isMaster);
+      if (isMaster) {
         badge.style.cursor = "pointer";
         badge.style.pointerEvents = "auto";
-        badge.title = t("Click to switch between Day Madrasa, Residential Campus, and Online Hifz Mode", "ക്യാമ്പസ് മോഡ് മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക");
+        badge.title = t("Master Admin: Click to switch between Day Madrasa, Residential Campus, and Online Hifz Mode", "മാസ്റ്റർ അഡ്മിൻ: ക്യാമ്പസ് മോഡ് മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക");
       } else {
         badge.style.cursor = "default";
         badge.style.pointerEvents = "none";
@@ -5620,14 +5602,14 @@
           bi: "Synced to isolated Madrasa workspace (madrasas/{madrasaId}) & local storage"
         },
         "lbl-cfg-campus-mode-prefix": {
-          en: "Campus Mode (Active:",
-          ml: "ക്യാമ്പസ് മോഡ് (നിലവിൽ:",
-          bi: "Campus Mode (Active:"
+          en: "Active Campus Mode (Read-Only):",
+          ml: "നിലവിലെ ക്യാമ്പസ് മോഡ്:",
+          bi: "Active Campus Mode:"
         },
         "cfg-mode-status-text": {
-          en: campusMode === "online" ? "🌐 Online Hifz Academy" : isDayMode ? "Day College / Day Madrasa" : "Residential Campus",
-          ml: campusMode === "online" ? "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി" : isDayMode ? "ഡേ കോളേജ് / ഡേ മദ്രസ" : "റെസിഡൻഷ്യൽ ക്യാമ്പസ്",
-          bi: campusMode === "online" ? "🌐 Online Hifz Academy (ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി)" : isDayMode ? "Day College / Day Madrasa" : "Residential Campus"
+          en: campusMode === "online" ? "🌐 Online Hifz Academy" : isDayMode ? "🚌 Day College / Day Madrasa" : "🏠 Residential Campus",
+          ml: campusMode === "online" ? "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി" : isDayMode ? "🚌 ഡേ കോളേജ് / ഡേ മദ്രസ" : "🏠 റെസിഡൻഷ്യൽ ക്യാമ്പസ്",
+          bi: campusMode === "online" ? "🌐 Online Hifz Academy (ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി)" : isDayMode ? "🚌 Day College / Day Madrasa" : "🏠 Residential Campus"
         },
         "opt-cfg-mode-day": {
           en: "Day College / Day Madrasa",
@@ -6404,9 +6386,9 @@
       return;
     };
 
-    // 1-Tap Campus Mode Switcher with Real-Time Firestore Persistence (Principal Only)
+    // 1-Tap Campus Mode Switcher with Real-Time Firestore Persistence (Master Super Admin Only)
     window.toggleCampusModeQuick = async function() {
-      if (!currentUser || currentUser.role !== "principal") return;
+      if (!currentUser || currentUser.role !== "master") return;
       const newMode = campusMode === "day" ? "residential" : campusMode === "residential" ? "online" : "day";
       campusMode = newMode;
       dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
@@ -6456,6 +6438,7 @@
     };
 
     window.handleCampusModeSelectChange = async function() {
+      if (!currentUser || currentUser.role !== "master") return;
       const select = document.getElementById("cfg-campus-mode");
       if (!select) return;
       const newMode = select.value === "residential" ? "residential" : select.value === "online" ? "online" : "day";
@@ -8180,7 +8163,9 @@
       const sub = (document.getElementById("cfg-college-sub")?.value || "Hifz Tracker Portal").trim();
       const academicTerm = (document.getElementById("cfg-academic-term")?.value || "1448 AH · Rabi Al-Thani Term").trim();
 
-      campusMode = mode === "residential" ? "residential" : mode === "online" ? "online" : "day";
+      if (currentUser && currentUser.role === "master" && modeSelect) {
+        campusMode = mode === "residential" ? "residential" : mode === "online" ? "online" : "day";
+      }
 
       // Demo Sandbox: never overwrite saved Live Data in localStorage or Firestore
       if (isDemoSandbox) {
@@ -9732,7 +9717,8 @@
                 if (!entry) break;
                 if (d.name) entry.name = d.name;
                 if (d.subtitle) entry.subtitle = d.subtitle;
-                if (d.mode) entry.mode = d.mode === "residential" ? "residential" : d.mode === "online" ? "online" : "day";
+                const rawMode = d.campusModeFull || d.mode;
+                if (rawMode) entry.mode = rawMode === "residential" ? "residential" : rawMode === "online" ? "online" : "day";
                 if (pref === "principal_auth_") {
                   if (d.username) entry.principalUser = d.username;
                   if (d.password) entry.principalPass = d.password;
@@ -9924,7 +9910,20 @@
                 <div style="font-weight:800; color:#0f172a; font-size:0.9rem;">${item.name || "Hifz Institution Portal"}</div>
                 <div style="font-size:0.75rem; color:#64748b;">📍 ${item.subtitle || "—"}</div>
               </td>
-              <td>${modeBadge}</td>
+              <td>
+                <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+                  ${modeBadge}
+                  <select
+                    onchange="handleMasterChangeMadrasaMode('${mId}', this.value)"
+                    aria-label="Change Campus Mode for ${mId}"
+                    style="padding:5px 8px; font-size:0.75rem; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#ffffff; color:#0f172a; cursor:pointer;"
+                  >
+                    <option value="day" ${item.mode === "day" || !item.mode ? "selected" : ""}>${t("🚌 Day Madrasa", "🚌 ഡേ മദ്രസ")}</option>
+                    <option value="residential" ${item.mode === "residential" ? "selected" : ""}>${t("🏠 Residential", "🏠 റെസിഡൻഷ്യൽ")}</option>
+                    <option value="online" ${item.mode === "online" ? "selected" : ""}>${t("🌐 Online Hifz", "🌐 ഓൺലൈൻ ഹിഫ്ള്")}</option>
+                  </select>
+                </div>
+              </td>
               <td>
                 <div style="display:flex; flex-direction:column; gap:4px; font-size:0.78rem; font-weight:700;">
                   <span style="color:#0369a1;">👨‍🎓 ${stdCount} ${t("Students", "വിദ്യാർത്ഥികൾ")}</span>
@@ -10136,6 +10135,72 @@
           t(
             `✓ Updated Principal credentials for [${mId}] → ID: ${newU} / Pass: ${newP}`,
             `✓ [${mId}] മദ്രസയുടെ പ്രിൻസിപ്പൽ പാസ്‌വേഡ് വിജയകരമായി പുതുക്കി (${newU} / ${newP})`
+          )
+        );
+      }
+    };
+
+    window.handleMasterChangeMadrasaMode = function(madrasaId, newModeVal) {
+      if (!currentUser || currentUser.role !== "master") return;
+      const mId = String(madrasaId || "").trim().toUpperCase();
+      if (!mId) return;
+
+      const newMode = newModeVal === "residential" ? "residential" : newModeVal === "online" ? "online" : "day";
+      const nowIso = new Date().toISOString();
+
+      try {
+        localStorage.setItem("hifz_campus_mode_" + mId, newMode);
+      } catch (e) {}
+
+      const registry = getLocalMadrasaRegistry();
+      if (!registry[mId]) registry[mId] = { madrasaId: mId };
+      registry[mId].mode = newMode;
+      registry[mId].updatedAt = nowIso;
+      saveLocalMadrasaRegistry(registry);
+
+      if (masterMadrasasMap[mId]) {
+        masterMadrasasMap[mId].mode = newMode;
+        masterMadrasasMap[mId].updatedAt = nowIso;
+      }
+
+      if (mId === currentMadrasaId) {
+        campusMode = newMode;
+        try {
+          localStorage.setItem("hifz_campus_mode", newMode);
+        } catch (e) {}
+        dailyAkhlaqTags = [...getDefaultPositiveTraitLabels()];
+        applyCampusModeUI();
+      }
+
+      if (window.fDb && window.fSetDoc && window.fDoc) {
+        const safeFirestoreMode = newMode === "residential" ? "residential" : "day";
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", `general_${mId}`),
+          { mode: safeFirestoreMode, campusModeFull: newMode, madrasaId: mId, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", `campus_data_${mId}`),
+          { mode: safeFirestoreMode, campusModeFull: newMode, madrasaId: mId, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+
+        window.fSetDoc(
+          window.fDoc(window.fDb, "madrasas", mId),
+          { madrasaId: mId, mode: newMode, updatedAt: nowIso },
+          { merge: true }
+        ).catch(() => {});
+      }
+
+      renderMasterAdminDashboard();
+
+      const modeDisplay = getCampusModeDisplayLabel(newMode, false);
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `✓ Master Admin updated [${mId}] Campus Mode to: ${modeDisplay}`,
+            `✓ [${mId}] മദ്രസയുടെ ക്യാമ്പസ് മോഡ് "${modeDisplay}" ആയി മാറ്റി!`
           )
         );
       }
@@ -13434,8 +13499,9 @@
       if (!mId || mId === "MDR-01") return;
       if (d.madrasaId && String(d.madrasaId).trim().toUpperCase() !== mId) return;
 
-      if (d.mode) {
-        campusMode = d.mode === "residential" ? "residential" : d.mode === "online" ? "online" : "day";
+      const rawMode = d.campusModeFull || d.mode;
+      if (rawMode) {
+        campusMode = rawMode === "residential" ? "residential" : rawMode === "online" ? "online" : "day";
       }
       const cleanName = d.name && !isLegacyHardcodedCampusText(d.name) ? String(d.name).trim() : "";
       const cleanSub = d.sub && !isLegacyHardcodedCampusText(d.sub) ? String(d.sub).trim() : "";
