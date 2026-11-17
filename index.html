@@ -1703,15 +1703,13 @@
       <div class="context-pills">
         <strong style="color: var(--text);" id="college-sub-display">Hifz Tracker Portal</strong>
         <span>·</span>
-        <button
-          type="button"
+        <span
           class="badge-campus"
           id="campus-badge"
-          onclick="toggleCampusModeQuick()"
           style="cursor:default; pointer-events:none;"
         >
-          Day College / Day Madrasa
-        </button>
+          🚌 Day Madrasa
+        </span>
         <span>·</span>
         <span id="academic-term-display">1448 AH · Rabi Al-Thani Term</span>
       </div>
@@ -2762,12 +2760,12 @@
                   </div>
                 </div>
 
-                <div class="form-group" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px;">
-                  <label for="cfg-madrasa-id" id="lbl-cfg-madrasa-id" style="font-weight:700;">Madrasa Code / ID (Multi-Campus Isolation)</label>
+                <div class="form-group" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:8px; padding:10px 12px;">
+                  <label for="cfg-madrasa-id" id="lbl-cfg-madrasa-id" style="font-weight:700; color:#334155;">🔒 Madrasa Code / ID (Read-Only)</label>
                   <div style="font-size:0.73rem; color:#64748b; margin-bottom:6px;" id="lbl-cfg-madrasa-id-sub">
-                    Unique Madrasa Code to keep this campus data, teachers, and students strictly isolated from other institutions
+                    Assigned by Master Super Admin — uniquely identifies this campus workspace and cannot be changed by Principal
                   </div>
-                  <input type="text" id="cfg-madrasa-id" value="" placeholder="e.g. MDR-7K9P2X" required style="font-family:monospace; font-weight:700; text-transform:uppercase;" />
+                  <input type="text" id="cfg-madrasa-id" value="" readonly disabled style="font-family:monospace; font-weight:800; text-transform:uppercase; background:#e2e8f0; color:#475569; cursor:not-allowed; border:1px solid #cbd5e1;" />
                 </div>
                 <div class="form-group">
                   <label for="cfg-college-name" id="lbl-cfg-college-name">College Name</label>
@@ -4268,7 +4266,11 @@
       }
 
       const cfgMadrasa = document.getElementById("cfg-madrasa-id");
-      if (cfgMadrasa) cfgMadrasa.value = currentMadrasaId;
+      if (cfgMadrasa) {
+        cfgMadrasa.value = currentMadrasaId;
+        cfgMadrasa.readOnly = true;
+        cfgMadrasa.disabled = true;
+      }
       const cfgName = document.getElementById("cfg-college-name");
       if (cfgName) {
         cfgName.value = isDemoSandbox
@@ -4651,37 +4653,24 @@
       if (inp) inp.value = currentHostelAdab.join(", ");
     };
 
-    function getCampusModeDisplayLabel(mode, withSwitchHint) {
+    function getCampusModeDisplayLabel(mode) {
       const m = mode || campusMode;
       if (m === "online") {
-        return withSwitchHint
-          ? t("🌐 Online Hifz Academy (Switch Mode)", "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി (മോഡ് മാറ്റുക)")
-          : t("🌐 Online Hifz Academy", "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി");
+        return t("🌐 Online Hifz Academy", "🌐 ഓൺലൈൻ ഹിഫ്ള് അക്കാദമി");
       }
       if (m === "residential") {
-        return withSwitchHint
-          ? t("Residential Campus (Switch Mode)", "റെസിഡൻഷ്യൽ ക്യാമ്പസ് (മോഡ് മാറ്റുക)")
-          : t("Residential Campus", "റെസിഡൻഷ്യൽ ക്യാമ്പസ്");
+        return t("🏠 Residential Campus", "🏠 റെസിഡൻഷ്യൽ ക്യാമ്പസ്");
       }
-      return withSwitchHint
-        ? t("Day College / Day Madrasa (Switch Mode)", "ഡേ കോളേജ് / ഡേ മദ്രസ (മോഡ് മാറ്റുക)")
-        : t("Day College / Day Madrasa", "ഡേ കോളേജ് / ഡേ മദ്രസ");
+      return t("🚌 Day Madrasa", "🚌 ഡേ മദ്രസ");
     }
 
     function updateCampusBadgeUI() {
       const badge = document.getElementById("campus-badge");
       if (!badge) return;
-      const isMaster = Boolean(currentUser && currentUser.role === "master");
-      badge.innerText = getCampusModeDisplayLabel(campusMode, isMaster);
-      if (isMaster) {
-        badge.style.cursor = "pointer";
-        badge.style.pointerEvents = "auto";
-        badge.title = t("Master Admin: Click to switch between Day Madrasa, Residential Campus, and Online Hifz Mode", "മാസ്റ്റർ അഡ്മിൻ: ക്യാമ്പസ് മോഡ് മാറ്റാൻ ക്ലിക്ക് ചെയ്യുക");
-      } else {
-        badge.style.cursor = "default";
-        badge.style.pointerEvents = "none";
-        badge.removeAttribute("title");
-      }
+      badge.innerText = getCampusModeDisplayLabel(campusMode);
+      badge.style.cursor = "default";
+      badge.style.pointerEvents = "none";
+      badge.removeAttribute("title");
       badge.classList.toggle("residential", campusMode === "residential");
     }
 
@@ -5662,12 +5651,12 @@
           ml: "🔔 തത്സമയ സിസ്റ്റം അറിയിപ്പുകൾ"
         },
         "lbl-cfg-madrasa-id": {
-          en: "Madrasa Code / ID (Multi-Campus Isolation)",
-          ml: "മദ്രസ കോഡ് / ഐഡി (മൾട്ടി-ക്യാമ്പസ് സുരക്ഷ)"
+          en: "🔒 Madrasa Code / ID (Read-Only)",
+          ml: "🔒 മദ്രസ കോഡ് / ഐഡി (മാറ്റാൻ കഴിയില്ല)"
         },
         "lbl-cfg-madrasa-id-sub": {
-          en: "Unique Madrasa Code to keep this campus data, teachers, and students strictly isolated from other institutions",
-          ml: "മറ്റ് സ്ഥാപനങ്ങളിൽ നിന്ന് ഈ ക്യാമ്പസിലെ വിദ്യാർത്ഥികളുടെയും ഉസ്താദുമാരുടെയും വിവരങ്ങൾ വേർതിരിച്ചു സൂക്ഷിക്കാനുള്ള പ്രത്യേക കോഡ്"
+          en: "Assigned by Master Super Admin — uniquely identifies this campus workspace and cannot be changed by Principal",
+          ml: "മാസ്റ്റർ അഡ്മിൻ അനുവദിച്ച മദ്രസ കോഡ് — പ്രിൻസിപ്പലിന് ഇത് മാറ്റാൻ കഴിയില്ല"
         },
         "lbl-cfg-college-name": {
           en: "College Name",
@@ -8153,12 +8142,6 @@
         if (deskLinkInp) deskLinkInp.value = currentOnlineClassLink;
       }
 
-      const madrasaIdInp = document.getElementById("cfg-madrasa-id");
-      const rawInputMadrasaId = (madrasaIdInp && madrasaIdInp.value ? madrasaIdInp.value : "")
-        .trim()
-        .toUpperCase()
-        .replace(/[^A-Z0-9_-]/g, "");
-
       const name = (document.getElementById("cfg-college-name")?.value || "Hifz Institution").trim();
       const sub = (document.getElementById("cfg-college-sub")?.value || "Hifz Tracker Portal").trim();
       const academicTerm = (document.getElementById("cfg-academic-term")?.value || "1448 AH · Rabi Al-Thani Term").trim();
@@ -8180,17 +8163,13 @@
         return;
       }
 
+      // Regular Principals cannot change currentMadrasaId; keep existing workspace ID locked
       const prevMadrasaId = currentMadrasaId;
-      if (rawInputMadrasaId && rawInputMadrasaId !== "MDR-01") {
-        currentMadrasaId = rawInputMadrasaId;
-      } else if (!currentMadrasaId || currentMadrasaId === "MDR-01") {
+      if (!currentMadrasaId || currentMadrasaId === "MDR-01") {
         currentMadrasaId = deviceMadrasaId;
       }
 
       try {
-        if (currentMadrasaId !== deviceMadrasaId) {
-          localStorage.setItem("hifz_custom_madrasa_id", currentMadrasaId);
-        }
         localStorage.setItem(`hifz_campus_mode_${currentMadrasaId}`, campusMode);
         localStorage.setItem("hifz_campus_mode", campusMode);
         localStorage.setItem("hifz_app_language", appLanguage);
@@ -9897,8 +9876,23 @@
           return `
             <tr style="border-bottom:1px solid #e2e8f0;">
               <td>
-                <div style="font-family:monospace; font-weight:800; font-size:0.9rem; color:#064e3b; background:#ecfdf5; border:1px solid #6ee7b7; padding:4px 8px; border-radius:6px; display:inline-block;">
-                  ${mId}
+                <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+                  <input
+                    type="text"
+                    id="master-mcode-${mId}"
+                    value="${mId}"
+                    title="${t("Master Admin: Edit Madrasa Code", "മാസ്റ്റർ അഡ്മിൻ: മദ്രസ കോഡ് മാറ്റാം")}"
+                    style="width:110px; font-family:monospace; font-weight:800; font-size:0.84rem; color:#064e3b; background:#ecfdf5; border:1px solid #6ee7b7; padding:4px 7px; border-radius:6px; text-transform:uppercase;"
+                  />
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="handleMasterRenameMadrasaCode('${mId}')"
+                    title="${t("Save New Madrasa Code", "പുതിയ മദ്രസ കോഡ് സേവ് ചെയ്യുക")}"
+                    style="padding:4px 8px; font-size:0.72rem; background:#065f46; color:#ffffff; border:none; border-radius:5px; font-weight:700;"
+                  >
+                    💾
+                  </button>
                 </div>
                 ${
                   isCurrentDevice
@@ -10201,6 +10195,129 @@
           t(
             `✓ Master Admin updated [${mId}] Campus Mode to: ${modeDisplay}`,
             `✓ [${mId}] മദ്രസയുടെ ക്യാമ്പസ് മോഡ് "${modeDisplay}" ആയി മാറ്റി!`
+          )
+        );
+      }
+    };
+
+    window.handleMasterRenameMadrasaCode = async function(oldMadrasaId) {
+      if (!currentUser || currentUser.role !== "master") {
+        if (window.showToast) {
+          window.showToast(t("🔒 Only the Master Super Admin can change Madrasa Codes.", "🔒 മാസ്റ്റർ സൂപ്പർ അഡ്മിന് മാത്രമേ മദ്രസ കോഡ് മാറ്റാൻ അനുവാദമുള്ളൂ."));
+        }
+        return;
+      }
+      const oldId = String(oldMadrasaId || "").trim().toUpperCase();
+      const inp = document.getElementById(`master-mcode-${oldId}`);
+      const newId = (inp && inp.value ? inp.value : "")
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9_-]/g, "");
+
+      if (!newId || newId === "MDR-01") {
+        if (window.showToast) {
+          window.showToast(t("Please enter a valid unique Madrasa Code.", "ദയവായി ശരിയായ ഒരു മദ്രസ കോഡ് നൽകുക."));
+        }
+        return;
+      }
+      if (newId === oldId) {
+        if (window.showToast) {
+          window.showToast(t("Madrasa Code is unchanged.", "മദ്രസ കോഡിൽ മാറ്റമില്ല."));
+        }
+        return;
+      }
+
+      const nowIso = new Date().toISOString();
+      const registry = getLocalMadrasaRegistry();
+      const existingEntry = masterMadrasasMap.get(oldId) || registry[oldId] || {
+        madrasaId: oldId,
+        name: getWorkspaceCampusName(oldId) || "Hifz Institution Portal",
+        subtitle: getWorkspaceCampusLocation(oldId) || "Kerala · India",
+        mode: localStorage.getItem("hifz_campus_mode_" + oldId) || "day",
+        principalUser: "admin",
+        principalPass: "admin786"
+      };
+
+      const updatedEntry = {
+        ...existingEntry,
+        madrasaId: newId,
+        updatedAt: nowIso
+      };
+
+      // Copy local workspace keys from oldId to newId
+      try {
+        const keysToMigrate = [
+          "hifz_campus_name_",
+          "hifz_campus_sub_",
+          "hifz_campus_term_",
+          "hifz_campus_mode_",
+          "hifz_principal_auth_",
+          "live_students_",
+          "live_teachers_",
+          "live_logs_",
+          "live_leaves_",
+          "live_config_"
+        ];
+        keysToMigrate.forEach((prefix) => {
+          const val = localStorage.getItem(prefix + oldId);
+          if (val !== null) {
+            localStorage.setItem(prefix + newId, val);
+          }
+        });
+        if (currentMadrasaId === oldId) {
+          currentMadrasaId = newId;
+          localStorage.setItem("hifz_custom_madrasa_id", newId);
+        }
+      } catch (e) {}
+
+      delete registry[oldId];
+      registry[newId] = updatedEntry;
+      saveLocalMadrasaRegistry(registry);
+
+      masterMadrasasMap.delete(oldId);
+      masterMadrasasMap.set(newId, updatedEntry);
+
+      if (window.fDb && window.fSetDoc && window.fDoc) {
+        const safeFirestoreMode = updatedEntry.mode === "residential" ? "residential" : "day";
+        window.fSetDoc(
+          window.fDoc(window.fDb, "madrasas", newId),
+          {
+            madrasaId: newId,
+            name: updatedEntry.name,
+            subtitle: updatedEntry.subtitle,
+            mode: updatedEntry.mode || "day",
+            principalUser: updatedEntry.principalUser || "admin",
+            principalPass: updatedEntry.principalPass || "admin786",
+            updatedAt: nowIso
+          },
+          { merge: true }
+        ).catch(() => {});
+
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", `general_${newId}`),
+          {
+            madrasaId: newId,
+            name: updatedEntry.name,
+            sub: updatedEntry.subtitle,
+            mode: safeFirestoreMode,
+            campusModeFull: updatedEntry.mode || "day",
+            principalUsername: updatedEntry.principalUser || "admin",
+            principalPassword: updatedEntry.principalPass || "admin786",
+            ownerId: "master-admin",
+            updatedAt: nowIso
+          },
+          { merge: true }
+        ).catch(() => {});
+      }
+
+      updateCampusIdentityUI();
+      renderMasterAdminDashboard();
+
+      if (window.showToast) {
+        window.showToast(
+          t(
+            `✓ Master Admin updated Madrasa Code from [${oldId}] to [${newId}]!`,
+            `✓ മദ്രസ കോഡ് [${oldId}]-ൽ നിന്ന് [${newId}] ആയി മാറ്റി!`
           )
         );
       }
