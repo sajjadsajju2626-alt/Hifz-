@@ -4179,11 +4179,11 @@
             saveLocalMadrasaRegistry(reg);
           }
         }
-        if (typeof masterMadrasasMap !== "undefined" && masterMadrasasMap && masterMadrasasMap.has(mId)) {
-          const item = masterMadrasasMap.get(mId);
+        if (typeof masterMadrasasMap !== "undefined" && masterMadrasasMap && masterMadrasasMap[mId]) {
+          const item = masterMadrasasMap[mId];
           if (name && String(name).trim()) item.name = String(name).trim();
           if (sub && String(sub).trim()) item.subtitle = String(sub).trim();
-          masterMadrasasMap.set(mId, item);
+          masterMadrasasMap[mId] = item;
         }
       } catch (e) {}
     }
@@ -10037,8 +10037,8 @@
 
           map[cleanId] = {
             madrasaId: cleanId,
-            name: localName || (cleanId === currentMadrasaId ? campusName : "Hifz Institution Portal"),
-            subtitle: localSub || (cleanId === currentMadrasaId ? campusSubtitle : "Hifz Academy Campus"),
+            name: localName || getWorkspaceCampusName(cleanId) || "Hifz Institution Portal",
+            subtitle: localSub || getWorkspaceCampusLocation(cleanId) || "Hifz Academy Campus",
             mode: localMode === "residential" ? "residential" : localMode === "online" ? "online" : "day",
             principalUser: localPUser,
             principalPass: localPPass,
@@ -10662,7 +10662,7 @@
 
       const nowIso = new Date().toISOString();
       const registry = getLocalMadrasaRegistry();
-      const existingEntry = masterMadrasasMap.get(oldId) || registry[oldId] || {
+      const existingEntry = masterMadrasasMap[oldId] || registry[oldId] || {
         madrasaId: oldId,
         name: getWorkspaceCampusName(oldId) || "Hifz Institution Portal",
         subtitle: getWorkspaceCampusLocation(oldId) || "Kerala · India",
@@ -10707,8 +10707,8 @@
       registry[newId] = updatedEntry;
       saveLocalMadrasaRegistry(registry);
 
-      masterMadrasasMap.delete(oldId);
-      masterMadrasasMap.set(newId, updatedEntry);
+      delete masterMadrasasMap[oldId];
+      masterMadrasasMap[newId] = updatedEntry;
 
       if (window.fDb && window.fSetDoc && window.fDoc) {
         const safeFirestoreMode = updatedEntry.mode === "residential" ? "residential" : "day";
@@ -11107,7 +11107,27 @@
         return { success: true, role: "master" };
       }
 
-      // Live production mode: Demo Sandbox bypass disabled to enforce strict multi-tenant authentication
+      // 0B. Check Master Demo Sandbox Login ("demo" / "demo786") — Unlocks All 3 Portals in Sandbox without touching Live Data
+      if (u.toLowerCase() === "demo" && p === "demo786") {
+        isDemoSandbox = true;
+        window.demoMode = true;
+        try {
+          localStorage.setItem("demoMode", "true");
+          localStorage.setItem("hifz_demo_sandbox_active", "true");
+        } catch (err) {}
+        loadDemoSandboxDataInMemory();
+        window.switchDemoPreviewPortal("principal");
+        updateCampusIdentityUI();
+        if (window.showToast) {
+          window.showToast(
+            t(
+              "🔍 Demo Preview Active! Use the top bar to switch between Principal, Ustadh & Parent views.",
+              "🔍 ഡെമോ മോഡ് സജീവമായി! മുകളിലെ ബട്ടണുകൾ ഉപയോഗിച്ച് പ്രിൻസിപ്പൽ, ഉസ്താദ്, പാരന്റ് പോർട്ടലുകൾ കാണാം."
+            )
+          );
+        }
+        return { success: true, role: "principal", isDemoSandbox: true };
+      }
 
       if (mCode && mCode !== "MDR-01" && mCode !== currentMadrasaId) {
         currentMadrasaId = mCode;
