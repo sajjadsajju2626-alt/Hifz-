@@ -37,6 +37,7 @@
       getDoc,
       getDocs,
       getDocFromServer,
+      getDocsFromServer,
       query,
       where,
       onSnapshot,
@@ -95,10 +96,13 @@
     window.fCollection = collection;
     window.fGetDoc = getDoc;
     window.fGetDocs = getDocs;
+    window.fGetDocFromServer = getDocFromServer;
+    window.fGetDocsFromServer = getDocsFromServer;
     window.fQuery = query;
     window.fWhere = where;
     window.fOnSnapshot = onSnapshot;
     window.fTimestamp = serverTimestamp;
+    window.firebaseReady = true;
 
     window.dispatchEvent(new Event("firebase-ready"));
   </script>
@@ -4045,6 +4049,331 @@
     }
     syncNegativeTagSet();
 
+    // ============================================================================
+    // CROSS-DEVICE FIRESTORE READINESS, SERVER-FIRST FETCH & WORKSPACE SYNC HELPERS
+    // ============================================================================
+    function normalizeMadrasaCode(val) {
+      return String(val || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9_-]/g, "");
+    }
+
+    async function ensureFirebaseReady(timeoutMs = 8000) {
+      if (window.fDb && window.fGetDoc && window.fSetDoc && window.fDoc) {
+        return true;
+      }
+      return await new Promise((resolve) => {
+        let settled = false;
+        const finish = (ok) => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener("firebase-ready", onReady);
+          clearInterval(pollId);
+          clearTimeout(timerId);
+          resolve(ok);
+        };
+        const onReady = () => {
+          if (window.fDb && window.fGetDoc && window.fDoc) finish(true);
+        };
+        window.addEventListener("firebase-ready", onReady);
+        const pollId = setInterval(() => {
+          if (window.fDb && window.fGetDoc && window.fSetDoc && window.fDoc) {
+            finish(true);
+          }
+        }, 120);
+        const timerId = setTimeout(() => {
+          finish(Boolean(window.fDb && window.fGetDoc && window.fDoc));
+        }, timeoutMs);
+      });
+    }
+
+    function parseFirestoreTimeMs(val) {
+      if (!val) return 0;
+      try {
+        if (typeof val === "number") return Number.isFinite(val) ? val : 0;
+        if (typeof val === "string") {
+          const parsed = Date.parse(val);
+          return Number.isFinite(parsed) ? parsed : 0;
+        }
+        if (typeof val.toMillis === "function") return val.toMillis();
+        if (typeof val.seconds === "number") return val.seconds * 1000;
+        if (val instanceof Date) return val.getTime();
+      } catch (e) {}
+      return 0;
+    }
+
+    function isFirestoreOfflineError(err) {
+      if (!err) return false;
+      const code = String(err.code || "").toLowerCase();
+      const msg = String(err.message || err || "").toLowerCase();
+      return (
+        code === "unavailable" ||
+        code === "failed-precondition" ||
+        msg.includes("offline") ||
+        msg.includes("network") ||
+        msg.includes("failed to get document from server")
+      );
+    }
+
+    async function safeGetDocServerFirst(docRef) {
+      if (!docRef) return { snap: null, error: null, fromServer: false };
+      if (typeof window.fGetDocFromServer === "function") {
+        try {
+          const snap = await window.fGetDocFromServer(docRef);
+          return { snap, error: null, fromServer: true };
+        } catch (err) {
+          if (isFirestoreOfflineError(err) && typeof window.fGetDoc === "function") {
+            try {
+              const cacheSnap = await window.fGetDoc(docRef);
+              return { snap: cacheSnap, error: null, fromServer: false };
+            } catch (cacheErr) {
+              return { snap: null, error: cacheErr || err, fromServer: false };
+            }
+          }
+          return { snap: null, error: err, fromServer: false };
+        }
+      }
+      if (typeof window.fGetDoc === "function") {
+        try {
+          const snap = await window.fGetDoc(docRef);
+          return { snap, error: null, fromServer: false };
+        } catch (err) {
+          return { snap: null, error: err, fromServer: false };
+        }
+      }
+      return { snap: null, error: new Error("Firestore getDoc unavailable"), fromServer: false };
+    }
+
+    async function safeGetDocsServerFirst(qOrCollRef) {
+      if (!qOrCollRef) return { snap: null, error: null, fromServer: false };
+      if (typeof window.fGetDocsFromServer === "function") {
+        try {
+          const snap = await window.fGetDocsFromServer(qOrCollRef);
+          return { snap, error: null, fromServer: true };
+        } catch (err) {
+          if (isFirestoreOfflineError(err) && typeof window.fGetDocs === "function") {
+            try {
+              const cacheSnap = await window.fGetDocs(qOrCollRef);
+              return { snap: cacheSnap, error: null, fromServer: false };
+            } catch (cacheErr) {
+              return { snap: null, error: cacheErr || err, fromServer: false };
+            }
+          }
+          return { snap: null, error: err, fromServer: false };
+        }
+      }
+      if (typeof window.fGetDocs === "function") {
+        try {
+          const snap = await window.fGetDocs(qOrCollRef);
+          return { snap, error: null, fromServer: false };
+        } catch (err) {
+          return { snap: null, error: err, fromServer: false };
+        }
+      }
+      return { snap: null, error: new Error("Firestore getDocs unavailable"), fromServer: false };
+    }
+
+    async function syncMadrasaWorkspaceDocsToFirestore(madrasaId, opts = {}) {
+      const mId = normalizeMadrasaCode(madrasaId);
+      if (!mId || mId === "MDR-01") {
+        return { ok: false, coreSynced: false, errors: ["Invalid madrasaId"] };
+      }
+
+      const ready = await ensureFirebaseReady(8000);
+      if (!ready || !window.fDb || !window.fSetDoc || !window.fDoc) {
+        return { ok: false, coreSynced: false, errors: ["Firebase SDK unavailable"] };
+      }
+
+      const nowIso = opts.updatedAt || new Date().toISOString();
+      const rawName = opts.name !== undefined ? String(opts.name).trim() : "";
+      const rawSub = opts.subtitle !== undefined ? String(opts.subtitle).trim() : (opts.sub !== undefined ? String(opts.sub).trim() : "");
+      const rawTerm = opts.academicTerm !== undefined ? String(opts.academicTerm).trim() : "";
+      const rawMode = opts.mode !== undefined ? (opts.mode === "residential" ? "residential" : opts.mode === "online" ? "online" : "day") : undefined;
+      const safeFirestoreMode = rawMode ? (rawMode === "residential" ? "residential" : "day") : undefined;
+      const pUser = opts.principalUser !== undefined ? String(opts.principalUser).trim().slice(0, 80) : undefined;
+      const pPass = opts.principalPass !== undefined ? String(opts.principalPass).trim().slice(0, 80) : undefined;
+
+      // Clamp strings cleanly to match Firestore security rule bounds
+      const safeName = rawName ? rawName.slice(0, 120) : "";
+      const safeSubSettings = rawSub ? rawSub.slice(0, 120) : "";
+      const safeSubMadrasa = rawSub ? rawSub.slice(0, 140) : "";
+      const safeTerm = rawTerm ? rawTerm.slice(0, 80) : "";
+
+      const madrasaPayload = {
+        madrasaId: mId,
+        ownerId: opts.ownerId || "portal-session",
+        updatedAt: nowIso
+      };
+      if (opts.createdAt) madrasaPayload.createdAt = String(opts.createdAt).slice(0, 64);
+      if (safeName) madrasaPayload.name = safeName;
+      if (safeSubMadrasa) madrasaPayload.subtitle = safeSubMadrasa;
+      if (safeTerm) madrasaPayload.academicTerm = safeTerm;
+      if (rawMode) madrasaPayload.mode = rawMode;
+      if (pUser) madrasaPayload.principalUser = pUser;
+      if (pPass) madrasaPayload.principalPass = pPass;
+
+      const underscoreSettingsPayload = {
+        madrasaId: mId,
+        ownerId: opts.ownerId || "portal-session",
+        updatedAt: nowIso
+      };
+      if (safeName) underscoreSettingsPayload.name = safeName;
+      if (safeSubSettings) {
+        underscoreSettingsPayload.sub = safeSubSettings;
+        underscoreSettingsPayload.subtitle = safeSubMadrasa;
+      }
+      if (safeTerm) underscoreSettingsPayload.academicTerm = safeTerm;
+      if (safeFirestoreMode) {
+        underscoreSettingsPayload.mode = safeFirestoreMode;
+        underscoreSettingsPayload.campusModeFull = rawMode;
+      }
+      if (pUser && pPass) {
+        underscoreSettingsPayload.principalUser = pUser;
+        underscoreSettingsPayload.principalPass = pPass;
+        underscoreSettingsPayload.principalUsername = pUser;
+        underscoreSettingsPayload.principalPassword = pPass;
+        underscoreSettingsPayload.username = pUser;
+        underscoreSettingsPayload.password = pPass;
+      }
+      if (opts.includeConfig) {
+        underscoreSettingsPayload.enableSalahTracking = Boolean(enableSalahTracking);
+        underscoreSettingsPayload.enableShiftTransitTracking = Boolean(enableShiftTransitTracking);
+        underscoreSettingsPayload.enableOnlineFeatures = Boolean(enableOnlineFeatures);
+        underscoreSettingsPayload.defaultOnlineLink = currentOnlineClassLink || "https://meet.google.com/new";
+        underscoreSettingsPayload.customTraits = Array.isArray(customTraits) ? customTraits : [];
+        underscoreSettingsPayload.cleanDatabaseMode = true;
+        underscoreSettingsPayload.demoCleared = true;
+      }
+
+      const generalPayload = {
+        madrasaId: mId,
+        ownerId: opts.ownerId || "portal-session",
+        updatedAt: nowIso
+      };
+      if (safeName) generalPayload.name = safeName;
+      if (safeSubSettings) generalPayload.sub = safeSubSettings;
+      if (safeTerm) generalPayload.academicTerm = safeTerm;
+      if (safeFirestoreMode) {
+        generalPayload.mode = safeFirestoreMode;
+        generalPayload.campusModeFull = rawMode;
+      }
+      if (pUser && pPass) {
+        generalPayload.principalUsername = pUser;
+        generalPayload.principalPassword = pPass;
+      }
+      if (opts.akhlaqAlertThreshold !== undefined) {
+        generalPayload.akhlaqAlertThreshold = opts.akhlaqAlertThreshold;
+      }
+
+      const writeTasks = [
+        {
+          key: `madrasas/${mId}`,
+          critical: true,
+          promise: window.fSetDoc(window.fDoc(window.fDb, "madrasas", mId), madrasaPayload, { merge: true })
+        },
+        {
+          key: `settings/_${mId}`,
+          critical: true,
+          promise: window.fSetDoc(window.fDoc(window.fDb, "settings", `_${mId}`), underscoreSettingsPayload, { merge: true })
+        },
+        {
+          key: `settings/general_${mId}`,
+          critical: false,
+          promise: window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`), generalPayload, { merge: true })
+        },
+        {
+          key: `madrasas/${mId}/settings/general`,
+          critical: false,
+          promise: window.fSetDoc(window.fDoc(window.fDb, "madrasas", mId, "settings", "general"), generalPayload, { merge: true })
+        }
+      ];
+
+      if (pUser && pPass) {
+        writeTasks.push({
+          key: `settings/principal_auth_${mId}`,
+          critical: true,
+          promise: window.fSetDoc(
+            window.fDoc(window.fDb, "settings", `principal_auth_${mId}`),
+            {
+              madrasaId: mId,
+              username: pUser,
+              password: pPass,
+              ownerId: opts.ownerId || "portal-session",
+              updatedAt: nowIso
+            },
+            { merge: true }
+          )
+        });
+      }
+
+      if (opts.includeConfig) {
+        writeTasks.push({
+          key: `settings/campus_config_${mId}`,
+          critical: false,
+          promise: window.fSetDoc(
+            window.fDoc(window.fDb, "settings", `campus_config_${mId}`),
+            {
+              madrasaId: mId,
+              enableSalahTracking: Boolean(enableSalahTracking),
+              enableShiftTransitTracking: Boolean(enableShiftTransitTracking),
+              enableOnlineFeatures: Boolean(enableOnlineFeatures),
+              defaultOnlineLink: currentOnlineClassLink || "https://meet.google.com/new",
+              customTraits: Array.isArray(customTraits) ? customTraits : [],
+              cleanDatabaseMode: true,
+              demoCleared: true,
+              ownerId: opts.ownerId || "portal-session",
+              updatedAt: nowIso
+            },
+            { merge: true }
+          )
+        });
+      }
+
+      if (opts.includeData) {
+        const campusDataPayload = {
+          madrasaId: mId,
+          demoCleared: true,
+          cleanDatabaseMode: true,
+          ownerId: opts.ownerId || "portal-session",
+          updatedAt: nowIso
+        };
+        if (safeName) campusDataPayload.name = safeName;
+        if (safeSubMadrasa) campusDataPayload.subtitle = safeSubMadrasa;
+        if (safeFirestoreMode) {
+          campusDataPayload.mode = safeFirestoreMode;
+          campusDataPayload.campusModeFull = rawMode;
+        }
+        writeTasks.push({
+          key: `settings/campus_data_${mId}`,
+          critical: false,
+          promise: window.fSetDoc(window.fDoc(window.fDb, "settings", `campus_data_${mId}`), campusDataPayload, { merge: true })
+        });
+      }
+
+      const settled = await Promise.allSettled(writeTasks.map((tItem) => tItem.promise));
+      const errors = [];
+      let madrasaOk = false;
+      let settingsUnderscoreOk = false;
+      let authOk = !(pUser && pPass);
+
+      settled.forEach((res, idx) => {
+        const task = writeTasks[idx];
+        if (res.status === "fulfilled") {
+          if (task.key.startsWith("madrasas/") && !task.key.includes("/settings/")) madrasaOk = true;
+          if (task.key === `settings/_${mId}`) settingsUnderscoreOk = true;
+          if (task.key === `settings/principal_auth_${mId}`) authOk = true;
+        } else {
+          const msg = res.reason && res.reason.message ? res.reason.message : String(res.reason || "Unknown error");
+          errors.push(`${task.key}: ${msg}`);
+          console.error(`Firestore sync error [${task.key}]:`, res.reason);
+        }
+      });
+
+      const coreSynced = madrasaOk && settingsUnderscoreOk && authOk;
+      return { ok: errors.length === 0, coreSynced, errors };
+    }
+
     // Per-Device Unique Madrasa ID Generator & Legacy Global Overwrite Cleanup
     function getOrCreateDeviceMadrasaId() {
       try {
@@ -6470,25 +6799,28 @@
         return;
       }
 
-      const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
+      const mId = normalizeMadrasaCode(currentMadrasaId || deviceMadrasaId);
       principalAuth = { username: newU, password: newP };
       try {
         localStorage.setItem(`hifz_principal_auth_${mId}`, JSON.stringify(principalAuth));
+        const reg = getLocalMadrasaRegistry();
+        if (reg[mId]) {
+          reg[mId].principalUser = newU;
+          reg[mId].principalPass = newP;
+          reg[mId].updatedAt = new Date().toISOString();
+          saveLocalMadrasaRegistry(reg);
+        }
       } catch (err) {}
 
+      let cloudSynced = false;
       try {
-        if (window.fDb && window.fSetDoc && window.fDoc && mId && mId !== "MDR-01") {
-          await window.fSetDoc(
-            window.fDoc(window.fDb, "settings", `principal_auth_${mId}`),
-            {
-              madrasaId: mId,
-              username: newU,
-              password: newP,
-              ownerId: "portal-session",
-              updatedAt: window.fTimestamp ? window.fTimestamp() : new Date()
-            },
-            { merge: true }
-          );
+        if (mId && mId !== "MDR-01") {
+          const syncRes = await syncMadrasaWorkspaceDocsToFirestore(mId, {
+            principalUser: newU,
+            principalPass: newP,
+            updatedAt: new Date().toISOString()
+          });
+          cloudSynced = Boolean(syncRes && syncRes.coreSynced);
         }
       } catch (err) {
         console.warn("Principal auth Firestore sync note:", err);
@@ -6500,7 +6832,11 @@
       if (confEl) confEl.value = "";
 
       if (window.showToast) {
-        window.showToast(t(`✓ Principal credentials updated! New Login ID: ${newU}`, `✓ പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങൾ മാറ്റി! പുതിയ ഐഡി: ${newU}`));
+        if (cloudSynced || !window.fDb) {
+          window.showToast(t(`✓ Principal credentials updated & synced to Cloud! New Login ID: ${newU}`, `✓ പ്രിൻസിപ്പൽ ലോഗിൻ വിവരങ്ങൾ ക്ലൗഡിലേക്ക് മാറ്റി! പുതിയ ഐഡി: ${newU}`));
+        } else {
+          window.showToast(t(`⚠️ Principal credentials saved locally (${newU}), but Cloud sync failed. Check connection.`, `⚠️ ഈ ഫോണിൽ സേവ് ചെയ്തു (${newU}), പക്ഷെ ക്ലൗഡ് സിങ്ക് പരാജയപ്പെട്ടു.`));
+        }
       }
     };
 
@@ -6619,15 +6955,11 @@
       }
 
       try {
-        if (window.fDb && window.fSetDoc && window.fDoc && mId && mId !== "MDR-01") {
-          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-          const payload = {
-            madrasaId: mId,
+        if (mId && mId !== "MDR-01") {
+          await syncMadrasaWorkspaceDocsToFirestore(mId, {
             mode: newMode,
-            ownerId: "portal-session",
-            updatedAt: nowTs
-          };
-          await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`), payload, { merge: true });
+            updatedAt: new Date().toISOString()
+          });
         }
         if (window.showToast) {
           window.showToast("Campus mode switched to " + modeLabel + "!");
@@ -6671,15 +7003,11 @@
       }
 
       try {
-        if (window.fDb && window.fSetDoc && window.fDoc && mId && mId !== "MDR-01") {
-          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-          const payload = {
-            madrasaId: mId,
+        if (mId && mId !== "MDR-01") {
+          await syncMadrasaWorkspaceDocsToFirestore(mId, {
             mode: newMode,
-            ownerId: "portal-session",
-            updatedAt: nowTs
-          };
-          await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`), payload, { merge: true });
+            updatedAt: new Date().toISOString()
+          });
         }
         if (window.showToast) {
           window.showToast("Campus mode set to " + modeLabel + "!");
@@ -8083,28 +8411,47 @@
       // 2. Background Firestore synchronization inside a resilient try/catch block (skip in Demo Sandbox)
       if (!isDemoSandbox) {
         try {
+          await ensureFirebaseReady(5000);
           if (window.fDb && window.fSetDoc && window.fDoc) {
             const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-            const firestoreStudentPayload = {
-              id: studentId,
-              studentId,
-              name: rawName,
-              batch,
-              ustadhName,
-              juzCompleted,
-              currentJuz,
-              currentSurah,
-              guardianName,
-              guardianPhone,
-              pin,
+            const safePin = String(pin || "1234").trim().padEnd(4, "0").slice(0, 16);
+            const safePhone = (String(guardianPhone || "").trim().length >= 3 ? String(guardianPhone).trim() : "+91 98470 00000").slice(0, 30);
+            const safeName = (rawName.length >= 2 ? rawName : rawName + " ").slice(0, 100);
+            const safeUstadh = (ustadhName.length >= 2 ? ustadhName : "Ustadh").slice(0, 80);
+            const scopedStdRef = window.fDoc(window.fDb, "students", getScopedDocId(studentId, mId));
+
+            const updatePayload = {
+              id: studentId.slice(0, 64),
+              studentId: studentId.slice(0, 32),
+              name: safeName,
+              batch: (batch || "Halqa General").slice(0, 60),
+              ustadhName: safeUstadh,
+              juzCompleted: Math.max(0, Math.min(30, Number(juzCompleted) || 0)),
+              currentJuz: Math.max(1, Math.min(30, Number(currentJuz) || 1)),
+              currentSurah: (currentSurah || "Al-Fatiha").slice(0, 80),
+              guardianName: (guardianName || "Guardian").slice(0, 100),
+              guardianPhone: safePhone,
+              pin: safePin,
               madrasaId: mId,
-              ownerId: "portal-session",
-              createdAt: nowTs,
               updatedAt: nowTs
             };
-            window.fSetDoc(window.fDoc(window.fDb, "students", getScopedDocId(studentId, mId)), firestoreStudentPayload).catch((colErr) => {
-              console.warn("Primary students collection sync note:", colErr);
-            });
+
+            (async () => {
+              try {
+                const existingSnap = window.fGetDoc ? await window.fGetDoc(scopedStdRef).catch(() => null) : null;
+                if (existingSnap && existingSnap.exists() && window.fUpdateDoc) {
+                  await window.fUpdateDoc(scopedStdRef, updatePayload);
+                } else {
+                  await window.fSetDoc(scopedStdRef, {
+                    ...updatePayload,
+                    ownerId: "portal-session",
+                    createdAt: nowTs
+                  });
+                }
+              } catch (colErr) {
+                console.warn("Primary students collection sync note:", colErr);
+              }
+            })();
 
             const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${mId}`);
             window.fSetDoc(campusDataRef, {
@@ -8224,24 +8571,44 @@
       // 2. Background Firestore synchronization inside a resilient try/catch block (skip in Demo Sandbox)
       if (!isDemoSandbox) {
         try {
+          await ensureFirebaseReady(5000);
           if (window.fDb && window.fSetDoc && window.fDoc) {
             const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-            const firestoreTeacherPayload = {
-              id: teacherId,
-              teacherId,
-              name: formattedName,
-              batch,
-              phone,
-              username,
-              pin,
+            const safeUsername = (username.length >= 2 ? username : (username + "_u").slice(0, 40)).slice(0, 40);
+            const safePin = (String(pin || "1234").trim().length >= 3 ? String(pin).trim() : String(pin || "123").trim().padEnd(3, "0")).slice(0, 30);
+            const safePhone = (String(phone || "").trim().length >= 3 ? String(phone).trim() : "+91 98470 00000").slice(0, 30);
+            const safeName = (formattedName.length >= 2 ? formattedName : "Ustadh " + formattedName).slice(0, 100);
+            const safeBatch = (batch || "Halqa General").slice(0, 80);
+            const scopedTchRef = window.fDoc(window.fDb, "teachers", getScopedDocId(teacherId, mId));
+
+            const teacherUpdatePayload = {
+              id: teacherId.slice(0, 64),
+              teacherId: teacherId.slice(0, 64),
+              name: safeName,
+              batch: safeBatch,
+              phone: safePhone,
+              username: safeUsername,
+              pin: safePin,
               madrasaId: mId,
-              ownerId: "portal-session",
-              createdAt: nowTs,
               updatedAt: nowTs
             };
-            window.fSetDoc(window.fDoc(window.fDb, "teachers", getScopedDocId(teacherId, mId)), firestoreTeacherPayload).catch((colErr) => {
-              console.warn("Primary teachers collection sync note:", colErr);
-            });
+
+            (async () => {
+              try {
+                const existingSnap = window.fGetDoc ? await window.fGetDoc(scopedTchRef).catch(() => null) : null;
+                if (existingSnap && existingSnap.exists() && window.fUpdateDoc) {
+                  await window.fUpdateDoc(scopedTchRef, teacherUpdatePayload);
+                } else {
+                  await window.fSetDoc(scopedTchRef, {
+                    ...teacherUpdatePayload,
+                    ownerId: "portal-session",
+                    createdAt: nowTs
+                  });
+                }
+              } catch (colErr) {
+                console.warn("Primary teachers collection sync note:", colErr);
+              }
+            })();
 
             const campusDataRef = window.fDoc(window.fDb, "settings", `campus_data_${mId}`);
             window.fSetDoc(campusDataRef, {
@@ -8413,51 +8780,32 @@
         window.subscribeToMadrasaWorkspace(currentMadrasaId);
       }
 
-      // Live Production Mode: sync strictly to this Madrasa's isolated Firestore document (NEVER global settings/general)
+      // Live Production Mode: sync strictly to this Madrasa's isolated Firestore documents (NEVER global settings/general)
       try {
-        if (window.fDb && window.fSetDoc && window.fDoc) {
-          const mId = (currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
-          const nowTs = (window.fTimestamp && typeof window.fTimestamp === "function") ? window.fTimestamp() : new Date();
-          const safeFirestoreMode = campusMode === "residential" ? "residential" : "day";
-          const payload = {
-            madrasaId: mId,
-            mode: safeFirestoreMode,
-            campusModeFull: campusMode,
-            name,
-            sub,
-            academicTerm,
-            akhlaqAlertThreshold: 75,
-            ownerId: "portal-session",
-            updatedAt: nowTs
-          };
-          await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`), payload, { merge: true });
-          if (principalAuth && principalAuth.username && principalAuth.password) {
-            window.fSetDoc(
-              window.fDoc(window.fDb, "settings", `principal_auth_${mId}`),
-              {
-                madrasaId: mId,
-                username: String(principalAuth.username).trim(),
-                password: String(principalAuth.password).trim(),
-                ownerId: "portal-session",
-                updatedAt: nowTs
-              },
-              { merge: true }
-            ).catch(() => {});
-          }
-          window.fSetDoc(window.fDoc(window.fDb, "madrasas", mId), {
-            madrasaId: mId,
-            name,
-            subtitle: sub,
-            academicTerm,
-            mode: campusMode,
-            updatedAt: new Date().toISOString()
-          }, { merge: true }).catch(() => {});
-          window.fSetDoc(window.fDoc(window.fDb, "madrasas", mId, "settings", "general"), payload, { merge: true }).catch(() => {});
-          await syncCampusConfigToFirestore();
-        }
+        const mId = normalizeMadrasaCode(currentMadrasaId || deviceMadrasaId);
+        const safeName = (name || "Hifz Institution").slice(0, 120);
+        const safeSub = (sub || "Hifz Tracker Portal").slice(0, 120);
+        const safeTerm = (academicTerm || "1448 AH · Rabi Al-Thani Term").slice(0, 80);
+
+        const syncRes = await syncMadrasaWorkspaceDocsToFirestore(mId, {
+          name: safeName,
+          subtitle: safeSub,
+          academicTerm: safeTerm,
+          mode: campusMode,
+          principalUser: principalAuth && principalAuth.username ? principalAuth.username : undefined,
+          principalPass: principalAuth && principalAuth.password ? principalAuth.password : undefined,
+          akhlaqAlertThreshold: 75,
+          includeConfig: true,
+          updatedAt: new Date().toISOString()
+        });
+        await syncCampusConfigToFirestore();
         renderAllViews();
         if (window.showToast) {
-          window.showToast(t("✓ Campus settings saved & synced to isolated workspace!", "✓ ക്യാമ്പസ് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു!"));
+          if (syncRes && syncRes.coreSynced) {
+            window.showToast(t("✓ Campus settings saved & synced to Cloud workspace!", "✓ ക്യാമ്പസ് ക്രമീകരണങ്ങൾ ക്ലൗഡിലേക്ക് സേവ് ചെയ്തു!"));
+          } else {
+            window.showToast(t("✓ Campus settings saved locally!", "✓ ക്യാമ്പസ് ക്രമീകരണങ്ങൾ സേവ് ചെയ്തു!"));
+          }
         }
       } catch (err) {
         console.warn("Settings save note:", err);
@@ -10337,19 +10685,22 @@
               } catch (err) {}
               return;
             }
-            const prefixes = ["general_", "campus_data_", "campus_config_", "principal_auth_"];
+            const prefixes = ["general_", "campus_data_", "campus_config_", "principal_auth_", "_"];
             for (const pref of prefixes) {
               if (docId.startsWith(pref)) {
-                const mId = (d.madrasaId || docId.slice(pref.length) || "").trim().toUpperCase();
+                const mId = normalizeMadrasaCode(d.madrasaId || docId.slice(pref.length));
                 const entry = ensureEntry(mId);
                 if (!entry) break;
                 if (d.name) entry.name = d.name;
-                if (d.subtitle) entry.subtitle = d.subtitle;
+                if (d.subtitle || d.sub) entry.subtitle = d.subtitle || d.sub;
                 const rawMode = d.campusModeFull || d.mode;
                 if (rawMode) entry.mode = rawMode === "residential" ? "residential" : rawMode === "online" ? "online" : "day";
-                if (pref === "principal_auth_") {
-                  if (d.username) entry.principalUser = d.username;
-                  if (d.password) entry.principalPass = d.password;
+                if (pref === "principal_auth_" || pref === "_") {
+                  if (d.username || d.principalUser) entry.principalUser = d.username || d.principalUser;
+                  if (d.password || d.principalPass) entry.principalPass = d.password || d.principalPass;
+                } else if (pref === "general_") {
+                  if (d.principalUsername && !entry.principalUser) entry.principalUser = d.principalUsername;
+                  if (d.principalPassword && !entry.principalPass) entry.principalPass = d.principalPassword;
                 }
                 if (d.updatedAt) entry.updatedAt = d.updatedAt;
                 break;
@@ -10688,72 +11039,20 @@
         updatedAt: nowIso
       };
 
-      // 3. Instantly push and save to Firestore madrasas/{rawCode} & settings/*_{rawCode}
-      let cloudSynced = false;
-      if (window.fDb && window.fSetDoc && window.fDoc) {
-        const safeFirestoreMode = mMode === "residential" ? "residential" : "day";
-        try {
-          await Promise.all([
-            window.fSetDoc(
-              window.fDoc(window.fDb, "madrasas", rawCode),
-              {
-                madrasaId: rawCode,
-                name: mName,
-                subtitle: mSub,
-                mode: mMode,
-                principalUser: pUser,
-                principalPass: pPass,
-                ownerId: "portal-session",
-                createdAt: nowIso,
-                updatedAt: nowIso
-              },
-              { merge: true }
-            ),
-            window.fSetDoc(
-              window.fDoc(window.fDb, "settings", `general_${rawCode}`),
-              {
-                name: mName,
-                sub: mSub,
-                mode: safeFirestoreMode,
-                campusModeFull: mMode,
-                madrasaId: rawCode,
-                principalUsername: pUser,
-                principalPassword: pPass,
-                ownerId: "portal-session",
-                updatedAt: nowIso
-              },
-              { merge: true }
-            ),
-            window.fSetDoc(
-              window.fDoc(window.fDb, "settings", `campus_data_${rawCode}`),
-              {
-                name: mName,
-                subtitle: mSub,
-                mode: safeFirestoreMode,
-                campusModeFull: mMode,
-                madrasaId: rawCode,
-                ownerId: "portal-session",
-                updatedAt: nowIso
-              },
-              { merge: true }
-            ),
-            window.fSetDoc(
-              window.fDoc(window.fDb, "settings", `principal_auth_${rawCode}`),
-              {
-                username: pUser,
-                password: pPass,
-                madrasaId: rawCode,
-                ownerId: "portal-session",
-                updatedAt: nowIso
-              },
-              { merge: true }
-            )
-          ]);
-          cloudSynced = true;
-        } catch (err) {
-          console.error("Failed to sync new Madrasa to Firestore:", err);
-        }
-      }
+      // 3. Instantly push and save to Firestore madrasas/{rawCode}, settings/_{rawCode}, and workspace docs
+      const syncRes = await syncMadrasaWorkspaceDocsToFirestore(rawCode, {
+        name: mName,
+        subtitle: mSub,
+        mode: mMode,
+        principalUser: pUser,
+        principalPass: pPass,
+        ownerId: "portal-session",
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        includeConfig: true,
+        includeData: true
+      });
+      const cloudSynced = Boolean(syncRes && syncRes.coreSynced);
 
       // Clear form inputs
       const cInp = document.getElementById("master-new-mcode");
@@ -10784,8 +11083,8 @@
       }
     };
 
-    window.handleMasterUpdatePrincipalPass = function(madrasaId) {
-      const mId = String(madrasaId || "").trim().toUpperCase();
+    window.handleMasterUpdatePrincipalPass = async function(madrasaId) {
+      const mId = normalizeMadrasaCode(madrasaId);
       if (!mId) return;
 
       const uInp = document.getElementById("master-puser-" + mId);
@@ -10815,35 +11114,38 @@
         masterMadrasasMap[mId].updatedAt = nowIso;
       }
 
-      if (window.fDb && window.fSetDoc && window.fDoc) {
-        window.fSetDoc(
-          window.fDoc(window.fDb, "settings", `principal_auth_${mId}`),
-          { username: newU, password: newP, madrasaId: mId, ownerId: "portal-session", updatedAt: nowIso },
-          { merge: true }
-        ).catch((err) => console.warn("principal_auth update sync error:", err));
-
-        window.fSetDoc(
-          window.fDoc(window.fDb, "madrasas", mId),
-          { madrasaId: mId, principalUser: newU, principalPass: newP, ownerId: "portal-session", updatedAt: nowIso },
-          { merge: true }
-        ).catch((err) => console.warn("madrasas principal update sync error:", err));
-      }
+      const syncRes = await syncMadrasaWorkspaceDocsToFirestore(mId, {
+        principalUser: newU,
+        principalPass: newP,
+        ownerId: "portal-session",
+        updatedAt: nowIso
+      });
+      const cloudSynced = Boolean(syncRes && syncRes.coreSynced);
 
       renderMasterAdminDashboard();
 
       if (window.showToast) {
-        window.showToast(
-          t(
-            `✓ Updated Principal credentials for [${mId}] → ID: ${newU} / Pass: ${newP}`,
-            `✓ [${mId}] മദ്രസയുടെ പ്രിൻസിപ്പൽ പാസ്‌വേഡ് വിജയകരമായി പുതുക്കി (${newU} / ${newP})`
-          )
-        );
+        if (cloudSynced || !window.fDb) {
+          window.showToast(
+            t(
+              `✓ Updated Principal credentials for [${mId}] & synced to Cloud → ID: ${newU} / Pass: ${newP}`,
+              `✓ [${mId}] മദ്രസയുടെ പ്രിൻസിപ്പൽ പാസ്‌വേഡ് ക്ലൗഡിലേക്ക് പുതുക്കി (${newU} / ${newP})`
+            )
+          );
+        } else {
+          window.showToast(
+            t(
+              `⚠️ Updated [${mId}] locally, but Cloud sync failed. Please retry.`,
+              `⚠️ [${mId}] ഈ ഫോണിൽ മാറ്റി, പക്ഷെ ക്ലൗഡ് സിങ്ക് പരാജയപ്പെട്ടു.`
+            )
+          );
+        }
       }
     };
 
-    window.handleMasterChangeMadrasaMode = function(madrasaId, newModeVal) {
+    window.handleMasterChangeMadrasaMode = async function(madrasaId, newModeVal) {
       if (!currentUser || currentUser.role !== "master") return;
-      const mId = String(madrasaId || "").trim().toUpperCase();
+      const mId = normalizeMadrasaCode(madrasaId);
       if (!mId) return;
 
       const newMode = newModeVal === "residential" ? "residential" : newModeVal === "online" ? "online" : "day";
@@ -10873,26 +11175,11 @@
         applyCampusModeUI();
       }
 
-      if (window.fDb && window.fSetDoc && window.fDoc) {
-        const safeFirestoreMode = newMode === "residential" ? "residential" : "day";
-        window.fSetDoc(
-          window.fDoc(window.fDb, "settings", `general_${mId}`),
-          { mode: safeFirestoreMode, campusModeFull: newMode, madrasaId: mId, ownerId: "portal-session", updatedAt: nowIso },
-          { merge: true }
-        ).catch((err) => console.warn("general mode sync error:", err));
-
-        window.fSetDoc(
-          window.fDoc(window.fDb, "settings", `campus_data_${mId}`),
-          { mode: safeFirestoreMode, campusModeFull: newMode, madrasaId: mId, ownerId: "portal-session", updatedAt: nowIso },
-          { merge: true }
-        ).catch((err) => console.warn("campus_data mode sync error:", err));
-
-        window.fSetDoc(
-          window.fDoc(window.fDb, "madrasas", mId),
-          { madrasaId: mId, mode: newMode, ownerId: "portal-session", updatedAt: nowIso },
-          { merge: true }
-        ).catch((err) => console.warn("madrasas mode sync error:", err));
-      }
+      await syncMadrasaWorkspaceDocsToFirestore(mId, {
+        mode: newMode,
+        ownerId: "portal-session",
+        updatedAt: nowIso
+      });
 
       renderMasterAdminDashboard();
 
@@ -10914,12 +11201,9 @@
         }
         return;
       }
-      const oldId = String(oldMadrasaId || "").trim().toUpperCase();
+      const oldId = normalizeMadrasaCode(oldMadrasaId);
       const inp = document.getElementById(`master-mcode-${oldId}`);
-      const newId = (inp && inp.value ? inp.value : "")
-        .trim()
-        .toUpperCase()
-        .replace(/[^A-Z0-9_-]/g, "");
+      const newId = normalizeMadrasaCode(inp && inp.value ? inp.value : "");
 
       if (!newId || newId === "MDR-01") {
         if (window.showToast) {
@@ -10960,6 +11244,7 @@
           "hifz_campus_mode_",
           "hifz_principal_auth_",
           "live_students_",
+          "live_ustadhs_",
           "live_teachers_",
           "live_logs_",
           "live_leaves_",
@@ -10984,50 +11269,18 @@
       delete masterMadrasasMap[oldId];
       masterMadrasasMap[newId] = updatedEntry;
 
-      if (window.fDb && window.fSetDoc && window.fDoc) {
-        const safeFirestoreMode = updatedEntry.mode === "residential" ? "residential" : "day";
-        window.fSetDoc(
-          window.fDoc(window.fDb, "madrasas", newId),
-          {
-            madrasaId: newId,
-            name: updatedEntry.name,
-            subtitle: updatedEntry.subtitle,
-            mode: updatedEntry.mode || "day",
-            principalUser: updatedEntry.principalUser || "admin",
-            principalPass: updatedEntry.principalPass || "admin786",
-            updatedAt: nowIso
-          },
-          { merge: true }
-        ).catch(() => {});
-
-        window.fSetDoc(
-          window.fDoc(window.fDb, "settings", `general_${newId}`),
-          {
-            madrasaId: newId,
-            name: updatedEntry.name,
-            sub: updatedEntry.subtitle,
-            mode: safeFirestoreMode,
-            campusModeFull: updatedEntry.mode || "day",
-            principalUsername: updatedEntry.principalUser || "admin",
-            principalPassword: updatedEntry.principalPass || "admin786",
-            ownerId: "master-admin",
-            updatedAt: nowIso
-          },
-          { merge: true }
-        ).catch(() => {});
-
-        window.fSetDoc(
-          window.fDoc(window.fDb, "settings", `principal_auth_${newId}`),
-          {
-            madrasaId: newId,
-            username: updatedEntry.principalUser || "admin",
-            password: updatedEntry.principalPass || "admin786",
-            ownerId: "master-admin",
-            updatedAt: nowIso
-          },
-          { merge: true }
-        ).catch(() => {});
-      }
+      await syncMadrasaWorkspaceDocsToFirestore(newId, {
+        name: updatedEntry.name || "Hifz Institution Portal",
+        subtitle: updatedEntry.subtitle || "Kerala · India",
+        mode: updatedEntry.mode || "day",
+        principalUser: updatedEntry.principalUser || "admin",
+        principalPass: updatedEntry.principalPass || "admin786",
+        ownerId: "portal-session",
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        includeConfig: true,
+        includeData: true
+      });
 
       updateCampusIdentityUI();
       renderMasterAdminDashboard();
@@ -11207,6 +11460,7 @@
 
         // Clean up associated workspace settings documents (best-effort)
         await Promise.allSettled([
+          window.fDeleteDoc(window.fDoc(window.fDb, "settings", `_${mId}`)),
           window.fDeleteDoc(window.fDoc(window.fDb, "settings", `general_${mId}`)),
           window.fDeleteDoc(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)),
           window.fDeleteDoc(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)),
@@ -11362,17 +11616,20 @@
     };
 
     async function fetchIsolatedMadrasaAuthFromFirestore(madrasaCode) {
-      const mId = String(madrasaCode || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+      const mId = normalizeMadrasaCode(madrasaCode);
       const result = {
         madrasaId: mId,
         exists: false,
         firestoreChecked: false,
         firestoreOnline: false,
+        firestoreError: null,
         principalCreds: null,
         teachers: [],
         students: [],
         madrasaDoc: null,
+        underscoreDoc: null,
         genDoc: null,
+        nestedGenDoc: null,
         cfgDoc: null,
         dataDoc: null,
         authDoc: null
@@ -11403,93 +11660,171 @@
         });
       };
 
-      // 1. Authenticate directly against Firestore workspace for this exact Madrasa Code
+      // Wait for Firebase SDK initialization so quick cross-device sign-ins never skip Firestore
+      await ensureFirebaseReady(8000);
+
+      // 1. Authenticate directly against remote Firestore workspace for this exact Madrasa Code (server-first)
       if (window.fDb && window.fGetDoc && window.fDoc) {
         result.firestoreChecked = true;
         let resolvedCount = 0;
-        const safeGetDoc = async (docRef) => {
-          try {
-            const snap = await window.fGetDoc(docRef);
-            resolvedCount++;
-            return snap;
-          } catch (err) {
-            return null;
+        const fetchErrors = [];
+        const credCandidates = [];
+
+        const recordCredCandidate = (usernameVal, passwordVal, updatedAtVal, priorityWeight) => {
+          const uStr = String(usernameVal || "").trim();
+          const pStr = String(passwordVal || "").trim();
+          if (uStr && pStr) {
+            credCandidates.push({
+              username: uStr,
+              password: pStr,
+              tsMs: parseFirestoreTimeMs(updatedAtVal),
+              priority: priorityWeight || 0
+            });
           }
         };
 
-        const [madrasaSnap, genSnap, cfgSnap, dataSnap, authSnap] = await Promise.all([
-          safeGetDoc(window.fDoc(window.fDb, "madrasas", mId)),
-          safeGetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`)),
-          safeGetDoc(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)),
-          safeGetDoc(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)),
-          safeGetDoc(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`))
-        ]);
+        const docQueries = [
+          safeGetDocServerFirst(window.fDoc(window.fDb, "madrasas", mId)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `general_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "madrasas", mId, "settings", "general"))
+        ];
+
+        const [madrasaRes, underscoreRes, genRes, cfgRes, dataRes, authRes, nestedGenRes] = await Promise.all(docQueries);
+
+        [madrasaRes, underscoreRes, genRes, cfgRes, dataRes, authRes, nestedGenRes].forEach((r) => {
+          if (r && r.snap) resolvedCount++;
+          else if (r && r.error) fetchErrors.push(r.error);
+        });
+
+        let madrasaSnap = madrasaRes && madrasaRes.snap;
+        const underscoreSnap = underscoreRes && underscoreRes.snap;
+        const genSnap = genRes && genRes.snap;
+        const cfgSnap = cfgRes && cfgRes.snap;
+        const dataSnap = dataRes && dataRes.snap;
+        const authSnap = authRes && authRes.snap;
+        const nestedGenSnap = nestedGenRes && nestedGenRes.snap;
+
+        // Fallback query on madrasas collection by field madrasaId if direct doc ID lookup was missing
+        if ((!madrasaSnap || !madrasaSnap.exists()) && window.fCollection && window.fQuery && window.fWhere) {
+          const fallbackRes = await safeGetDocsServerFirst(
+            window.fQuery(window.fCollection(window.fDb, "madrasas"), window.fWhere("madrasaId", "==", mId))
+          );
+          if (fallbackRes && fallbackRes.snap) {
+            resolvedCount++;
+            if (!fallbackRes.snap.empty) {
+              madrasaSnap = fallbackRes.snap.docs[0];
+            }
+          } else if (fallbackRes && fallbackRes.error) {
+            fetchErrors.push(fallbackRes.error);
+          }
+        }
 
         if (madrasaSnap && madrasaSnap.exists()) {
-          const d = madrasaSnap.data();
-          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+          const d = madrasaSnap.data() || {};
+          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
             result.madrasaDoc = d;
             result.exists = true;
             syncMadrasaDocIntoLocalAndMemory(d, mId);
-            if (d.principalUser && d.principalPass) {
-              result.principalCreds = {
-                username: String(d.principalUser).trim(),
-                password: String(d.principalPass).trim()
-              };
-            }
+            recordCredCandidate(d.principalUser || d.username, d.principalPass || d.password, d.updatedAt, 3);
           }
         }
+
+        if (underscoreSnap && underscoreSnap.exists()) {
+          const d = underscoreSnap.data() || {};
+          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+            result.underscoreDoc = d;
+            result.exists = true;
+            syncMadrasaDocIntoLocalAndMemory(
+              {
+                madrasaId: mId,
+                name: d.name,
+                subtitle: d.subtitle || d.sub,
+                academicTerm: d.academicTerm,
+                mode: d.campusModeFull || d.mode,
+                principalUser: d.principalUser || d.principalUsername || d.username,
+                principalPass: d.principalPass || d.principalPassword || d.password,
+                updatedAt: d.updatedAt
+              },
+              mId
+            );
+            recordCredCandidate(
+              d.principalUser || d.principalUsername || d.username,
+              d.principalPass || d.principalPassword || d.password,
+              d.updatedAt,
+              4
+            );
+            addUniqueTeachers(d.teachers);
+            addUniqueStudents(d.students);
+          }
+        }
+
         if (genSnap && genSnap.exists()) {
-          const d = genSnap.data();
-          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+          const d = genSnap.data() || {};
+          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
             result.genDoc = d;
             result.exists = true;
+            recordCredCandidate(d.principalUsername || d.principalUser, d.principalPassword || d.principalPass, d.updatedAt, 2);
           }
         }
+
+        if (nestedGenSnap && nestedGenSnap.exists()) {
+          const d = nestedGenSnap.data() || {};
+          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+            result.nestedGenDoc = d;
+            result.exists = true;
+            recordCredCandidate(d.principalUsername || d.principalUser, d.principalPassword || d.principalPass, d.updatedAt, 1);
+          }
+        }
+
         if (cfgSnap && cfgSnap.exists()) {
-          const d = cfgSnap.data();
-          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+          const d = cfgSnap.data() || {};
+          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
             result.cfgDoc = d;
             result.exists = true;
           }
         }
+
         if (dataSnap && dataSnap.exists()) {
-          const d = dataSnap.data();
-          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+          const d = dataSnap.data() || {};
+          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
             result.dataDoc = d;
             result.exists = true;
             addUniqueTeachers(d.teachers);
             addUniqueStudents(d.students);
           }
         }
+
         if (authSnap && authSnap.exists()) {
-          const d = authSnap.data();
-          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+          const d = authSnap.data() || {};
+          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
             result.authDoc = d;
             result.exists = true;
-            if (d.username && d.password) {
-              result.principalCreds = {
-                username: String(d.username).trim(),
-                password: String(d.password).trim()
-              };
-            }
+            recordCredCandidate(d.username || d.principalUser, d.password || d.principalPass, d.updatedAt, 5);
           }
         }
 
-        if (!result.principalCreds && result.genDoc && result.genDoc.principalUsername && result.genDoc.principalPassword) {
+        if (credCandidates.length > 0) {
+          credCandidates.sort((a, b) => {
+            if (b.tsMs !== a.tsMs) return b.tsMs - a.tsMs;
+            return b.priority - a.priority;
+          });
           result.principalCreds = {
-            username: String(result.genDoc.principalUsername).trim(),
-            password: String(result.genDoc.principalPassword).trim()
+            username: credCandidates[0].username,
+            password: credCandidates[0].password
           };
         }
 
-        // Also query Firestore teachers & students collections strictly scoped to mId
+        // Also query Firestore teachers & students collections strictly scoped to mId (server-first)
         if (window.fGetDocs && window.fCollection && window.fQuery && window.fWhere) {
           const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
-          try {
-            const tchSnap = await window.fGetDocs(window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter));
+          const tchRes = await safeGetDocsServerFirst(window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter));
+          if (tchRes && tchRes.snap) {
             resolvedCount++;
-            tchSnap.forEach((docSnap) => {
+            tchRes.snap.forEach((docSnap) => {
               const tData = docSnap.data() || {};
               if (!belongsToMadrasa(docSnap.id, tData, mId)) return;
               const cleanTchId = tData.teacherId || stripScopedDocIdPrefix(docSnap.id, mId);
@@ -11497,12 +11832,14 @@
               result.exists = true;
               addUniqueTeachers([{ ...tData, teacherId: cleanTchId }]);
             });
-          } catch (e) {}
+          } else if (tchRes && tchRes.error) {
+            fetchErrors.push(tchRes.error);
+          }
 
-          try {
-            const stdSnap = await window.fGetDocs(window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter));
+          const stdRes = await safeGetDocsServerFirst(window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter));
+          if (stdRes && stdRes.snap) {
             resolvedCount++;
-            stdSnap.forEach((docSnap) => {
+            stdRes.snap.forEach((docSnap) => {
               const sData = docSnap.data() || {};
               if (!belongsToMadrasa(docSnap.id, sData, mId)) return;
               const cleanStdId = sData.studentId || stripScopedDocIdPrefix(docSnap.id, mId);
@@ -11510,14 +11847,21 @@
               result.exists = true;
               addUniqueStudents([{ ...sData, studentId: cleanStdId }]);
             });
-          } catch (e) {}
+          } else if (stdRes && stdRes.error) {
+            fetchErrors.push(stdRes.error);
+          }
         }
 
         result.firestoreOnline = resolvedCount > 0;
+        if (!result.firestoreOnline && fetchErrors.length > 0) {
+          result.firestoreError = fetchErrors[0];
+        }
+      } else {
+        result.firestoreError = new Error("Firebase SDK unavailable");
       }
 
-      // 2. If workspace exists in Firestore (or Firestore is offline), allow strictly mId-scoped local cache fallback
-      //    NEVER fall back to global defaults when Firestore is online and reports no workspace for mId!
+      // 2. If workspace exists in Firestore (or Firestore is offline), allow strictly mId-scoped local cache fallback.
+      //    NEVER fall back to local cache if Firestore is online and confirmed no workspace exists for mId!
       const canUseScopedLocalFallback = result.exists || !result.firestoreOnline;
       if (canUseScopedLocalFallback) {
         try {
@@ -11574,7 +11918,7 @@
       if (banner) banner.classList.add("hidden");
 
       const rawInputCode = (document.getElementById("auth-madrasa-code")?.value || "").trim();
-      const rawMadrasaCode = rawInputCode.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+      const rawMadrasaCode = normalizeMadrasaCode(rawInputCode);
       const u = (document.getElementById("auth-username")?.value || "").trim();
       const p = (document.getElementById("auth-password")?.value || "").trim();
 
@@ -11591,10 +11935,13 @@
       }
 
       try {
+        await ensureFirebaseReady(8000);
+
         // Sync latest Master Super Admin credentials from Firestore if attempting master login or logging in without Madrasa Code
         if ((isMasterAttempt || (!rawMadrasaCode && u)) && window.fDb && window.fGetDoc && window.fDoc) {
           try {
-            const masterSnap = await window.fGetDoc(window.fDoc(window.fDb, "settings", "master_system_auth"));
+            const masterRes = await safeGetDocServerFirst(window.fDoc(window.fDb, "settings", "master_system_auth"));
+            const masterSnap = masterRes && masterRes.snap;
             if (masterSnap && masterSnap.exists()) {
               const md = masterSnap.data() || {};
               if (md.username && md.password) {
@@ -11928,10 +12275,29 @@
       }
 
       if (!workspace || !workspace.exists) {
+        if (workspace && (!workspace.firestoreChecked || !workspace.firestoreOnline)) {
+          const errMsg = workspace.firestoreError && workspace.firestoreError.message ? String(workspace.firestoreError.message) : "";
+          if (isFirestorePermissionError(workspace.firestoreError)) {
+            return {
+              success: false,
+              message: t(
+                `Cloud permission error while verifying Madrasa Code "${mCode}". (${errMsg})`,
+                `"${mCode}" മദ്രസ കോഡ് പരിശോധിക്കുന്നതിൽ ക്ലൗഡ് പെർമിഷൻ പിശക്.`
+              )
+            };
+          }
+          return {
+            success: false,
+            message: t(
+              `Unable to connect to Cloud database to verify Madrasa Code "${mCode}". Please check your internet connection and retry.`,
+              `"${mCode}" മദ്രസ കോഡ് പരിശോധിക്കാൻ ഇന്റർനെറ്റ്/ക്ലൗഡ് കണക്ഷൻ ലഭ്യമായില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.`
+            )
+          };
+        }
         return {
           success: false,
           message: t(
-            `Madrasa Code "${mCode}" not found in Firestore. Please check your Madrasa Code.`,
+            `Madrasa Code "${mCode}" not found in Firestore. Please verify your Madrasa Code.`,
             `"${mCode}" എന്ന മദ്രസ കോഡ് കണ്ടെത്തിയില്ല! ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക.`
           )
         };
@@ -11969,6 +12335,12 @@
             setWorkspaceCampusIdentity(mCode, mCleanName, mCleanSub, mCleanTerm);
           }
         }
+        if (workspace.underscoreDoc) {
+          applyGeneralSettingsDocToMadrasa(workspace.underscoreDoc, mCode);
+          applyCampusConfigDocToMadrasa(workspace.underscoreDoc, mCode);
+          applyCampusDataDocToMadrasa(workspace.underscoreDoc, mCode);
+        }
+        if (workspace.nestedGenDoc) applyGeneralSettingsDocToMadrasa(workspace.nestedGenDoc, mCode);
         if (workspace.genDoc) applyGeneralSettingsDocToMadrasa(workspace.genDoc, mCode);
         if (workspace.cfgDoc) applyCampusConfigDocToMadrasa(workspace.cfgDoc, mCode);
         if (workspace.dataDoc) applyCampusDataDocToMadrasa(workspace.dataDoc, mCode);
@@ -15671,20 +16043,33 @@
     }
 
     window.fetchMadrasaWorkspaceFromFirestore = async function(madrasaId) {
+      await ensureFirebaseReady(5000);
       if (!window.fDb || !window.fGetDoc || !window.fDoc) return;
-      const mId = (madrasaId || currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
+      const mId = normalizeMadrasaCode(madrasaId || currentMadrasaId || deviceMadrasaId);
       if (!mId || mId === "MDR-01") return;
       try {
-        const [genSnap, cfgSnap, dataSnap, authSnap] = await Promise.all([
-          window.fGetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`)).catch(() => null),
-          window.fGetDoc(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)).catch(() => null),
-          window.fGetDoc(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)).catch(() => null),
-          window.fGetDoc(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`)).catch(() => null)
+        const [madrasaRes, underscoreRes, genRes, nestedGenRes, cfgRes, dataRes, authRes] = await Promise.all([
+          safeGetDocServerFirst(window.fDoc(window.fDb, "madrasas", mId)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `general_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "madrasas", mId, "settings", "general")),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)),
+          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`))
         ]);
-        if (genSnap && genSnap.exists()) applyGeneralSettingsDocToMadrasa(genSnap.data(), mId);
-        if (cfgSnap && cfgSnap.exists()) applyCampusConfigDocToMadrasa(cfgSnap.data(), mId);
-        if (dataSnap && dataSnap.exists()) applyCampusDataDocToMadrasa(dataSnap.data(), mId);
-        if (authSnap && authSnap.exists()) applyPrincipalAuthDocToMadrasa(authSnap.data(), mId);
+        if (madrasaRes.snap && madrasaRes.snap.exists()) syncMadrasaDocIntoLocalAndMemory(madrasaRes.snap.data(), mId);
+        if (underscoreRes.snap && underscoreRes.snap.exists()) {
+          const ud = underscoreRes.snap.data();
+          applyGeneralSettingsDocToMadrasa(ud, mId);
+          applyCampusConfigDocToMadrasa(ud, mId);
+          applyCampusDataDocToMadrasa(ud, mId);
+          applyPrincipalAuthDocToMadrasa(ud, mId);
+        }
+        if (nestedGenRes.snap && nestedGenRes.snap.exists()) applyGeneralSettingsDocToMadrasa(nestedGenRes.snap.data(), mId);
+        if (genRes.snap && genRes.snap.exists()) applyGeneralSettingsDocToMadrasa(genRes.snap.data(), mId);
+        if (cfgRes.snap && cfgRes.snap.exists()) applyCampusConfigDocToMadrasa(cfgRes.snap.data(), mId);
+        if (dataRes.snap && dataRes.snap.exists()) applyCampusDataDocToMadrasa(dataRes.snap.data(), mId);
+        if (authRes.snap && authRes.snap.exists()) applyPrincipalAuthDocToMadrasa(authRes.snap.data(), mId);
       } catch (e) {}
     };
 
@@ -15696,7 +16081,7 @@
 
       if (!window.fDb || !window.fOnSnapshot || !window.fDoc) return;
       if (!hasAuthenticatedPortalOrFirebaseUser()) return;
-      const mId = (madrasaId || currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
+      const mId = normalizeMadrasaCode(madrasaId || currentMadrasaId || deviceMadrasaId);
       if (!mId || mId === "MDR-01") return;
 
       try {
@@ -15705,6 +16090,21 @@
             window.fDoc(window.fDb, "madrasas", mId),
             (docSnap) => {
               if (docSnap && docSnap.exists()) syncMadrasaDocIntoLocalAndMemory(docSnap.data(), docSnap.id);
+            },
+            () => {}
+          )
+        );
+        activeWorkspaceUnsubscribers.push(
+          window.fOnSnapshot(
+            window.fDoc(window.fDb, "settings", `_${mId}`),
+            (docSnap) => {
+              if (docSnap && docSnap.exists()) {
+                const ud = docSnap.data();
+                applyGeneralSettingsDocToMadrasa(ud, mId);
+                applyCampusConfigDocToMadrasa(ud, mId);
+                applyCampusDataDocToMadrasa(ud, mId);
+                applyPrincipalAuthDocToMadrasa(ud, mId);
+              }
             },
             () => {}
           )
@@ -16059,8 +16459,13 @@
             if (typeof window.fetchAllMadrasasForMasterAdmin === "function") {
               window.fetchAllMadrasasForMasterAdmin(false);
             }
-          } else if (typeof window.subscribeToMadrasaWorkspace === "function") {
-            window.subscribeToMadrasaWorkspace(currentMadrasaId);
+          } else {
+            if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
+              window.fetchMadrasaWorkspaceFromFirestore(currentMadrasaId);
+            }
+            if (typeof window.subscribeToMadrasaWorkspace === "function") {
+              window.subscribeToMadrasaWorkspace(currentMadrasaId);
+            }
           }
         }
       } else {
