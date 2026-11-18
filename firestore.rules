@@ -44,12 +44,12 @@ service cloud.firestore {
         ownerId.size() >= 1 &&
         ownerId.size() <= 128 &&
         ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
-        ((isVerified() && ownerId == request.auth.uid) || ownerId in ['portal-session', 'local-seed']);
+        ((isVerified() && ownerId == request.auth.uid) || ownerId in ['portal-session', 'local-seed', 'master-admin']);
     }
 
     function canAccessOwner(ownerId) {
       return (isVerified() && (ownerId == request.auth.uid || isAdmin())) ||
-        ownerId in ['portal-session', 'local-seed'];
+        ownerId in ['portal-session', 'local-seed', 'master-admin'];
     }
 
     // 2. Validation Blueprints
@@ -387,19 +387,21 @@ service cloud.firestore {
 
     match /madrasas/{madrasaId} {
       allow get: if isValidId(madrasaId);
-      allow list: if resource.data.madrasaId is string;
+      allow list: if canAccessOwner(resource.data.ownerId);
       allow create, update: if isValidId(madrasaId) && isValidMadrasa(incoming());
       allow delete: if isValidId(madrasaId) && (isAdmin() || !('ownerId' in existing()) || existing().ownerId in ['portal-session', 'local-seed', 'master-admin']);
 
       match /settings/{settingId} {
-        allow get, list: if isValidId(madrasaId) && isValidId(settingId);
+        allow get: if isValidId(madrasaId) && isValidId(settingId);
+        allow list: if isValidId(madrasaId) && canAccessOwner(resource.data.ownerId);
         allow create, update: if isValidId(madrasaId) && isValidId(settingId) && isValidSettings(incoming());
         allow delete: if isValidId(madrasaId) && isValidId(settingId) && (isAdmin() || !('ownerId' in existing()) || existing().ownerId in ['portal-session', 'local-seed', 'master-admin']);
       }
     }
 
     match /settings/{settingId} {
-      allow get, list: if isValidId(settingId);
+      allow get: if isValidId(settingId);
+      allow list: if canAccessOwner(resource.data.ownerId);
       allow create, update: if isValidId(settingId) && isValidSettings(incoming());
       allow delete: if isValidId(settingId) && (isAdmin() || !('ownerId' in existing()) || existing().ownerId in ['portal-session', 'local-seed', 'master-admin']);
     }
