@@ -1848,6 +1848,144 @@
         grid-template-columns: minmax(0, 1fr);
       }
     }
+
+    /* Principal Header Bar & Accessible Demo Mode Toggle Switch */
+    .principal-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 1.2rem;
+    }
+
+    .principal-header-bar .sub-tabs {
+      margin-bottom: 0;
+    }
+
+    .demo-mode-switch-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+      transition: all 0.2s ease;
+    }
+
+    .demo-mode-switch-card.is-demo-active {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border-color: #f59e0b;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.16);
+    }
+
+    .demo-mode-switch-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      margin: 0;
+    }
+
+    .demo-mode-switch-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+
+    .demo-mode-switch-card.is-demo-active .demo-mode-switch-title {
+      color: #92400e;
+    }
+
+    .demo-mode-status-pill {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    .demo-mode-switch-card.is-demo-active .demo-mode-status-pill {
+      background: #d97706;
+      color: #ffffff;
+      border-color: #b45309;
+    }
+
+    .hifz-toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .hifz-toggle-switch input {
+      position: absolute;
+      opacity: 0;
+      width: 44px;
+      height: 24px;
+      margin: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .hifz-toggle-slider {
+      position: absolute;
+      inset: 0;
+      background-color: #cbd5e1;
+      border-radius: 999px;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .hifz-toggle-slider::before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      top: 3px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+      transition: transform 0.2s ease;
+    }
+
+    .hifz-toggle-switch input:checked + .hifz-toggle-slider {
+      background-color: #d97706;
+    }
+
+    .hifz-toggle-switch input:checked + .hifz-toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    .hifz-toggle-switch input:focus-visible + .hifz-toggle-slider {
+      outline: 2px solid #064e3b;
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 640px) {
+      .principal-header-bar {
+        align-items: stretch;
+      }
+      .demo-mode-switch-card {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .demo-mode-switch-label {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2745,16 +2883,36 @@
 
     <!-- 4. PRINCIPAL DASHBOARD VIEW -->
     <section id="view-principal" class="hidden">
-      <div class="sub-tabs" id="principal-sub-tabs">
-        <button type="button" class="sub-tab-btn" id="ptab-btn-settings" onclick="switchPrincipalTab('settings')">
-          Campus Settings
-        </button>
-        <button type="button" class="sub-tab-btn active" id="ptab-btn-portfolios" onclick="switchPrincipalTab('portfolios')">
-          Student Portfolios
-        </button>
-        <button type="button" class="sub-tab-btn" id="ptab-btn-enroll" onclick="switchPrincipalTab('enroll')">
-          Add Student / Ustadh
-        </button>
+      <div class="principal-header-bar">
+        <div class="sub-tabs" id="principal-sub-tabs">
+          <button type="button" class="sub-tab-btn" id="ptab-btn-settings" onclick="switchPrincipalTab('settings')">
+            Campus Settings
+          </button>
+          <button type="button" class="sub-tab-btn active" id="ptab-btn-portfolios" onclick="switchPrincipalTab('portfolios')">
+            Student Portfolios
+          </button>
+          <button type="button" class="sub-tab-btn" id="ptab-btn-enroll" onclick="switchPrincipalTab('enroll')">
+            Add Student / Ustadh
+          </button>
+        </div>
+
+        <div id="principal-demo-mode-wrap" class="demo-mode-switch-card no-print">
+          <label for="principal-demo-mode-toggle" class="demo-mode-switch-label">
+            <span id="lbl-principal-demo-toggle" class="demo-mode-switch-title">🔄 Demo Mode / ഡെമോ മോഡ്</span>
+            <span id="principal-demo-status-pill" class="demo-mode-status-pill">OFF · Live</span>
+            <span class="hifz-toggle-switch">
+              <input
+                type="checkbox"
+                id="principal-demo-mode-toggle"
+                role="switch"
+                aria-checked="false"
+                aria-label="Toggle Demo Mode"
+                onchange="handlePrincipalDemoModeToggle(this.checked)"
+              />
+              <span class="hifz-toggle-slider"></span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <!-- Tab 1: Student Portfolios -->
@@ -3008,6 +3166,34 @@
                 <div class="form-group" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                   <span id="lbl-cfg-campus-mode-prefix" style="font-size:0.82rem; font-weight:700; color:#334155;">Active Campus Mode:</span>
                   <span id="cfg-mode-status-text" class="badge" style="background:#ecfdf5; color:#065f46; border:1px solid #6ee7b7; font-size:0.8rem; font-weight:800; padding:5px 12px; border-radius:99px;">🚌 Day College / Day Madrasa</span>
+                </div>
+
+                <!-- 0. Principal Demo Mode Toggle Card -->
+                <div id="cfg-demo-mode-card" class="form-group" style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px;">
+                  <label for="cfg-demo-mode-toggle" style="margin:0; display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;">
+                    <div>
+                      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                        <span style="font-size:0.84rem; font-weight:700; color:#92400e;" id="lbl-cfg-demo-title">
+                          🔄 Demo Mode / ഡെമോ മോഡ്
+                        </span>
+                        <span id="cfg-demo-status-pill" class="demo-mode-status-pill">OFF · Live</span>
+                      </div>
+                      <div style="font-size:0.73rem; color:#b45309; font-weight:500; margin-top:2px;" id="lbl-cfg-demo-sub">
+                        Toggle ON to test with sample students, Ustadhs &amp; Hifz logs safely; toggle OFF to return cleanly to live workspace data.
+                      </div>
+                    </div>
+                    <span class="hifz-toggle-switch">
+                      <input
+                        type="checkbox"
+                        id="cfg-demo-mode-toggle"
+                        role="switch"
+                        aria-checked="false"
+                        aria-label="Toggle Demo Mode in Settings"
+                        onchange="handlePrincipalDemoModeToggle(this.checked)"
+                      />
+                      <span class="hifz-toggle-slider"></span>
+                    </span>
+                  </label>
                 </div>
 
                 <!-- 1. Residential Mode: 5-Time Jama'at Salah Tracking Toggle Card -->
@@ -5006,7 +5192,9 @@
         if (isDemoSandbox) {
           headerDemoBadge.classList.remove("hidden");
           headerDemoBadge.style.display = "inline-flex";
-          headerDemoBadge.innerText = "🔑 Demo Preview Sandbox Active";
+          headerDemoBadge.innerText = (currentUser && !currentUser.isDemoSandbox)
+            ? t("🔄 Demo Mode Active (Sandbox)", "🔄 ഡെമോ മോഡ് സജീവം (സാൻഡ്ബോക്സ്)")
+            : t("🔑 Demo Preview Sandbox Active", "🔑 ഡെമോ പ്രിവ്യൂ സജീവം");
         } else {
           headerDemoBadge.classList.add("hidden");
           headerDemoBadge.style.display = "none";
@@ -5121,6 +5309,8 @@
       } catch (e) {}
     }
 
+    let preDemoLiveSnapshot = null;
+
     function loadDemoSandboxDataInMemory() {
       globalStudents = JSON.parse(JSON.stringify(INITIAL_STUDENTS));
       globalTeachers = JSON.parse(JSON.stringify(INITIAL_TEACHERS));
@@ -5130,6 +5320,192 @@
       globalParentAlerts = JSON.parse(JSON.stringify(INITIAL_PARENT_ALERTS));
       currentParentStudentId = "STD-101";
     }
+
+    function injectDemoSandboxDataIntoWorkspace() {
+      const sampleStudents = JSON.parse(JSON.stringify(INITIAL_STUDENTS));
+      const sampleTeachers = JSON.parse(JSON.stringify(INITIAL_TEACHERS));
+      const sampleLogs = JSON.parse(JSON.stringify(INITIAL_LOGS));
+      const sampleSchedules = JSON.parse(JSON.stringify(INITIAL_SCHEDULES));
+      const sampleNotices = JSON.parse(JSON.stringify(INITIAL_NOTICES));
+      const sampleAlerts = JSON.parse(JSON.stringify(INITIAL_PARENT_ALERTS));
+
+      const liveStudents = (globalStudents || []).filter((s) => !isSampleStudent(s));
+      const liveTeachers = (globalTeachers || []).filter((t) => !isSampleTeacher(t));
+      const liveLogs = (globalLogs || []).filter((l) => !isSampleLog(l));
+      const liveSchedules = (globalSchedules || []).filter((s) => !isSampleSchedule(s));
+      const liveNotices = (globalNotices || []).filter((n) => !isSampleNotice(n));
+      const liveAlerts = (globalParentAlerts || []).filter((a) => !isSampleAlert(a));
+
+      const existingStudentIds = new Set(liveStudents.map((s) => String(s.studentId || "").toUpperCase()));
+      const existingTeacherKeys = new Set(liveTeachers.map((t) => String(t.username || t.teacherId || "").toLowerCase()));
+      const existingLogIds = new Set(liveLogs.map((l) => String(l.id || "").toUpperCase()));
+      const existingSchIds = new Set(liveSchedules.map((s) => String(s.id || "").toUpperCase()));
+      const existingNoticeIds = new Set(liveNotices.map((n) => String(n.id || "").toUpperCase()));
+      const existingAlertIds = new Set(liveAlerts.map((a) => String(a.id || "")));
+
+      globalStudents = [...sampleStudents.filter((s) => !existingStudentIds.has(String(s.studentId || "").toUpperCase())), ...liveStudents];
+      globalTeachers = [...sampleTeachers.filter((t) => !existingTeacherKeys.has(String(t.username || t.teacherId || "").toLowerCase())), ...liveTeachers];
+      globalLogs = sortLogsChronologicallyDesc([
+        ...sampleLogs.filter((l) => !existingLogIds.has(String(l.id || "").toUpperCase())),
+        ...liveLogs
+      ]);
+      globalSchedules = [...sampleSchedules.filter((s) => !existingSchIds.has(String(s.id || "").toUpperCase())), ...liveSchedules];
+      globalNotices = [...sampleNotices.filter((n) => !existingNoticeIds.has(String(n.id || "").toUpperCase())), ...liveNotices];
+      globalParentAlerts = [...sampleAlerts.filter((a) => !existingAlertIds.has(String(a.id || ""))), ...liveAlerts];
+
+      if (!currentParentStudentId || !globalStudents.some((s) => s.studentId === currentParentStudentId)) {
+        currentParentStudentId = (globalStudents[0] && globalStudents[0].studentId) || "STD-101";
+      }
+    }
+
+    function updatePrincipalDemoToggleUI() {
+      const enabled = Boolean(isDemoSandbox);
+      const wrap = document.getElementById("principal-demo-mode-wrap");
+      const toggle = document.getElementById("principal-demo-mode-toggle");
+      const titleEl = document.getElementById("lbl-principal-demo-toggle");
+      const pillEl = document.getElementById("principal-demo-status-pill");
+      const cfgToggle = document.getElementById("cfg-demo-mode-toggle");
+      const cfgPillEl = document.getElementById("cfg-demo-status-pill");
+      const cfgTitleEl = document.getElementById("lbl-cfg-demo-title");
+      const cfgSubEl = document.getElementById("lbl-cfg-demo-sub");
+      const cfgCard = document.getElementById("cfg-demo-mode-card");
+
+      if (wrap) wrap.classList.toggle("is-demo-active", enabled);
+      if (toggle) {
+        toggle.checked = enabled;
+        toggle.setAttribute("aria-checked", enabled ? "true" : "false");
+      }
+      if (titleEl) {
+        titleEl.innerText = t("🔄 Demo Mode", "🔄 ഡെമോ മോഡ്");
+      }
+      if (pillEl) {
+        pillEl.innerText = enabled ? t("ON · Sandbox", "ഓൺ · ഡെമോ") : t("OFF · Live", "ഓഫ് · ലൈവ്");
+      }
+
+      if (cfgToggle) {
+        cfgToggle.checked = enabled;
+        cfgToggle.setAttribute("aria-checked", enabled ? "true" : "false");
+      }
+      if (cfgTitleEl) {
+        cfgTitleEl.innerText = t("🔄 Demo Mode", "🔄 ഡെമോ മോഡ്");
+      }
+      if (cfgPillEl) {
+        cfgPillEl.innerText = enabled ? t("ON · Sandbox", "ഓൺ · ഡെമോ") : t("OFF · Live", "ഓഫ് · ലൈവ്");
+        cfgPillEl.style.background = enabled ? "#d97706" : "#f1f5f9";
+        cfgPillEl.style.color = enabled ? "#ffffff" : "#475569";
+        cfgPillEl.style.borderColor = enabled ? "#b45309" : "#cbd5e1";
+      }
+      if (cfgSubEl) {
+        cfgSubEl.innerText = enabled
+          ? t(
+              "Demo Sandbox is active: sample students, Ustadhs & Hifz logs are loaded in memory only. Cloud & saved live records are untouched.",
+              "ഡെമോ മോഡ് സജീവമാണ്: സാമ്പിൾ വിദ്യാർത്ഥികളും ഉസ്താദുമാരും ഹിഫ്ള് റെക്കോർഡുകളും താൽക്കാലികമായി ലോഡ് ചെയ്തിരിക്കുന്നു. യഥാർത്ഥ ഡാറ്റ സുരക്ഷിതമാണ്."
+            )
+          : t(
+              "Toggle ON to test with sample students, Ustadhs & Hifz logs safely; toggle OFF to return cleanly to live workspace data.",
+              "സാമ്പിൾ വിദ്യാർത്ഥികളെയും ഉസ്താദുമാരെയും ഹിഫ്ള് വിവരങ്ങളെയും പരിശോധിക്കാൻ ഓൺ ആക്കുക; ലൈവ് മോഡിലേക്ക് മടങ്ങാൻ ഓഫ് ആക്കുക."
+            );
+      }
+      if (cfgCard) {
+        cfgCard.style.background = enabled ? "#fef3c7" : "#fffbeb";
+        cfgCard.style.borderColor = enabled ? "#f59e0b" : "#fde68a";
+      }
+    }
+
+    window.handlePrincipalDemoModeToggle = function(enabled, silent) {
+      const turnOn = Boolean(enabled);
+
+      // If logged in strictly as the standalone demo/demo786 sandbox account and toggled OFF, exit sandbox cleanly
+      if (!turnOn && currentUser && currentUser.isDemoSandbox) {
+        window.exitDemoSandbox();
+        return;
+      }
+
+      if (turnOn) {
+        if (!isDemoSandbox) {
+          preDemoLiveSnapshot = {
+            students: JSON.parse(JSON.stringify((globalStudents || []).filter((s) => !isSampleStudent(s)))),
+            teachers: JSON.parse(JSON.stringify((globalTeachers || []).filter((t) => !isSampleTeacher(t)))),
+            logs: JSON.parse(JSON.stringify((globalLogs || []).filter((l) => !isSampleLog(l)))),
+            schedules: JSON.parse(JSON.stringify((globalSchedules || []).filter((s) => !isSampleSchedule(s)))),
+            notices: JSON.parse(JSON.stringify((globalNotices || []).filter((n) => !isSampleNotice(n)))),
+            alerts: JSON.parse(JSON.stringify((globalParentAlerts || []).filter((a) => !isSampleAlert(a)))),
+            parentStudentId: currentParentStudentId || ""
+          };
+        }
+
+        isDemoSandbox = true;
+        window.demoMode = true;
+        const baseName = getWorkspaceCampusName(currentMadrasaId);
+        const baseLoc = getWorkspaceCampusLocation(currentMadrasaId);
+        demoSandboxCampusName = baseName ? `${baseName} (${t("Demo Mode", "ഡെമോ മോഡ്")})` : "";
+        demoSandboxCampusLocation = baseLoc || "";
+        demoSandboxAcademicTerm = getWorkspaceAcademicTerm(currentMadrasaId);
+
+        injectDemoSandboxDataIntoWorkspace();
+        updateDemoPreviewBarButtons(currentUser ? currentUser.role : "principal");
+        updateCampusIdentityUI();
+        applyCampusModeUI();
+        updateSessionHeader();
+        updatePrincipalDemoToggleUI();
+        populateStudentSelectors();
+        renderAllViews();
+
+        if (!silent && window.showToast) {
+          window.showToast(
+            t(
+              "🔄 Demo Mode ON — Sample students, Ustadhs & Hifz records loaded safely (Live data untouched).",
+              "🔄 ഡെമോ മോഡ് ഓൺ — സാമ്പിൾ വിദ്യാർത്ഥികളും ഉസ്താദുമാരും ഹിഫ്ള് റെക്കോർഡുകളും ലോഡ് ചെയ്തു (യഥാർത്ഥ വിവരങ്ങൾ സുരക്ഷിതമാണ്)."
+            )
+          );
+        }
+      } else {
+        isDemoSandbox = false;
+        window.demoMode = false;
+        demoSandboxCampusName = "";
+        demoSandboxCampusLocation = "";
+
+        if (preDemoLiveSnapshot) {
+          globalStudents = preDemoLiveSnapshot.students.filter((s) => !isSampleStudent(s));
+          globalTeachers = preDemoLiveSnapshot.teachers.filter((t) => !isSampleTeacher(t));
+          globalLogs = sortLogsChronologicallyDesc(preDemoLiveSnapshot.logs.filter((l) => !isSampleLog(l)));
+          globalSchedules = preDemoLiveSnapshot.schedules.filter((s) => !isSampleSchedule(s));
+          globalNotices = preDemoLiveSnapshot.notices.filter((n) => !isSampleNotice(n));
+          globalParentAlerts = preDemoLiveSnapshot.alerts.filter((a) => !isSampleAlert(a));
+          currentParentStudentId = preDemoLiveSnapshot.parentStudentId || (globalStudents[0] ? globalStudents[0].studentId : "");
+          preDemoLiveSnapshot = null;
+        } else {
+          loadLiveCollectionsFromLocal(currentMadrasaId);
+          currentParentStudentId = globalStudents[0] ? globalStudents[0].studentId : "";
+        }
+
+        updateDemoPreviewBarButtons(currentUser ? currentUser.role : "principal");
+        updateCampusIdentityUI();
+        applyCampusModeUI();
+        updateSessionHeader();
+        updatePrincipalDemoToggleUI();
+        populateStudentSelectors();
+        renderAllViews();
+
+        if (window.fDb && currentMadrasaId && currentMadrasaId !== "MDR-01") {
+          if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
+            window.fetchMadrasaWorkspaceFromFirestore(currentMadrasaId);
+          }
+          if (typeof window.subscribeToMadrasaWorkspace === "function") {
+            window.subscribeToMadrasaWorkspace(currentMadrasaId);
+          }
+        }
+
+        if (!silent && window.showToast) {
+          window.showToast(
+            t(
+              "✓ Demo Mode OFF — Returned cleanly to your Live Workspace.",
+              "✓ ഡെമോ മോഡ് ഓഫ് — യഥാർത്ഥ ലൈവ് വർക്ക്സ്പേസിലേക്ക് തിരിച്ചെത്തി."
+            )
+          );
+        }
+      }
+    };
 
     loadLiveCollectionsFromLocal(currentMadrasaId);
 
@@ -5943,6 +6319,11 @@
           el.id === "btn-exit-demo-sandbox-settings" ||
           el.id === "header-demo-sandbox-badge" ||
           el.id === "btn-try-demo-sandbox-label" ||
+          el.id === "lbl-principal-demo-toggle" ||
+          el.id === "principal-demo-status-pill" ||
+          el.id === "lbl-cfg-demo-title" ||
+          el.id === "lbl-cfg-demo-sub" ||
+          el.id === "cfg-demo-status-pill" ||
           el.closest("#auth-demo-sandbox-section") ||
           el.closest("#principal-portfolio-trend-card") ||
           el.closest("#header-notif-container")
@@ -9369,6 +9750,9 @@
 
       let activePrincipalSubTab = null;
       if (role === "master" && targetView === "master") {
+        if (isDemoSandbox && currentUser && !currentUser.isDemoSandbox && typeof window.handlePrincipalDemoModeToggle === "function") {
+          window.handlePrincipalDemoModeToggle(false, true);
+        }
         masterInspectingMadrasaId = null;
         updateNavVisibilityForRole("master");
         updateSessionHeader();
@@ -12500,8 +12884,9 @@
 
     function updateDemoPreviewBarButtons(activeRole) {
       const bar = document.getElementById("demo-preview-switcher-bar");
+      const showRoleSwitcherBar = Boolean(isDemoSandbox && currentUser && currentUser.isDemoSandbox);
       if (bar) {
-        bar.classList.toggle("hidden", !isDemoSandbox);
+        bar.classList.toggle("hidden", !showRoleSwitcherBar);
       }
       const btnP = document.getElementById("demo-bar-btn-principal");
       const btnT = document.getElementById("demo-bar-btn-teacher");
@@ -12969,8 +13354,17 @@
     // Logout and Return to Clean Initial Sign In View
     window.performLogout = function() {
       if (isDemoSandbox) {
-        window.exitDemoSandbox();
-        return;
+        if (currentUser && currentUser.isDemoSandbox) {
+          window.exitDemoSandbox();
+          return;
+        }
+        isDemoSandbox = false;
+        window.demoMode = false;
+        demoSandboxCampusName = "";
+        demoSandboxCampusLocation = "";
+        preDemoLiveSnapshot = null;
+        loadLiveCollectionsFromLocal(currentMadrasaId);
+        if (typeof updatePrincipalDemoToggleUI === "function") updatePrincipalDemoToggleUI();
       }
       try {
         localStorage.removeItem("hifz_portal_session");
@@ -13149,6 +13543,7 @@
       updateDemoPreviewBarButtons(role);
       updateCampusIdentityUI();
       updateSessionHeader();
+      if (typeof updatePrincipalDemoToggleUI === "function") updatePrincipalDemoToggleUI();
       updateNavVisibilityForRole(currentUser ? currentUser.role : role);
 
       if (role === "master") {
@@ -16362,6 +16757,7 @@
       if (window.renderMasterAdminDashboard) window.renderMasterAdminDashboard();
       updateDbResetStatusBanner();
       updateAuthDemoHelperUI();
+      if (typeof updatePrincipalDemoToggleUI === "function") updatePrincipalDemoToggleUI();
       translateStaticDOMElements(appLanguage);
       if (window.updateHeaderAuthButton) window.updateHeaderAuthButton();
       if (window.updateNotificationsUI) window.updateNotificationsUI();
