@@ -1547,6 +1547,307 @@
         text-align: right !important;
       }
     }
+
+    /* Responsive Tables & Master Admin Registered Madrasas Directory */
+    .table-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+
+    #view-master {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+      box-sizing: border-box;
+    }
+
+    #view-master .workspace-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    #view-master .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #view-master .kpi-card {
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+
+    #view-master .kpi-label {
+      font-size: 0.76rem;
+      margin-bottom: 4px;
+    }
+
+    #view-master .kpi-value {
+      font-size: 1.4rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    #view-master .kpi-meta {
+      font-size: 0.72rem;
+      margin-top: 4px;
+    }
+
+    #view-master .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    #view-master .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    #view-master .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .master-madrasas-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+
+    .master-madrasas-table thead th {
+      background: #f8fafc;
+      color: #334155;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-align: left;
+      padding: 11px 12px;
+      border-bottom: 2px solid #e2e8f0;
+      white-space: nowrap;
+    }
+
+    .master-madrasas-table tbody td {
+      padding: 12px;
+      vertical-align: middle;
+    }
+
+    .master-code-cell-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .master-code-input {
+      width: 110px;
+      min-width: 0;
+      font-family: monospace;
+      font-weight: 800;
+      font-size: 0.84rem;
+      color: #064e3b;
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      padding: 5px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .master-counts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .master-creds-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .master-cred-user-input {
+      width: 95px;
+      min-width: 0;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    .master-cred-pass-input {
+      width: 105px;
+      min-width: 0;
+      padding: 6px 8px;
+      font-size: 0.78rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-family: monospace;
+      font-weight: 700;
+    }
+
+    .master-actions-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      #view-master .kpi-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      #view-master .grid-2 {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      #view-master .kpi-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      #view-master .form-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+      }
+      .master-search-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      #master-search-input {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .master-madrasas-table-wrap {
+        overflow-x: visible !important;
+      }
+      .master-madrasas-table,
+      .master-madrasas-table tbody {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .master-madrasas-table thead {
+        display: none;
+      }
+      .master-madrasas-table tbody tr.master-madrasa-row {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        background: #ffffff;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+      }
+      .master-madrasas-table tbody tr.master-madrasa-row td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px 0;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .master-madrasas-table tbody tr.master-madrasa-row td:first-child {
+        padding-top: 2px;
+      }
+      .master-madrasas-table tbody tr.master-madrasa-row td:last-child {
+        border-bottom: none;
+        padding-bottom: 2px;
+        padding-top: 10px;
+      }
+      .master-madrasas-table tbody tr.master-madrasa-row td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.69rem;
+        font-weight: 800;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 5px;
+      }
+      .master-madrasas-table tbody tr.master-madrasa-empty-row,
+      .master-madrasas-table tbody tr.master-madrasa-empty-row td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .master-code-cell-row {
+        width: 100%;
+      }
+      .master-code-input {
+        flex: 1 1 auto !important;
+        width: auto !important;
+      }
+      .master-counts-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .master-creds-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+      }
+      .master-cred-user-input,
+      .master-cred-pass-input {
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .master-creds-save-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+        justify-content: center;
+      }
+      .master-actions-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+      }
+      .master-actions-row button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #view-master .kpi-strip {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .master-creds-row,
+      .master-actions-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
@@ -3485,19 +3786,19 @@
               എല്ലാ മദ്രസ വർക്ക്സ്പേസുകളും (madrasas/{madrasaId}), വിദ്യാർത്ഥി-ഉസ്താദ് കണക്കുകളും, പ്രിൻസിപ്പൽ പാസ്‌വേഡ് റീസെറ്റ് സംവിധാനവും
             </p>
           </div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <div class="master-search-wrap" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; flex:1 1 240px; max-width:340px;">
             <input
               type="text"
               id="master-search-input"
               oninput="renderMasterAdminDashboard()"
               placeholder="🔍 മദ്രസ കോഡ് അല്ലെങ്കിൽ പേര് തിരയുക..."
-              style="min-width:240px; padding:8px 12px; font-size:0.82rem; border-radius:8px; border:1px solid #cbd5e1;"
+              style="width:100%; padding:8px 12px; font-size:0.82rem; border-radius:8px; border:1px solid #cbd5e1; box-sizing:border-box;"
             />
           </div>
         </div>
 
-        <div class="table-wrap">
-          <table>
+        <div class="table-wrap master-madrasas-table-wrap">
+          <table id="master-madrasas-table" class="master-madrasas-table">
             <thead>
               <tr>
                 <th id="th-master-code">മദ്രസ കോഡ്</th>
@@ -3509,7 +3810,7 @@
               </tr>
             </thead>
             <tbody id="master-madrasas-tbody">
-              <tr>
+              <tr class="master-madrasa-empty-row">
                 <td colspan="6" style="text-align:center; padding:24px; color:#64748b;">
                   മദ്രസ വിവരങ്ങൾ ശേഖരിക്കുന്നു...
                 </td>
@@ -10849,13 +11150,20 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr>
+        tbody.innerHTML = `<tr class="master-madrasa-empty-row">
           <td colspan="6" style="text-align:center; padding:24px; color:#64748b;">
             ${t("No matching Madrasa workspaces found.", "മദ്രസ വർക്ക്സ്പേസുകൾ ഒന്നും കണ്ടെത്തിയില്ല.")}
           </td>
         </tr>`;
         return;
       }
+
+      const lblCode = t("Madrasa Code", "മദ്രസ കോഡ്");
+      const lblName = t("Institution & Location", "സ്ഥാപനവും സ്ഥലവും");
+      const lblMode = t("Campus Mode", "പഠന രീതി (Mode)");
+      const lblCounts = t("Students & Ustadhs", "വിദ്യാർത്ഥികൾ & ഉസ്താദുമാർ");
+      const lblCreds = t("Principal Login & Password", "പ്രിൻസിപ്പൽ ഐഡി & പാസ്‌വേഡ്");
+      const lblActions = t("Actions", "പ്രവർത്തനങ്ങൾ");
 
       tbody.innerHTML = filtered
         .map((item) => {
@@ -10874,43 +11182,43 @@
           }
 
           return `
-            <tr style="border-bottom:1px solid #e2e8f0;">
-              <td>
-                <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+            <tr class="master-madrasa-row" style="border-bottom:1px solid #e2e8f0;">
+              <td data-label="${lblCode}">
+                <div class="master-code-cell-row">
                   <input
                     type="text"
                     id="master-mcode-${mId}"
+                    class="master-code-input"
                     value="${mId}"
                     title="${t("Master Admin: Edit Madrasa Code", "മാസ്റ്റർ അഡ്മിൻ: മദ്രസ കോഡ് മാറ്റാം")}"
-                    style="width:110px; font-family:monospace; font-weight:800; font-size:0.84rem; color:#064e3b; background:#ecfdf5; border:1px solid #6ee7b7; padding:4px 7px; border-radius:6px; text-transform:uppercase;"
                   />
                   <button
                     type="button"
                     class="btn-secondary"
                     onclick="handleMasterRenameMadrasaCode('${mId}')"
                     title="${t("Save New Madrasa Code", "പുതിയ മദ്രസ കോഡ് സേവ് ചെയ്യുക")}"
-                    style="padding:4px 8px; font-size:0.72rem; background:#065f46; color:#ffffff; border:none; border-radius:5px; font-weight:700;"
+                    style="padding:5px 9px; font-size:0.74rem; background:#065f46; color:#ffffff; border:none; border-radius:6px; font-weight:700; flex-shrink:0;"
                   >
                     💾
                   </button>
                 </div>
                 ${
                   isCurrentDevice
-                    ? `<div style="font-size:0.66rem; color:#047857; font-weight:700; margin-top:3px;">📱 ${t("This Device", "ഈ ഫോൺ")}</div>`
+                    ? `<div style="font-size:0.66rem; color:#047857; font-weight:700; margin-top:4px;">📱 ${t("This Device", "ഈ ഫോൺ")}</div>`
                     : ""
                 }
               </td>
-              <td>
-                <div style="font-weight:800; color:#0f172a; font-size:0.9rem;">${item.name || "Hifz Institution Portal"}</div>
-                <div style="font-size:0.75rem; color:#64748b;">📍 ${item.subtitle || "—"}</div>
+              <td data-label="${lblName}">
+                <div style="font-weight:800; color:#0f172a; font-size:0.9rem; word-break:break-word;">${item.name || "Hifz Institution Portal"}</div>
+                <div style="font-size:0.75rem; color:#64748b; word-break:break-word;">📍 ${item.subtitle || "—"}</div>
               </td>
-              <td>
-                <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start;">
+              <td data-label="${lblMode}">
+                <div style="display:flex; flex-direction:column; gap:5px; align-items:flex-start; width:100%;">
                   ${modeBadge}
                   <select
                     onchange="handleMasterChangeMadrasaMode('${mId}', this.value)"
                     aria-label="Change Campus Mode for ${mId}"
-                    style="padding:5px 8px; font-size:0.75rem; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#ffffff; color:#0f172a; cursor:pointer;"
+                    style="width:100%; padding:6px 8px; font-size:0.76rem; font-weight:700; border:1px solid #cbd5e1; border-radius:6px; background:#ffffff; color:#0f172a; cursor:pointer;"
                   >
                     <option value="day" ${item.mode === "day" || !item.mode ? "selected" : ""}>${t("🚌 Day Madrasa", "🚌 ഡേ മദ്രസ")}</option>
                     <option value="residential" ${item.mode === "residential" ? "selected" : ""}>${t("🏠 Residential", "🏠 റെസിഡൻഷ്യൽ")}</option>
@@ -10918,47 +11226,47 @@
                   </select>
                 </div>
               </td>
-              <td>
-                <div style="display:flex; flex-direction:column; gap:4px; font-size:0.78rem; font-weight:700;">
+              <td data-label="${lblCounts}">
+                <div class="master-counts-list">
                   <span style="color:#0369a1;">👨‍🎓 ${stdCount} ${t("Students", "വിദ്യാർത്ഥികൾ")}</span>
                   <span style="color:#6d28d9;">👳‍♂️ ${tchCount} ${t("Ustadhs", "ഉസ്താദുമാർ")}</span>
                 </div>
               </td>
-              <td>
-                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <td data-label="${lblCreds}">
+                <div class="master-creds-row">
                   <input
                     type="text"
                     id="master-puser-${mId}"
+                    class="master-cred-user-input"
                     value="${(item.principalUser || "admin").replace(/"/g, "&quot;")}"
                     placeholder="Login ID"
                     title="${t("Principal Login ID", "പ്രിൻസിപ്പൽ ലോഗിൻ ഐഡി")}"
-                    style="width:95px; padding:6px 8px; font-size:0.78rem; border:1px solid #cbd5e1; border-radius:6px; font-weight:700;"
                   />
                   <input
                     type="text"
                     id="master-ppass-${mId}"
+                    class="master-cred-pass-input"
                     value="${(item.principalPass || "admin786").replace(/"/g, "&quot;")}"
                     placeholder="Password"
                     title="${t("Principal Password", "പ്രിൻസിപ്പൽ പാസ്‌വേഡ്")}"
-                    style="width:105px; padding:6px 8px; font-size:0.78rem; border:1px solid #cbd5e1; border-radius:6px; font-family:monospace; font-weight:700;"
                   />
                   <button
                     type="button"
-                    class="btn-secondary"
+                    class="btn-secondary master-creds-save-btn"
                     onclick="handleMasterUpdatePrincipalPass('${mId}')"
-                    style="padding:6px 10px; font-size:0.74rem; background:#047857; color:#ffffff; border:none; font-weight:700;"
+                    style="padding:7px 10px; font-size:0.74rem; background:#047857; color:#ffffff; border:none; font-weight:700;"
                   >
                     💾 ${t("Save / Reset", "പാസ്‌വേഡ് മാറ്റുക")}
                   </button>
                 </div>
               </td>
-              <td>
-                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <td data-label="${lblActions}">
+                <div class="master-actions-row">
                   <button
                     type="button"
                     class="btn-secondary"
                     onclick="handleMasterInspectMadrasa('${mId}')"
-                    style="padding:7px 11px; font-size:0.75rem; font-weight:800; background:#f8fafc; color:#0f172a; border:1px solid #94a3b8;"
+                    style="padding:8px 11px; font-size:0.75rem; font-weight:800; background:#f8fafc; color:#0f172a; border:1px solid #94a3b8; justify-content:center;"
                   >
                     🔑 ${t("Open Portal", "പോർട്ടൽ തുറക്കുക")}
                   </button>
@@ -10966,7 +11274,7 @@
                     type="button"
                     onclick="openMasterDeleteMadrasaModal('${mId}')"
                     title="${t("Delete Madrasa Workspace", "മദ്രസ വർക്ക്സ്പേസ് ഡിലീറ്റ് ചെയ്യുക")}"
-                    style="padding:7px 11px; font-size:0.75rem; font-weight:800; background:#dc2626; color:#ffffff; border:1px solid #b91c1c; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;"
+                    style="padding:8px 11px; font-size:0.75rem; font-weight:800; background:#dc2626; color:#ffffff; border:1px solid #b91c1c; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px;"
                   >
                     🗑️ ഡിലീറ്റ് (Delete)
                   </button>
