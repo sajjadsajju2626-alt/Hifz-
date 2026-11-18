@@ -1757,8 +1757,6 @@
                 name="portal_madrasa_code_field"
                 value=""
                 placeholder="Enter Madrasa Code (മദ്രസ കോഡ് നൽകുക)"
-                required
-                aria-required="true"
                 autocomplete="off"
                 style="font-family: monospace; font-weight: 700; text-transform: uppercase;"
               />
@@ -11127,42 +11125,21 @@
       const u = (document.getElementById("auth-username")?.value || "").trim();
       const p = (document.getElementById("auth-password")?.value || "").trim();
 
-      // 1. Mandatory Madrasa Code Check
-      if (!rawMadrasaCode) {
-        showAuthAlert("ദയവായി മദ്രസ കോഡ് നൽകുക / Please enter Madrasa Code");
-        const mInp = document.getElementById("auth-madrasa-code");
-        if (mInp) mInp.focus();
-        return;
-      }
-      if (rawMadrasaCode === "MDR-01") {
-        showAuthAlert("ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക / Please enter a valid unique Madrasa Code.");
-        const mInp = document.getElementById("auth-madrasa-code");
-        if (mInp) mInp.focus();
-        return;
-      }
-      if (!u || !p) {
-        showAuthAlert(
-          t(
-            "Please enter both your Login ID / Admission No. and Password / PIN.",
-            "ദയവായി ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക."
-          )
-        );
-        return;
-      }
+      let masterCreds = getMasterAuth();
+      let isMasterAttempt =
+        Boolean(u) &&
+        (u.toLowerCase() === masterCreds.username.toLowerCase() || u.toLowerCase() === "master");
 
       const submitBtn = document.getElementById("btn-auth-submit");
       const origBtnText = submitBtn ? submitBtn.innerText : "";
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerText = t("Verifying Workspace...", "വർക്ക്സ്പേസ് പരിശോധിക്കുന്നു...");
+        submitBtn.innerText = t("Verifying...", "പരിശോധിക്കുന്നു...");
       }
 
       try {
-        const masterCreds = getMasterAuth();
-        const isMasterAttempt =
-          u.toLowerCase() === masterCreds.username.toLowerCase() || u.toLowerCase() === "master";
-
-        if (isMasterAttempt && window.fDb && window.fGetDoc && window.fDoc) {
+        // Sync latest Master Super Admin credentials from Firestore if attempting master login or logging in without Madrasa Code
+        if ((isMasterAttempt || (!rawMadrasaCode && u)) && window.fDb && window.fGetDoc && window.fDoc) {
           try {
             const masterSnap = await window.fGetDoc(window.fDoc(window.fDb, "settings", "master_system_auth"));
             if (masterSnap && masterSnap.exists()) {
@@ -11172,9 +11149,45 @@
                   "hifz_master_auth",
                   JSON.stringify({ username: String(md.username).trim(), password: String(md.password).trim() })
                 );
+                masterCreds = getMasterAuth();
+                isMasterAttempt =
+                  Boolean(u) &&
+                  (u.toLowerCase() === masterCreds.username.toLowerCase() || u.toLowerCase() === "master");
               }
             }
           } catch (err) {}
+        }
+
+        // 1. Mandatory Madrasa Code Check ONLY for regular portal users (bypassed for Master Super Admin)
+        if (!isMasterAttempt) {
+          if (!rawMadrasaCode) {
+            showAuthAlert("ദയവായി മദ്രസ കോഡ് നൽകുക / Please enter Madrasa Code");
+            const mInp = document.getElementById("auth-madrasa-code");
+            if (mInp) mInp.focus();
+            return;
+          }
+          if (rawMadrasaCode === "MDR-01") {
+            showAuthAlert("ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക / Please enter a valid unique Madrasa Code.");
+            const mInp = document.getElementById("auth-madrasa-code");
+            if (mInp) mInp.focus();
+            return;
+          }
+        }
+
+        if (!u || !p) {
+          showAuthAlert(
+            t(
+              "Please enter both your Login ID / Admission No. and Password / PIN.",
+              "ദയവായി ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക."
+            )
+          );
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.innerText = isMasterAttempt
+            ? t("Signing in Master Admin...", "മാസ്റ്റർ അഡ്മിൻ പ്രവേശിക്കുന്നു...")
+            : t("Verifying Workspace...", "വർക്ക്സ്പേസ് പരിശോധിക്കുന്നു...");
         }
 
         let isolatedWorkspace = null;
@@ -11314,19 +11327,6 @@
         .toUpperCase()
         .replace(/[^A-Z0-9_-]/g, "");
 
-      if (!mCode) {
-        return {
-          success: false,
-          message: "ദയവായി മദ്രസ കോഡ് നൽകുക / Please enter Madrasa Code"
-        };
-      }
-      if (mCode === "MDR-01") {
-        return {
-          success: false,
-          message: "ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക / Please enter a valid unique Madrasa Code."
-        };
-      }
-
       if (!u || !p) {
         return {
           success: false,
@@ -11338,7 +11338,10 @@
       }
 
       // 0A. Check Master Super Admin Credentials ("master" / "master786" or configured Master credentials)
+      //     Direct & independent of any individual campus / Madrasa Code
       const masterCreds = getMasterAuth();
+      const isMasterUsername =
+        u.toLowerCase() === masterCreds.username.toLowerCase() || u.toLowerCase() === "master";
       if (
         (u.toLowerCase() === masterCreds.username.toLowerCase() && p === masterCreds.password) ||
         (u.toLowerCase() === "master" && p === "master786")
@@ -11371,6 +11374,30 @@
           );
         }
         return { success: true, role: "master" };
+      }
+
+      if (isMasterUsername && !mCode) {
+        return {
+          success: false,
+          message: t(
+            "Invalid Master Super Admin password.",
+            "തെറ്റായ മാസ്റ്റർ സൂപ്പർ അഡ്മിൻ പാസ്‌വേഡ്."
+          )
+        };
+      }
+
+      // Mandatory Madrasa Code check for all regular campus users (Principal, Ustadh, Parent)
+      if (!mCode) {
+        return {
+          success: false,
+          message: "ദയവായി മദ്രസ കോഡ് നൽകുക / Please enter Madrasa Code"
+        };
+      }
+      if (mCode === "MDR-01") {
+        return {
+          success: false,
+          message: "ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക / Please enter a valid unique Madrasa Code."
+        };
       }
 
       // 0B. Check Master Demo Sandbox Login ("demo" / "demo786") — Unlocks All 3 Portals in Sandbox without touching Live Data
