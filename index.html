@@ -3204,6 +3204,43 @@
       </div>
     </div>
 
+    <!-- MASTER ADMIN: DELETE MADRASA WORKSPACE CONFIRMATION MODAL -->
+    <div id="master-delete-madrasa-modal" class="modal-backdrop hidden no-print" onclick="if(event.target===this) closeMasterDeleteMadrasaModal()">
+      <div class="modal-card" style="max-width:440px; border:2px solid #fca5a5;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding-bottom:12px; border-bottom:1px solid #fee2e2; margin-bottom:14px;">
+          <div>
+            <h3 style="font-size:1.02rem; font-weight:800; color:#b91c1c; margin:0; display:flex; align-items:center; gap:6px;">
+              🗑️ <span id="master-delete-modal-title">Delete Madrasa Workspace (മദ്രസ ഡിലീറ്റ് ചെയ്യുക)</span>
+            </h3>
+            <p style="font-size:0.76rem; color:#64748b; margin:3px 0 0;">
+              Permanent Cloud &amp; Local Removal
+            </p>
+          </div>
+          <button type="button" class="btn-secondary" onclick="closeMasterDeleteMadrasaModal()" style="padding:4px 10px; font-size:0.78rem;">✕</button>
+        </div>
+
+        <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:12px 14px; margin-bottom:16px;">
+          <div style="font-size:0.86rem; font-weight:800; color:#7f1d1d; margin-bottom:6px;">
+            <span id="master-delete-target-code" style="font-family:monospace; background:#fee2e2; padding:2px 7px; border-radius:5px; border:1px solid #fca5a5;"></span>
+            <span id="master-delete-target-name" style="margin-left:6px;"></span>
+          </div>
+          <p id="master-delete-warning-text" style="font-size:0.8rem; color:#991b1b; line-height:1.5; margin:0;">
+            ഈ മദ്രസ വർക്ക്സ്പേസ് ഡിലീറ്റ് ചെയ്താൽ Firestore-ൽ നിന്നുള്ള ഇതിന്റെ എല്ലാ ക്രമീകരണങ്ങളും വിവരങ്ങളും സ്ഥിരമായി നീക്കം ചെയ്യപ്പെടുന്നതാണ്. തുടരണോ?<br />
+            <span style="display:block; margin-top:6px; font-weight:600;">Deleting this workspace will permanently remove its settings and data from Firestore. This action cannot be undone.</span>
+          </p>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="btn-secondary" id="btn-master-delete-cancel" onclick="closeMasterDeleteMadrasaModal()" style="padding:9px 16px; font-size:0.82rem; font-weight:700;">
+            Cancel (റദ്ദാക്കുക)
+          </button>
+          <button type="button" id="btn-master-delete-confirm" onclick="confirmMasterDeleteMadrasa()" style="padding:9px 16px; font-size:0.82rem; font-weight:800; background:#dc2626; color:#ffffff; border:none; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+            🗑️ ഡിലീറ്റ് (Delete)
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- =====================================================================
          VIEW 6: MASTER SYSTEM ADMINISTRATION DASHBOARD (മാസ്റ്റർ അഡ്മിൻ ഡാഷ്‌ബോർഡും മദ്രസ ലിസ്റ്റും)
          ===================================================================== -->
@@ -8545,6 +8582,15 @@
           return;
         }
 
+        // 2b. Close Master Delete Madrasa Modal if open
+        const masterDelModal = document.getElementById("master-delete-madrasa-modal");
+        if (masterDelModal && !masterDelModal.classList.contains("hidden")) {
+          window.closeMasterDeleteMadrasaModal(true);
+          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, true);
+          isHandlingPopState = false;
+          return;
+        }
+
         // 3. Close Notification Dropdown Drawer if open
         const notifDrop = document.getElementById("notification-dropdown");
         if (notifDrop && !notifDrop.classList.contains("hidden")) {
@@ -10009,6 +10055,142 @@
       if (inp) inp.value = "MDR-" + suffix;
     };
 
+    let activeRegisteredMadrasasUnsubscribe = null;
+
+    function syncMadrasaDocIntoLocalAndMemory(d, docId) {
+      if (!d || typeof d !== "object") return null;
+      const mId = String(d.madrasaId || docId || "")
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9_-]/g, "");
+      if (!mId || mId === "MDR-01") return null;
+
+      const cleanName = d.name && !isLegacyHardcodedCampusText(d.name) ? String(d.name).trim() : "";
+      const cleanSub = d.subtitle && !isLegacyHardcodedCampusText(d.subtitle) ? String(d.subtitle).trim() : "";
+      const rawMode = d.campusModeFull || d.mode;
+      const cleanMode = rawMode === "residential" ? "residential" : rawMode === "online" ? "online" : "day";
+      const pUser = d.principalUser ? String(d.principalUser).trim() : "";
+      const pPass = d.principalPass ? String(d.principalPass).trim() : "";
+
+      try {
+        if (cleanName) localStorage.setItem("hifz_campus_name_" + mId, cleanName);
+        if (cleanSub) localStorage.setItem("hifz_campus_sub_" + mId, cleanSub);
+        if (d.academicTerm) localStorage.setItem("hifz_campus_term_" + mId, String(d.academicTerm).trim());
+        if (rawMode) localStorage.setItem("hifz_campus_mode_" + mId, cleanMode);
+        if (pUser && pPass) {
+          localStorage.setItem("hifz_principal_auth_" + mId, JSON.stringify({ username: pUser, password: pPass }));
+        }
+        const reg = getLocalMadrasaRegistry();
+        const prev = reg[mId] || {};
+        reg[mId] = {
+          madrasaId: mId,
+          name: cleanName || prev.name || "",
+          subtitle: cleanSub || prev.subtitle || "",
+          mode: rawMode ? cleanMode : prev.mode || "day",
+          principalUser: pUser || prev.principalUser || "admin",
+          principalPass: pPass || prev.principalPass || "admin786",
+          updatedAt: d.updatedAt || prev.updatedAt || new Date().toISOString()
+        };
+        saveLocalMadrasaRegistry(reg);
+      } catch (e) {}
+
+      const prevEntry = masterMadrasasMap[mId];
+      masterMadrasasMap[mId] = {
+        madrasaId: mId,
+        name: cleanName || (prevEntry && prevEntry.name) || getWorkspaceCampusName(mId) || "Hifz Institution Portal",
+        subtitle: cleanSub || (prevEntry && prevEntry.subtitle) || getWorkspaceCampusLocation(mId) || "Hifz Academy Campus",
+        mode: rawMode ? cleanMode : (prevEntry && prevEntry.mode) || "day",
+        principalUser: pUser || (prevEntry && prevEntry.principalUser) || "admin",
+        principalPass: pPass || (prevEntry && prevEntry.principalPass) || "admin786",
+        studentIds: (prevEntry && prevEntry.studentIds) || new Set(),
+        teacherIds: (prevEntry && prevEntry.teacherIds) || new Set(),
+        updatedAt: d.updatedAt || (prevEntry && prevEntry.updatedAt) || ""
+      };
+
+      if (!isDemoSandbox && currentMadrasaId === mId) {
+        if (rawMode) campusMode = cleanMode;
+        if (cleanName || cleanSub || d.academicTerm) {
+          setWorkspaceCampusIdentity(
+            mId,
+            cleanName || getWorkspaceCampusName(mId),
+            cleanSub || getWorkspaceCampusLocation(mId),
+            d.academicTerm ? String(d.academicTerm).trim() : getWorkspaceCampusTerm(mId)
+          );
+        }
+        if (pUser && pPass) {
+          principalAuth = { username: pUser, password: pPass };
+        }
+        updateCampusIdentityUI();
+        applyCampusModeUI();
+      }
+
+      return masterMadrasasMap[mId];
+    }
+
+    function isFirestorePermissionError(err) {
+      if (!err) return false;
+      const code = String(err.code || "").toLowerCase();
+      const msg = String(err.message || err || "").toLowerCase();
+      return code === "permission-denied" || msg.includes("missing or insufficient permissions") || msg.includes("permission-denied");
+    }
+
+    function hasAuthenticatedPortalOrFirebaseUser() {
+      const hasFirebaseAuthUser = Boolean(typeof window.fAuth !== "undefined" && window.fAuth && window.fAuth.currentUser);
+      const hasPortalSession = Boolean(currentUser && currentUser.role && !isDemoSandbox);
+      return hasFirebaseAuthUser || hasPortalSession;
+    }
+
+    window.unsubscribeRegisteredMadrasas = function() {
+      if (activeRegisteredMadrasasUnsubscribe) {
+        try {
+          activeRegisteredMadrasasUnsubscribe();
+        } catch (e) {}
+        activeRegisteredMadrasasUnsubscribe = null;
+      }
+    };
+
+    window.subscribeToRegisteredMadrasas = function() {
+      window.unsubscribeRegisteredMadrasas();
+      if (!window.fDb || !window.fOnSnapshot || !window.fCollection) return;
+      if (!hasAuthenticatedPortalOrFirebaseUser() || !currentUser || currentUser.role !== "master") {
+        return;
+      }
+
+      try {
+        activeRegisteredMadrasasUnsubscribe = window.fOnSnapshot(
+          window.fCollection(window.fDb, "madrasas"),
+          (snap) => {
+            if (!snap || !currentUser || currentUser.role !== "master") return;
+            if (typeof snap.docChanges === "function") {
+              snap.docChanges().forEach((change) => {
+                if (change.type === "removed") {
+                  const removedId = String((change.doc.data() && change.doc.data().madrasaId) || change.doc.id || "")
+                    .trim()
+                    .toUpperCase();
+                  if (removedId) cleanupLocalMadrasaState(removedId);
+                }
+              });
+            }
+            snap.forEach((docSnap) => {
+              syncMadrasaDocIntoLocalAndMemory(docSnap.data() || {}, docSnap.id);
+            });
+            renderMasterAdminDashboard();
+          },
+          (err) => {
+            if (isFirestorePermissionError(err)) {
+              window.unsubscribeRegisteredMadrasas();
+              return;
+            }
+            console.warn("Madrasas real-time sync notice:", err);
+          }
+        );
+      } catch (e) {
+        if (!isFirestorePermissionError(e)) {
+          console.warn("subscribeToRegisteredMadrasas error:", e);
+        }
+      }
+    };
+
     window.fetchAllMadrasasForMasterAdmin = async function(showFeedbackToast) {
       const registry = getLocalMadrasaRegistry();
       const map = {};
@@ -10018,11 +10200,12 @@
         if (!cleanId || cleanId === "MDR-01") return null;
         if (!map[cleanId]) {
           const regItem = registry[cleanId] || {};
-          let localName = regItem.name || "";
-          let localSub = regItem.subtitle || "";
-          let localMode = regItem.mode || "day";
-          let localPUser = regItem.principalUser || "admin";
-          let localPPass = regItem.principalPass || "admin786";
+          const prevMem = masterMadrasasMap[cleanId] || {};
+          let localName = regItem.name || prevMem.name || "";
+          let localSub = regItem.subtitle || prevMem.subtitle || "";
+          let localMode = regItem.mode || prevMem.mode || "day";
+          let localPUser = regItem.principalUser || prevMem.principalUser || "admin";
+          let localPPass = regItem.principalPass || prevMem.principalPass || "admin786";
           let localStudents = [];
           let localTeachers = [];
 
@@ -10036,12 +10219,12 @@
               if (pObj && pObj.username) localPUser = pObj.username;
               if (pObj && pObj.password) localPPass = pObj.password;
             }
-            const sRaw = localStorage.getItem("hifz_live_students_" + cleanId);
+            const sRaw = localStorage.getItem("live_students_" + cleanId) || localStorage.getItem("hifz_live_students_" + cleanId);
             if (sRaw) {
               const sArr = JSON.parse(sRaw);
               if (Array.isArray(sArr)) localStudents = sArr;
             }
-            const tRaw = localStorage.getItem("hifz_live_teachers_" + cleanId);
+            const tRaw = localStorage.getItem("live_ustadhs_" + cleanId) || localStorage.getItem("hifz_live_teachers_" + cleanId);
             if (tRaw) {
               const tArr = JSON.parse(tRaw);
               if (Array.isArray(tArr)) localTeachers = tArr;
@@ -10057,7 +10240,7 @@
             principalPass: localPPass,
             studentIds: new Set(localStudents.map((s) => s.studentId).filter(Boolean)),
             teacherIds: new Set(localTeachers.map((t) => (t.username || t.teacherId || "").toLowerCase()).filter(Boolean)),
-            updatedAt: regItem.updatedAt || ""
+            updatedAt: regItem.updatedAt || prevMem.updatedAt || ""
           };
         }
         return map[cleanId];
@@ -10095,9 +10278,14 @@
         }
       } catch (e) {}
 
-      // 2. Query Firestore collections if online
-      if (window.fDb && window.fGetDocs && window.fCollection) {
-        // 2a. Query madrasas/{madrasaId} collection (if accessible)
+      // 2. Query Firestore global collections ONLY when authenticated as Master Admin (or Firebase auth user exists)
+      const canReadGlobalCollections =
+        Boolean(window.fDb && window.fGetDocs && window.fCollection) &&
+        hasAuthenticatedPortalOrFirebaseUser() &&
+        Boolean(currentUser && currentUser.role === "master");
+
+      if (canReadGlobalCollections) {
+        // 2a. Query madrasas/{madrasaId} collection directly from Firestore
         try {
           const madrasasSnap = await window.fGetDocs(window.fCollection(window.fDb, "madrasas"));
           madrasasSnap.forEach((docSnap) => {
@@ -10111,9 +10299,24 @@
               if (d.principalUser) entry.principalUser = d.principalUser;
               if (d.principalPass) entry.principalPass = d.principalPass;
               if (d.updatedAt) entry.updatedAt = d.updatedAt;
+              try {
+                if (d.name) localStorage.setItem("hifz_campus_name_" + mId, String(d.name).trim());
+                if (d.subtitle) localStorage.setItem("hifz_campus_sub_" + mId, String(d.subtitle).trim());
+                if (d.mode) localStorage.setItem("hifz_campus_mode_" + mId, entry.mode);
+                if (d.principalUser && d.principalPass) {
+                  localStorage.setItem(
+                    "hifz_principal_auth_" + mId,
+                    JSON.stringify({ username: String(d.principalUser).trim(), password: String(d.principalPass).trim() })
+                  );
+                }
+              } catch (err) {}
             }
           });
-        } catch (e) {}
+        } catch (e) {
+          if (!isFirestorePermissionError(e)) {
+            console.warn("Firestore madrasas fetch notice:", e);
+          }
+        }
 
         // 2b. Query settings collection for general_{mId}, campus_data_{mId}, campus_config_{mId}, principal_auth_{mId}
         try {
@@ -10399,14 +10602,24 @@
                 </div>
               </td>
               <td>
-                <button
-                  type="button"
-                  class="btn-secondary"
-                  onclick="handleMasterInspectMadrasa('${mId}')"
-                  style="padding:7px 11px; font-size:0.75rem; font-weight:800; background:#f8fafc; color:#0f172a; border:1px solid #94a3b8;"
-                >
-                  🔑 ${t("Open Portal", "പോർട്ടൽ തുറക്കുക")}
-                </button>
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                  <button
+                    type="button"
+                    class="btn-secondary"
+                    onclick="handleMasterInspectMadrasa('${mId}')"
+                    style="padding:7px 11px; font-size:0.75rem; font-weight:800; background:#f8fafc; color:#0f172a; border:1px solid #94a3b8;"
+                  >
+                    🔑 ${t("Open Portal", "പോർട്ടൽ തുറക്കുക")}
+                  </button>
+                  <button
+                    type="button"
+                    onclick="openMasterDeleteMadrasaModal('${mId}')"
+                    title="${t("Delete Madrasa Workspace", "മദ്രസ വർക്ക്സ്പേസ് ഡിലീറ്റ് ചെയ്യുക")}"
+                    style="padding:7px 11px; font-size:0.75rem; font-weight:800; background:#dc2626; color:#ffffff; border:1px solid #b91c1c; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:5px;"
+                  >
+                    🗑️ ഡിലീറ്റ് (Delete)
+                  </button>
+                </div>
               </td>
             </tr>
           `;
@@ -10475,32 +10688,71 @@
         updatedAt: nowIso
       };
 
-      // 3. Persist to Firestore settings/*_{rawCode} and madrasas/{rawCode}
+      // 3. Instantly push and save to Firestore madrasas/{rawCode} & settings/*_{rawCode}
+      let cloudSynced = false;
       if (window.fDb && window.fSetDoc && window.fDoc) {
         const safeFirestoreMode = mMode === "residential" ? "residential" : "day";
-        window.fSetDoc(
-          window.fDoc(window.fDb, "settings", `general_${rawCode}`),
-          { mode: safeFirestoreMode, campusModeFull: mMode, madrasaId: rawCode, updatedAt: nowIso },
-          { merge: true }
-        ).catch(() => {});
-
-        window.fSetDoc(
-          window.fDoc(window.fDb, "settings", `campus_data_${rawCode}`),
-          { name: mName, subtitle: mSub, mode: safeFirestoreMode, campusModeFull: mMode, madrasaId: rawCode, updatedAt: nowIso },
-          { merge: true }
-        ).catch(() => {});
-
-        window.fSetDoc(
-          window.fDoc(window.fDb, "settings", `principal_auth_${rawCode}`),
-          { username: pUser, password: pPass, madrasaId: rawCode, updatedAt: nowIso },
-          { merge: true }
-        ).catch(() => {});
-
-        window.fSetDoc(
-          window.fDoc(window.fDb, "madrasas", rawCode),
-          { madrasaId: rawCode, name: mName, subtitle: mSub, mode: mMode, principalUser: pUser, principalPass: pPass, updatedAt: nowIso },
-          { merge: true }
-        ).catch(() => {});
+        try {
+          await Promise.all([
+            window.fSetDoc(
+              window.fDoc(window.fDb, "madrasas", rawCode),
+              {
+                madrasaId: rawCode,
+                name: mName,
+                subtitle: mSub,
+                mode: mMode,
+                principalUser: pUser,
+                principalPass: pPass,
+                ownerId: "portal-session",
+                createdAt: nowIso,
+                updatedAt: nowIso
+              },
+              { merge: true }
+            ),
+            window.fSetDoc(
+              window.fDoc(window.fDb, "settings", `general_${rawCode}`),
+              {
+                name: mName,
+                sub: mSub,
+                mode: safeFirestoreMode,
+                campusModeFull: mMode,
+                madrasaId: rawCode,
+                principalUsername: pUser,
+                principalPassword: pPass,
+                ownerId: "portal-session",
+                updatedAt: nowIso
+              },
+              { merge: true }
+            ),
+            window.fSetDoc(
+              window.fDoc(window.fDb, "settings", `campus_data_${rawCode}`),
+              {
+                name: mName,
+                subtitle: mSub,
+                mode: safeFirestoreMode,
+                campusModeFull: mMode,
+                madrasaId: rawCode,
+                ownerId: "portal-session",
+                updatedAt: nowIso
+              },
+              { merge: true }
+            ),
+            window.fSetDoc(
+              window.fDoc(window.fDb, "settings", `principal_auth_${rawCode}`),
+              {
+                username: pUser,
+                password: pPass,
+                madrasaId: rawCode,
+                ownerId: "portal-session",
+                updatedAt: nowIso
+              },
+              { merge: true }
+            )
+          ]);
+          cloudSynced = true;
+        } catch (err) {
+          console.error("Failed to sync new Madrasa to Firestore:", err);
+        }
       }
 
       // Clear form inputs
@@ -10514,12 +10766,21 @@
       renderMasterAdminDashboard();
 
       if (window.showToast) {
-        window.showToast(
-          t(
-            `✓ Created Madrasa Workspace [${rawCode}] (${mName}) with Principal ID: ${pUser}`,
-            `✓ പുതിയ മദ്രസ വർക്ക്സ്പേസ് [${rawCode}] (${mName}) വിജയകരമായി സൃഷ്ടിച്ചു!`
-          )
-        );
+        if (cloudSynced) {
+          window.showToast(
+            t(
+              `✓ Created Madrasa Workspace [${rawCode}] (${mName}) & synced to Cloud.`,
+              `✓ പുതിയ മദ്രസ വർക്ക്സ്പേസ് [${rawCode}] (${mName}) ക്ലൗഡിലേക്ക് സേവ് ചെയ്തു!`
+            )
+          );
+        } else {
+          window.showToast(
+            t(
+              `⚠️ Created [${rawCode}] locally, but Cloud Firestore sync failed. Check connection.`,
+              `⚠️ [${rawCode}] ഈ ഫോണിൽ സേവ് ചെയ്തു, പക്ഷെ ക്ലൗഡ് സിങ്ക് പരാജയപ്പെട്ടു.`
+            )
+          );
+        }
       }
     };
 
@@ -10557,15 +10818,15 @@
       if (window.fDb && window.fSetDoc && window.fDoc) {
         window.fSetDoc(
           window.fDoc(window.fDb, "settings", `principal_auth_${mId}`),
-          { username: newU, password: newP, madrasaId: mId, updatedAt: nowIso },
+          { username: newU, password: newP, madrasaId: mId, ownerId: "portal-session", updatedAt: nowIso },
           { merge: true }
-        ).catch(() => {});
+        ).catch((err) => console.warn("principal_auth update sync error:", err));
 
         window.fSetDoc(
           window.fDoc(window.fDb, "madrasas", mId),
-          { madrasaId: mId, principalUser: newU, principalPass: newP, updatedAt: nowIso },
+          { madrasaId: mId, principalUser: newU, principalPass: newP, ownerId: "portal-session", updatedAt: nowIso },
           { merge: true }
-        ).catch(() => {});
+        ).catch((err) => console.warn("madrasas principal update sync error:", err));
       }
 
       renderMasterAdminDashboard();
@@ -10616,21 +10877,21 @@
         const safeFirestoreMode = newMode === "residential" ? "residential" : "day";
         window.fSetDoc(
           window.fDoc(window.fDb, "settings", `general_${mId}`),
-          { mode: safeFirestoreMode, campusModeFull: newMode, madrasaId: mId, updatedAt: nowIso },
+          { mode: safeFirestoreMode, campusModeFull: newMode, madrasaId: mId, ownerId: "portal-session", updatedAt: nowIso },
           { merge: true }
-        ).catch(() => {});
+        ).catch((err) => console.warn("general mode sync error:", err));
 
         window.fSetDoc(
           window.fDoc(window.fDb, "settings", `campus_data_${mId}`),
-          { mode: safeFirestoreMode, campusModeFull: newMode, madrasaId: mId, updatedAt: nowIso },
+          { mode: safeFirestoreMode, campusModeFull: newMode, madrasaId: mId, ownerId: "portal-session", updatedAt: nowIso },
           { merge: true }
-        ).catch(() => {});
+        ).catch((err) => console.warn("campus_data mode sync error:", err));
 
         window.fSetDoc(
           window.fDoc(window.fDb, "madrasas", mId),
-          { madrasaId: mId, mode: newMode, updatedAt: nowIso },
+          { madrasaId: mId, mode: newMode, ownerId: "portal-session", updatedAt: nowIso },
           { merge: true }
-        ).catch(() => {});
+        ).catch((err) => console.warn("madrasas mode sync error:", err));
       }
 
       renderMasterAdminDashboard();
@@ -10819,6 +11080,182 @@
       }
     };
 
+    let pendingMasterDeleteMadrasaId = null;
+
+    function cleanupLocalMadrasaState(madrasaId) {
+      const mId = String(madrasaId || "").trim().toUpperCase();
+      if (!mId) return;
+
+      delete masterMadrasasMap[mId];
+
+      try {
+        const reg = getLocalMadrasaRegistry();
+        if (reg && reg[mId]) {
+          delete reg[mId];
+          saveLocalMadrasaRegistry(reg);
+        }
+        const prefixes = [
+          "hifz_campus_name_",
+          "hifz_campus_sub_",
+          "hifz_campus_term_",
+          "hifz_campus_mode_",
+          "hifz_principal_auth_",
+          "hifz_demo_cleared_",
+          "live_students_",
+          "hifz_live_students_",
+          "live_ustadhs_",
+          "live_teachers_",
+          "hifz_live_teachers_",
+          "live_logs_",
+          "live_schedules_",
+          "live_notices_",
+          "live_alerts_",
+          "live_leaves_",
+          "live_config_"
+        ];
+        prefixes.forEach((pref) => localStorage.removeItem(pref + mId));
+
+        if (localStorage.getItem("hifz_custom_madrasa_id") === mId) {
+          localStorage.removeItem("hifz_custom_madrasa_id");
+        }
+      } catch (e) {}
+
+      if (masterInspectingMadrasaId === mId) {
+        masterInspectingMadrasaId = null;
+        if (typeof updateNavVisibilityForRole === "function" && currentUser) {
+          updateNavVisibilityForRole(currentUser.role);
+        }
+      }
+
+      if (currentMadrasaId === mId) {
+        currentMadrasaId = deviceMadrasaId === mId ? "MDR-01" : deviceMadrasaId;
+        globalStudents = [];
+        globalTeachers = [];
+        globalLogs = [];
+        globalSchedules = [];
+        globalNotices = [];
+        globalParentAlerts = [];
+        if (Array.isArray(activeWorkspaceUnsubscribers)) {
+          activeWorkspaceUnsubscribers.forEach((unsub) => {
+            try { if (typeof unsub === "function") unsub(); } catch (e) {}
+          });
+          activeWorkspaceUnsubscribers = [];
+        }
+      }
+    }
+
+    window.openMasterDeleteMadrasaModal = function(madrasaId) {
+      if (!currentUser || currentUser.role !== "master") {
+        if (window.showToast) {
+          window.showToast(t("🔒 Only Master Super Admin can delete a Madrasa.", "🔒 മാസ്റ്റർ സൂപ്പർ അഡ്മിന് മാത്രമേ മദ്രസ ഡിലീറ്റ് ചെയ്യാൻ സാധിക്കൂ."));
+        }
+        return;
+      }
+      const mId = String(madrasaId || "").trim().toUpperCase();
+      if (!mId) return;
+
+      pendingMasterDeleteMadrasaId = mId;
+      const entry = masterMadrasasMap[mId] || {};
+      const mName = entry.name || getWorkspaceCampusName(mId) || "Hifz Institution Portal";
+
+      const codeEl = document.getElementById("master-delete-target-code");
+      const nameEl = document.getElementById("master-delete-target-name");
+      if (codeEl) codeEl.innerText = mId;
+      if (nameEl) nameEl.innerText = mName;
+
+      const modal = document.getElementById("master-delete-madrasa-modal");
+      if (modal) modal.classList.remove("hidden");
+
+      if (typeof window.pushAppHistoryState === "function") {
+        window.pushAppHistoryState({ modal: "master-delete-madrasa" });
+      }
+    };
+
+    window.closeMasterDeleteMadrasaModal = function(fromPopState) {
+      pendingMasterDeleteMadrasaId = null;
+      const modal = document.getElementById("master-delete-madrasa-modal");
+      if (modal) modal.classList.add("hidden");
+      const btn = document.getElementById("btn-master-delete-confirm");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = "🗑️ ഡിലീറ്റ് (Delete)";
+      }
+      if (!fromPopState && typeof window.syncHistoryModalClosed === "function") {
+        window.syncHistoryModalClosed("master-delete-madrasa");
+      }
+    };
+
+    window.confirmMasterDeleteMadrasa = async function() {
+      if (!currentUser || currentUser.role !== "master") return;
+      const mId = pendingMasterDeleteMadrasaId;
+      if (!mId) return;
+
+      const btn = document.getElementById("btn-master-delete-confirm");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = t("Deleting...", "ഡിലീറ്റ് ചെയ്യുന്നു...");
+      }
+
+      let cloudDeleted = false;
+      if (window.fDb && window.fDeleteDoc && window.fDoc) {
+        try {
+          await window.fDeleteDoc(window.fDoc(window.fDb, "madrasas", mId));
+          cloudDeleted = true;
+        } catch (err) {
+          console.error("Failed to delete madrasa document from Firestore:", err);
+        }
+
+        // Clean up associated workspace settings documents (best-effort)
+        await Promise.allSettled([
+          window.fDeleteDoc(window.fDoc(window.fDb, "settings", `general_${mId}`)),
+          window.fDeleteDoc(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)),
+          window.fDeleteDoc(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)),
+          window.fDeleteDoc(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`)),
+          window.fDeleteDoc(window.fDoc(window.fDb, "madrasas", mId, "settings", "general"))
+        ]);
+
+        // Clean up workspace-scoped student, teacher, log, alert, and notice records (best-effort)
+        if (window.fGetDocs && window.fCollection && window.fQuery && window.fWhere) {
+          const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
+          const colls = ["students", "teachers", "hifz_logs", "alerts", "notices"];
+          for (const collName of colls) {
+            try {
+              const snap = await window.fGetDocs(window.fQuery(window.fCollection(window.fDb, collName), ownerFilter));
+              const deletes = [];
+              snap.forEach((docSnap) => {
+                if (belongsToMadrasa(docSnap.id, docSnap.data() || {}, mId)) {
+                  deletes.push(window.fDeleteDoc(window.fDoc(window.fDb, collName, docSnap.id)));
+                }
+              });
+              if (deletes.length > 0) await Promise.allSettled(deletes);
+            } catch (e) {}
+          }
+        }
+      }
+
+      cleanupLocalMadrasaState(mId);
+      window.closeMasterDeleteMadrasaModal();
+      renderMasterAdminDashboard();
+
+      if (window.showToast) {
+        if (cloudDeleted || !window.fDb) {
+          window.showToast(
+            t(
+              `✓ Deleted Madrasa Workspace [${mId}] from Firestore and local state.`,
+              `✓ [${mId}] മദ്രസ വർക്ക്സ്പേസ് Firestore-ൽ നിന്നും സ്ഥിരമായി നീക്കം ചെയ്തു.`
+            )
+          );
+        } else {
+          window.showToast(
+            t(
+              `⚠️ Removed [${mId}] locally, but Firestore deletion encountered a permission or network issue.`,
+              `⚠️ [${mId}] ഈ ഫോണിൽ നിന്ന് നീക്കം ചെയ്തു, പക്ഷെ Firestore ഡിലീറ്റ് പൂർണ്ണമായില്ല.`
+            )
+          );
+        }
+      }
+    };
+
     window.handleMasterBroadcastNotice = function(e) {
       if (e && typeof e.preventDefault === "function") e.preventDefault();
       const titleInp = document.getElementById("master-global-notice-title");
@@ -10934,6 +11371,7 @@
         principalCreds: null,
         teachers: [],
         students: [],
+        madrasaDoc: null,
         genDoc: null,
         cfgDoc: null,
         dataDoc: null,
@@ -10979,13 +11417,28 @@
           }
         };
 
-        const [genSnap, cfgSnap, dataSnap, authSnap] = await Promise.all([
+        const [madrasaSnap, genSnap, cfgSnap, dataSnap, authSnap] = await Promise.all([
+          safeGetDoc(window.fDoc(window.fDb, "madrasas", mId)),
           safeGetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`)),
           safeGetDoc(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)),
           safeGetDoc(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)),
           safeGetDoc(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`))
         ]);
 
+        if (madrasaSnap && madrasaSnap.exists()) {
+          const d = madrasaSnap.data();
+          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+            result.madrasaDoc = d;
+            result.exists = true;
+            syncMadrasaDocIntoLocalAndMemory(d, mId);
+            if (d.principalUser && d.principalPass) {
+              result.principalCreds = {
+                username: String(d.principalUser).trim(),
+                password: String(d.principalPass).trim()
+              };
+            }
+          }
+        }
         if (genSnap && genSnap.exists()) {
           const d = genSnap.data();
           if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
@@ -11362,6 +11815,9 @@
           localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
         } catch (err) {}
         applyAuthenticatedState("master");
+        if (typeof window.subscribeToRegisteredMadrasas === "function") {
+          window.subscribeToRegisteredMadrasas();
+        }
         if (typeof window.fetchAllMadrasasForMasterAdmin === "function") {
           window.fetchAllMadrasasForMasterAdmin(false);
         }
@@ -11499,6 +11955,20 @@
         } catch (err) {}
         loadLiveCollectionsFromLocal(currentMadrasaId);
 
+        if (workspace.madrasaDoc) {
+          const md = workspace.madrasaDoc;
+          const mRawMode = md.campusModeFull || md.mode;
+          if (mRawMode) {
+            campusMode = mRawMode === "residential" ? "residential" : mRawMode === "online" ? "online" : "day";
+            try { localStorage.setItem(`hifz_campus_mode_${mCode}`, campusMode); } catch (err) {}
+          }
+          const mCleanName = md.name && !isLegacyHardcodedCampusText(md.name) ? String(md.name).trim() : "";
+          const mCleanSub = md.subtitle && !isLegacyHardcodedCampusText(md.subtitle) ? String(md.subtitle).trim() : "";
+          const mCleanTerm = md.academicTerm ? String(md.academicTerm).trim() : "";
+          if (mCleanName || mCleanSub || mCleanTerm) {
+            setWorkspaceCampusIdentity(mCode, mCleanName, mCleanSub, mCleanTerm);
+          }
+        }
         if (workspace.genDoc) applyGeneralSettingsDocToMadrasa(workspace.genDoc, mCode);
         if (workspace.cfgDoc) applyCampusConfigDocToMadrasa(workspace.cfgDoc, mCode);
         if (workspace.dataDoc) applyCampusDataDocToMadrasa(workspace.dataDoc, mCode);
@@ -11547,6 +12017,7 @@
         }
         populateStudentSelectors();
         renderPrincipalTeachersDirectory();
+        updateCampusIdentityUI();
         applyCampusModeUI();
         applyAuthenticatedState(targetRole);
       };
@@ -11731,6 +12202,15 @@
     window.showAuthView = function() {
       currentUser = null;
       masterInspectingMadrasaId = null;
+      if (typeof window.unsubscribeRegisteredMadrasas === "function") {
+        window.unsubscribeRegisteredMadrasas();
+      }
+      if (Array.isArray(activeWorkspaceUnsubscribers)) {
+        activeWorkspaceUnsubscribers.forEach((unsub) => {
+          try { if (typeof unsub === "function") unsub(); } catch (e) {}
+        });
+        activeWorkspaceUnsubscribers = [];
+      }
       const bar = document.getElementById("demo-preview-switcher-bar");
       if (bar) bar.classList.add("hidden");
 
@@ -11816,6 +12296,9 @@
 
       if (role === "master") {
         switchWorkspace("master");
+        if (typeof window.subscribeToRegisteredMadrasas === "function") {
+          window.subscribeToRegisteredMadrasas();
+        }
         if (typeof window.fetchAllMadrasasForMasterAdmin === "function") {
           window.fetchAllMadrasasForMasterAdmin(false);
         }
@@ -15111,6 +15594,23 @@
       if (!mId || mId === "MDR-01") return;
       if (d.madrasaId && String(d.madrasaId).trim().toUpperCase() !== mId) return;
 
+      const rawMode = d.campusModeFull || d.mode;
+      if (rawMode) {
+        campusMode = rawMode === "residential" ? "residential" : rawMode === "online" ? "online" : "day";
+      }
+      const cleanName = d.name && !isLegacyHardcodedCampusText(d.name) ? String(d.name).trim() : "";
+      const cleanSub = (d.subtitle || d.sub) && !isLegacyHardcodedCampusText(d.subtitle || d.sub) ? String(d.subtitle || d.sub).trim() : "";
+      if (cleanName || cleanSub) {
+        setWorkspaceCampusIdentity(
+          mId,
+          cleanName || getWorkspaceCampusName(mId),
+          cleanSub || getWorkspaceCampusLocation(mId),
+          d.academicTerm ? String(d.academicTerm).trim() : getWorkspaceCampusTerm(mId)
+        );
+        updateCampusIdentityUI();
+        applyCampusModeUI();
+      }
+
       if (d.demoCleared === true || d.cleanDatabaseMode === true) {
         demoCleared = true;
         cleanDatabaseMode = true;
@@ -15195,10 +15695,20 @@
       activeWorkspaceUnsubscribers = [];
 
       if (!window.fDb || !window.fOnSnapshot || !window.fDoc) return;
+      if (!hasAuthenticatedPortalOrFirebaseUser()) return;
       const mId = (madrasaId || currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
       if (!mId || mId === "MDR-01") return;
 
       try {
+        activeWorkspaceUnsubscribers.push(
+          window.fOnSnapshot(
+            window.fDoc(window.fDb, "madrasas", mId),
+            (docSnap) => {
+              if (docSnap && docSnap.exists()) syncMadrasaDocIntoLocalAndMemory(docSnap.data(), docSnap.id);
+            },
+            () => {}
+          )
+        );
         activeWorkspaceUnsubscribers.push(
           window.fOnSnapshot(
             window.fDoc(window.fDb, "settings", `general_${mId}`),
@@ -15467,8 +15977,15 @@
     };
 
     window.addEventListener("firebase-ready", () => {
-      if (!window.fDb || !window.fOnSnapshot || !window.fQuery || !window.fWhere) return;
-      if (currentUser && currentUser.role !== "master" && !isDemoSandbox) {
+      if (!window.fDb || !currentUser || isDemoSandbox) return;
+      if (currentUser.role === "master") {
+        if (typeof window.subscribeToRegisteredMadrasas === "function") {
+          window.subscribeToRegisteredMadrasas();
+        }
+        if (typeof window.fetchAllMadrasasForMasterAdmin === "function") {
+          window.fetchAllMadrasasForMasterAdmin(false);
+        }
+      } else {
         window.subscribeToMadrasaWorkspace(currentMadrasaId);
       }
     });
@@ -15534,11 +16051,20 @@
           currentParentStudentId = currentUser.studentId || (globalStudents[0] ? globalStudents[0].studentId : "");
         }
         applyAuthenticatedState(currentUser.role);
-        if (window.fDb && currentUser.role !== "master" && !isDemoSandbox && typeof window.subscribeToMadrasaWorkspace === "function") {
-          window.subscribeToMadrasaWorkspace(currentMadrasaId);
+        if (window.fDb && !isDemoSandbox) {
+          if (currentUser.role === "master") {
+            if (typeof window.subscribeToRegisteredMadrasas === "function") {
+              window.subscribeToRegisteredMadrasas();
+            }
+            if (typeof window.fetchAllMadrasasForMasterAdmin === "function") {
+              window.fetchAllMadrasasForMasterAdmin(false);
+            }
+          } else if (typeof window.subscribeToMadrasaWorkspace === "function") {
+            window.subscribeToMadrasaWorkspace(currentMadrasaId);
+          }
         }
       } else {
-        // ALWAYS defaults to the neutral Portal Sign In page when first opened if no session
+        // ALWAYS defaults to the neutral Portal Sign In page when first opened if no session (no unauthenticated global Firestore reads)
         showAuthView();
       }
 

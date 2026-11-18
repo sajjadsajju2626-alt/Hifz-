@@ -660,9 +660,72 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "Madrasa": {
+      "title": "Madrasa",
+      "description": "Registered Madrasa workspace metadata and Principal access configuration.",
+      "type": "object",
+      "properties": {
+        "madrasaId": {
+          "type": "string",
+          "description": "Unique Madrasa workspace code (e.g., MDR-03)",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Institution or Madrasa display name",
+          "maxLength": 120
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Location or subtitle",
+          "maxLength": 140
+        },
+        "academicTerm": {
+          "type": "string",
+          "description": "Academic term label",
+          "maxLength": 80
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["residential", "day", "online"],
+          "description": "Active campus mode"
+        },
+        "principalUser": {
+          "type": "string",
+          "description": "Principal login username",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "principalPass": {
+          "type": "string",
+          "description": "Principal login password",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["madrasaId"]
     }
   },
   "firestore": {
+    "/madrasas/{madrasaId}": {
+      "schema": { "$ref": "#/entities/Madrasa" },
+      "description": "Registered Madrasa workspaces managed by Master Super Admin and synced across devices"
+    },
     "/students/{studentId}": {
       "schema": { "$ref": "#/entities/Student" },
       "description": "Hifz college student profiles and Juz progress"

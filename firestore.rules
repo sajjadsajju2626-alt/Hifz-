@@ -212,6 +212,27 @@ service cloud.firestore {
         (!('ownerId' in data) || (data.ownerId is string && data.ownerId.size() <= 128));
     }
 
+    function isValidMadrasa(data) {
+      return data.keys().hasAll(['madrasaId']) &&
+        data.keys().hasOnly([
+          'madrasaId', 'name', 'subtitle', 'academicTerm', 'mode',
+          'principalUser', 'principalPass', 'ownerId', 'createdAt', 'updatedAt'
+        ]) &&
+        data.madrasaId is string &&
+        data.madrasaId.size() >= 1 &&
+        data.madrasaId.size() <= 64 &&
+        data.madrasaId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        (!('name' in data) || (data.name is string && data.name.size() <= 120)) &&
+        (!('subtitle' in data) || (data.subtitle is string && data.subtitle.size() <= 140)) &&
+        (!('academicTerm' in data) || (data.academicTerm is string && data.academicTerm.size() <= 80)) &&
+        (!('mode' in data) || (data.mode is string && data.mode in ['residential', 'day', 'online'])) &&
+        (!('principalUser' in data) || (data.principalUser is string && data.principalUser.size() >= 1 && data.principalUser.size() <= 80)) &&
+        (!('principalPass' in data) || (data.principalPass is string && data.principalPass.size() >= 1 && data.principalPass.size() <= 80)) &&
+        (!('ownerId' in data) || (data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128)) &&
+        (!('createdAt' in data) || ((data.createdAt is string && data.createdAt.size() <= 64) || data.createdAt is timestamp)) &&
+        (!('updatedAt' in data) || ((data.updatedAt is string && data.updatedAt.size() <= 64) || data.updatedAt is timestamp));
+    }
+
     function isValidAdmin(data) {
       return data.keys().hasAll(['uid', 'email', 'createdAt']) &&
       data.keys().hasOnly(['uid', 'email', 'createdAt']) &&
@@ -364,10 +385,23 @@ service cloud.firestore {
       allow delete: if isValidId(noticeId) && canAccessOwner(existing().ownerId);
     }
 
+    match /madrasas/{madrasaId} {
+      allow get: if isValidId(madrasaId);
+      allow list: if resource.data.madrasaId is string;
+      allow create, update: if isValidId(madrasaId) && isValidMadrasa(incoming());
+      allow delete: if isValidId(madrasaId) && (isAdmin() || !('ownerId' in existing()) || existing().ownerId in ['portal-session', 'local-seed', 'master-admin']);
+
+      match /settings/{settingId} {
+        allow get, list: if isValidId(madrasaId) && isValidId(settingId);
+        allow create, update: if isValidId(madrasaId) && isValidId(settingId) && isValidSettings(incoming());
+        allow delete: if isValidId(madrasaId) && isValidId(settingId) && (isAdmin() || !('ownerId' in existing()) || existing().ownerId in ['portal-session', 'local-seed', 'master-admin']);
+      }
+    }
+
     match /settings/{settingId} {
       allow get, list: if isValidId(settingId);
       allow create, update: if isValidId(settingId) && isValidSettings(incoming());
-      allow delete: if isValidId(settingId) && isAdmin();
+      allow delete: if isValidId(settingId) && (isAdmin() || !('ownerId' in existing()) || existing().ownerId in ['portal-session', 'local-seed', 'master-admin']);
     }
 
     match /admins/{adminUid} {
