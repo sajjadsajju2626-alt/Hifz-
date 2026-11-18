@@ -23,9 +23,9 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 
-  <!-- Firebase Modular SDK (v11) -->
+  <!-- Firebase Modular SDK (v11.10.0) -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
       getFirestore,
       initializeFirestore,
@@ -43,7 +43,7 @@
       where,
       onSnapshot,
       serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
       projectId: "gen-lang-client-0385980230",
@@ -54,6 +54,7 @@
       storageBucket: "gen-lang-client-0385980230.firebasestorage.app",
       messagingSenderId: "997081475844"
     };
+    window.__hifzFirebaseConfig = firebaseConfig;
 
     const app = initializeApp(firebaseConfig);
     let db;
@@ -90,24 +91,46 @@
     }
     window.handleFirestoreError = handleFirestoreError;
 
+    async function checkFirestoreRestConfigHealth() {
+      try {
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), 3500) : null;
+        const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(firebaseConfig.projectId)}/databases/${encodeURIComponent(firebaseConfig.firestoreDatabaseId)}/documents/test/connection?key=${encodeURIComponent(firebaseConfig.apiKey)}`;
+        const resp = await fetch(url, {
+          method: "GET",
+          cache: "no-store",
+          signal: controller ? controller.signal : undefined
+        });
+        if (timer) clearTimeout(timer);
+        // 200 (found) or 403 (PERMISSION_DENIED from security rules) both confirm Firebase project/database config is healthy
+        return resp.status === 200 || resp.status === 403 || resp.status === 404;
+      } catch (e) {
+        return null;
+      }
+    }
+
     async function testConnection() {
       if (typeof navigator !== "undefined" && navigator.onLine === false) {
         return;
       }
       try {
-        await getDocFromServer(doc(db, "test", "connection"));
+        await Promise.race([
+          getDocFromServer(doc(db, "test", "connection")),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("the client is offline (timeout)")), 8000))
+        ]);
       } catch (error) {
-        if (error instanceof Error && error.message && error.message.includes("the client is offline")) {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          try {
-            await getDocFromServer(doc(db, "test", "connection"));
-          } catch (retryError) {
-            if (
-              retryError instanceof Error &&
-              retryError.message &&
-              retryError.message.includes("the client is offline") &&
-              (typeof navigator === "undefined" || navigator.onLine !== false)
-            ) {
+        const msg = error instanceof Error ? error.message : String(error || "");
+        if (msg.includes("the client is offline")) {
+          const restOk = await checkFirestoreRestConfigHealth();
+          if (restOk === true) {
+            // Firebase project/database config is verified reachable via REST; skip false-positive config error
+            return;
+          }
+          if (restOk === false || (typeof navigator === "undefined" || navigator.onLine !== false)) {
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            const restRetryOk = await checkFirestoreRestConfigHealth();
+            if (restRetryOk === true) return;
+            if (typeof navigator === "undefined" || navigator.onLine !== false) {
               console.error("Please check your Firebase configuration.");
             }
           }
@@ -4575,7 +4598,106 @@
         .replace(/[^A-Z0-9_-]/g, "");
     }
 
-    async function ensureFirebaseReady(timeoutMs = 8000) {
+    function withPromiseTimeout(promise, timeoutMs = 4500, timeoutLabel = "Request timed out") {
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const timerId = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          const err = new Error(timeoutLabel);
+          err.code = "deadline-exceeded";
+          err.isTimeout = true;
+          reject(err);
+        }, Math.max(500, Number(timeoutMs) || 4500));
+        Promise.resolve(promise)
+          .then((val) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timerId);
+            resolve(val);
+          })
+          .catch((err) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timerId);
+            reject(err);
+          });
+      });
+    }
+
+    function decodeFirestoreRestValue(v) {
+      if (!v || typeof v !== "object") return undefined;
+      if ("stringValue" in v) return v.stringValue;
+      if ("booleanValue" in v) return Boolean(v.booleanValue);
+      if ("integerValue" in v) return Number(v.integerValue);
+      if ("doubleValue" in v) return Number(v.doubleValue);
+      if ("timestampValue" in v) return v.timestampValue;
+      if ("nullValue" in v) return null;
+      if ("arrayValue" in v) {
+        const vals = v.arrayValue && Array.isArray(v.arrayValue.values) ? v.arrayValue.values : [];
+        return vals.map(decodeFirestoreRestValue);
+      }
+      if ("mapValue" in v) {
+        const fields = (v.mapValue && v.mapValue.fields) || {};
+        const out = {};
+        Object.keys(fields).forEach((k) => {
+          out[k] = decodeFirestoreRestValue(fields[k]);
+        });
+        return out;
+      }
+      return undefined;
+    }
+
+    async function fetchFirestoreDocViaRest(pathSegments, timeoutMs = 3500) {
+      const cfg = window.__hifzFirebaseConfig;
+      if (!cfg || !cfg.projectId || !cfg.firestoreDatabaseId || !cfg.apiKey) {
+        return { ok: false, exists: false, data: null, error: new Error("Missing Firebase REST config") };
+      }
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        return { ok: false, exists: false, data: null, error: new Error("Client offline") };
+      }
+      const cleanPath = (Array.isArray(pathSegments) ? pathSegments : [pathSegments])
+        .map((seg) => encodeURIComponent(String(seg || "").trim()))
+        .filter(Boolean)
+        .join("/");
+      if (!cleanPath) {
+        return { ok: false, exists: false, data: null, error: new Error("Invalid document path") };
+      }
+      const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(cfg.projectId)}/databases/${encodeURIComponent(cfg.firestoreDatabaseId)}/documents/${cleanPath}?key=${encodeURIComponent(cfg.apiKey)}`;
+      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+      const timerId = controller ? setTimeout(() => controller.abort(), Math.max(800, timeoutMs)) : null;
+      try {
+        const resp = await fetch(url, {
+          method: "GET",
+          cache: "no-store",
+          signal: controller ? controller.signal : undefined
+        });
+        if (timerId) clearTimeout(timerId);
+        if (resp.status === 404) {
+          return { ok: true, exists: false, data: null, error: null };
+        }
+        if (resp.status === 403) {
+          const permErr = new Error("Missing or insufficient permissions.");
+          permErr.code = "permission-denied";
+          return { ok: false, exists: false, data: null, error: permErr };
+        }
+        if (!resp.ok) {
+          return { ok: false, exists: false, data: null, error: new Error(`REST HTTP ${resp.status}`) };
+        }
+        const json = await resp.json();
+        const fields = (json && json.fields) || {};
+        const parsed = {};
+        Object.keys(fields).forEach((k) => {
+          parsed[k] = decodeFirestoreRestValue(fields[k]);
+        });
+        return { ok: true, exists: true, data: parsed, error: null };
+      } catch (err) {
+        if (timerId) clearTimeout(timerId);
+        return { ok: false, exists: false, data: null, error: err };
+      }
+    }
+
+    async function ensureFirebaseReady(timeoutMs = 4000) {
       if (window.fDb && window.fGetDoc && window.fSetDoc && window.fDoc) {
         return true;
       }
@@ -4626,65 +4748,93 @@
       return (
         code === "unavailable" ||
         code === "failed-precondition" ||
+        code === "deadline-exceeded" ||
+        Boolean(err.isTimeout) ||
         msg.includes("offline") ||
         msg.includes("network") ||
+        msg.includes("timed out") ||
+        msg.includes("timeout") ||
         msg.includes("failed to get document from server")
       );
     }
 
-    async function safeGetDocServerFirst(docRef) {
+    async function safeGetDocServerFirst(docRef, timeoutMs = 4500) {
       if (!docRef) return { snap: null, error: null, fromServer: false };
       if (typeof window.fGetDocFromServer === "function") {
         try {
-          const snap = await window.fGetDocFromServer(docRef);
+          const snap = await withPromiseTimeout(
+            window.fGetDocFromServer(docRef),
+            timeoutMs,
+            "Firestore getDocFromServer timed out"
+          );
           return { snap, error: null, fromServer: true };
         } catch (err) {
           if (isFirestoreOfflineError(err) && typeof window.fGetDoc === "function") {
             try {
-              const cacheSnap = await window.fGetDoc(docRef);
-              return { snap: cacheSnap, error: null, fromServer: false };
+              const cacheSnap = await withPromiseTimeout(
+                window.fGetDoc(docRef),
+                1500,
+                "Firestore cache getDoc timed out"
+              );
+              return { snap: cacheSnap, error: null, fromServer: false, timedOut: Boolean(err && err.isTimeout) };
             } catch (cacheErr) {
-              return { snap: null, error: cacheErr || err, fromServer: false };
+              return { snap: null, error: cacheErr || err, fromServer: false, timedOut: Boolean(err && err.isTimeout) };
             }
           }
-          return { snap: null, error: err, fromServer: false };
+          return { snap: null, error: err, fromServer: false, timedOut: Boolean(err && err.isTimeout) };
         }
       }
       if (typeof window.fGetDoc === "function") {
         try {
-          const snap = await window.fGetDoc(docRef);
+          const snap = await withPromiseTimeout(
+            window.fGetDoc(docRef),
+            Math.min(timeoutMs, 2500),
+            "Firestore getDoc timed out"
+          );
           return { snap, error: null, fromServer: false };
         } catch (err) {
-          return { snap: null, error: err, fromServer: false };
+          return { snap: null, error: err, fromServer: false, timedOut: Boolean(err && err.isTimeout) };
         }
       }
       return { snap: null, error: new Error("Firestore getDoc unavailable"), fromServer: false };
     }
 
-    async function safeGetDocsServerFirst(qOrCollRef) {
+    async function safeGetDocsServerFirst(qOrCollRef, timeoutMs = 4500) {
       if (!qOrCollRef) return { snap: null, error: null, fromServer: false };
       if (typeof window.fGetDocsFromServer === "function") {
         try {
-          const snap = await window.fGetDocsFromServer(qOrCollRef);
+          const snap = await withPromiseTimeout(
+            window.fGetDocsFromServer(qOrCollRef),
+            timeoutMs,
+            "Firestore getDocsFromServer timed out"
+          );
           return { snap, error: null, fromServer: true };
         } catch (err) {
           if (isFirestoreOfflineError(err) && typeof window.fGetDocs === "function") {
             try {
-              const cacheSnap = await window.fGetDocs(qOrCollRef);
-              return { snap: cacheSnap, error: null, fromServer: false };
+              const cacheSnap = await withPromiseTimeout(
+                window.fGetDocs(qOrCollRef),
+                1500,
+                "Firestore cache getDocs timed out"
+              );
+              return { snap: cacheSnap, error: null, fromServer: false, timedOut: Boolean(err && err.isTimeout) };
             } catch (cacheErr) {
-              return { snap: null, error: cacheErr || err, fromServer: false };
+              return { snap: null, error: cacheErr || err, fromServer: false, timedOut: Boolean(err && err.isTimeout) };
             }
           }
-          return { snap: null, error: err, fromServer: false };
+          return { snap: null, error: err, fromServer: false, timedOut: Boolean(err && err.isTimeout) };
         }
       }
       if (typeof window.fGetDocs === "function") {
         try {
-          const snap = await window.fGetDocs(qOrCollRef);
+          const snap = await withPromiseTimeout(
+            window.fGetDocs(qOrCollRef),
+            Math.min(timeoutMs, 2500),
+            "Firestore getDocs timed out"
+          );
           return { snap, error: null, fromServer: false };
         } catch (err) {
-          return { snap: null, error: err, fromServer: false };
+          return { snap: null, error: err, fromServer: false, timedOut: Boolean(err && err.isTimeout) };
         }
       }
       return { snap: null, error: new Error("Firestore getDocs unavailable"), fromServer: false };
@@ -12564,170 +12714,186 @@
         });
       };
 
-      // Wait for Firebase SDK initialization so quick cross-device sign-ins never skip Firestore
-      await ensureFirebaseReady(8000);
+      const credCandidates = [];
+      const recordCredCandidate = (usernameVal, passwordVal, updatedAtVal, priorityWeight) => {
+        const uStr = String(usernameVal || "").trim();
+        const pStr = String(passwordVal || "").trim();
+        if (uStr && pStr) {
+          credCandidates.push({
+            username: uStr,
+            password: pStr,
+            tsMs: parseFirestoreTimeMs(updatedAtVal),
+            priority: priorityWeight || 0
+          });
+        }
+      };
 
-      // 1. Authenticate directly against remote Firestore workspace for this exact Madrasa Code (server-first)
-      if (window.fDb && window.fGetDoc && window.fDoc) {
-        result.firestoreChecked = true;
+      const applyRemoteMadrasaData = (d) => {
+        if (!d || typeof d !== "object") return;
+        if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+          result.madrasaDoc = d;
+          result.exists = true;
+          syncMadrasaDocIntoLocalAndMemory(d, mId);
+          recordCredCandidate(d.principalUser || d.username, d.principalPass || d.password, d.updatedAt, 3);
+        }
+      };
+
+      const applyRemoteUnderscoreData = (d) => {
+        if (!d || typeof d !== "object") return;
+        if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+          result.underscoreDoc = d;
+          result.exists = true;
+          syncMadrasaDocIntoLocalAndMemory(
+            {
+              madrasaId: mId,
+              name: d.name,
+              subtitle: d.subtitle || d.sub,
+              academicTerm: d.academicTerm,
+              mode: d.campusModeFull || d.mode,
+              principalUser: d.principalUser || d.principalUsername || d.username,
+              principalPass: d.principalPass || d.principalPassword || d.password,
+              updatedAt: d.updatedAt
+            },
+            mId
+          );
+          recordCredCandidate(
+            d.principalUser || d.principalUsername || d.username,
+            d.principalPass || d.principalPassword || d.password,
+            d.updatedAt,
+            4
+          );
+          addUniqueTeachers(d.teachers);
+          addUniqueStudents(d.students);
+        }
+      };
+
+      const applyRemoteAuthData = (d) => {
+        if (!d || typeof d !== "object") return;
+        if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+          result.authDoc = d;
+          result.exists = true;
+          recordCredCandidate(d.username || d.principalUser, d.password || d.principalPass, d.updatedAt, 5);
+        }
+      };
+
+      const runRemoteWorkspaceLookup = async () => {
+        // Wait briefly for Firebase SDK initialization so cross-device sign-ins never block long
+        await ensureFirebaseReady(3000);
+
         let resolvedCount = 0;
         const fetchErrors = [];
-        const credCandidates = [];
 
-        const recordCredCandidate = (usernameVal, passwordVal, updatedAtVal, priorityWeight) => {
-          const uStr = String(usernameVal || "").trim();
-          const pStr = String(passwordVal || "").trim();
-          if (uStr && pStr) {
-            credCandidates.push({
-              username: uStr,
-              password: pStr,
-              tsMs: parseFirestoreTimeMs(updatedAtVal),
-              priority: priorityWeight || 0
-            });
-          }
-        };
+        // 1A. Primary SDK lookup (server-first with per-call timeout & local cache fallback)
+        if (window.fDb && window.fGetDoc && window.fDoc) {
+          result.firestoreChecked = true;
 
-        const docQueries = [
-          safeGetDocServerFirst(window.fDoc(window.fDb, "madrasas", mId)),
-          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `_${mId}`)),
-          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `general_${mId}`)),
-          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)),
-          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)),
-          safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`)),
-          safeGetDocServerFirst(window.fDoc(window.fDb, "madrasas", mId, "settings", "general"))
-        ];
+          const docQueries = [
+            safeGetDocServerFirst(window.fDoc(window.fDb, "madrasas", mId), 4000),
+            safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `_${mId}`), 4000),
+            safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `general_${mId}`), 3500),
+            safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `campus_config_${mId}`), 3500),
+            safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `campus_data_${mId}`), 3500),
+            safeGetDocServerFirst(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`), 4000),
+            safeGetDocServerFirst(window.fDoc(window.fDb, "madrasas", mId, "settings", "general"), 3500)
+          ];
 
-        const [madrasaRes, underscoreRes, genRes, cfgRes, dataRes, authRes, nestedGenRes] = await Promise.all(docQueries);
+          // Run teachers & students collection queries in parallel with docQueries to eliminate sequential delays
+          const ownerFilter =
+            window.fQuery && window.fWhere ? window.fWhere("ownerId", "in", ["portal-session", "local-seed"]) : null;
+          const collQueries =
+            window.fGetDocs && window.fCollection && ownerFilter
+              ? [
+                  safeGetDocsServerFirst(window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter), 4000),
+                  safeGetDocsServerFirst(window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter), 4000)
+                ]
+              : [Promise.resolve(null), Promise.resolve(null)];
 
-        [madrasaRes, underscoreRes, genRes, cfgRes, dataRes, authRes, nestedGenRes].forEach((r) => {
-          if (r && r.snap) resolvedCount++;
-          else if (r && r.error) fetchErrors.push(r.error);
-        });
+          const [docResults, collResults] = await Promise.all([
+            Promise.all(docQueries),
+            Promise.all(collQueries)
+          ]);
 
-        let madrasaSnap = madrasaRes && madrasaRes.snap;
-        const underscoreSnap = underscoreRes && underscoreRes.snap;
-        const genSnap = genRes && genRes.snap;
-        const cfgSnap = cfgRes && cfgRes.snap;
-        const dataSnap = dataRes && dataRes.snap;
-        const authSnap = authRes && authRes.snap;
-        const nestedGenSnap = nestedGenRes && nestedGenRes.snap;
+          const [madrasaRes, underscoreRes, genRes, cfgRes, dataRes, authRes, nestedGenRes] = docResults;
+          const [tchRes, stdRes] = collResults;
 
-        // Fallback query on madrasas collection by field madrasaId if direct doc ID lookup was missing
-        if ((!madrasaSnap || !madrasaSnap.exists()) && window.fCollection && window.fQuery && window.fWhere) {
-          const fallbackRes = await safeGetDocsServerFirst(
-            window.fQuery(window.fCollection(window.fDb, "madrasas"), window.fWhere("madrasaId", "==", mId))
-          );
-          if (fallbackRes && fallbackRes.snap) {
-            resolvedCount++;
-            if (!fallbackRes.snap.empty) {
-              madrasaSnap = fallbackRes.snap.docs[0];
-            }
-          } else if (fallbackRes && fallbackRes.error) {
-            fetchErrors.push(fallbackRes.error);
-          }
-        }
-
-        if (madrasaSnap && madrasaSnap.exists()) {
-          const d = madrasaSnap.data() || {};
-          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
-            result.madrasaDoc = d;
-            result.exists = true;
-            syncMadrasaDocIntoLocalAndMemory(d, mId);
-            recordCredCandidate(d.principalUser || d.username, d.principalPass || d.password, d.updatedAt, 3);
-          }
-        }
-
-        if (underscoreSnap && underscoreSnap.exists()) {
-          const d = underscoreSnap.data() || {};
-          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
-            result.underscoreDoc = d;
-            result.exists = true;
-            syncMadrasaDocIntoLocalAndMemory(
-              {
-                madrasaId: mId,
-                name: d.name,
-                subtitle: d.subtitle || d.sub,
-                academicTerm: d.academicTerm,
-                mode: d.campusModeFull || d.mode,
-                principalUser: d.principalUser || d.principalUsername || d.username,
-                principalPass: d.principalPass || d.principalPassword || d.password,
-                updatedAt: d.updatedAt
-              },
-              mId
-            );
-            recordCredCandidate(
-              d.principalUser || d.principalUsername || d.username,
-              d.principalPass || d.principalPassword || d.password,
-              d.updatedAt,
-              4
-            );
-            addUniqueTeachers(d.teachers);
-            addUniqueStudents(d.students);
-          }
-        }
-
-        if (genSnap && genSnap.exists()) {
-          const d = genSnap.data() || {};
-          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
-            result.genDoc = d;
-            result.exists = true;
-            recordCredCandidate(d.principalUsername || d.principalUser, d.principalPassword || d.principalPass, d.updatedAt, 2);
-          }
-        }
-
-        if (nestedGenSnap && nestedGenSnap.exists()) {
-          const d = nestedGenSnap.data() || {};
-          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
-            result.nestedGenDoc = d;
-            result.exists = true;
-            recordCredCandidate(d.principalUsername || d.principalUser, d.principalPassword || d.principalPass, d.updatedAt, 1);
-          }
-        }
-
-        if (cfgSnap && cfgSnap.exists()) {
-          const d = cfgSnap.data() || {};
-          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
-            result.cfgDoc = d;
-            result.exists = true;
-          }
-        }
-
-        if (dataSnap && dataSnap.exists()) {
-          const d = dataSnap.data() || {};
-          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
-            result.dataDoc = d;
-            result.exists = true;
-            addUniqueTeachers(d.teachers);
-            addUniqueStudents(d.students);
-          }
-        }
-
-        if (authSnap && authSnap.exists()) {
-          const d = authSnap.data() || {};
-          if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
-            result.authDoc = d;
-            result.exists = true;
-            recordCredCandidate(d.username || d.principalUser, d.password || d.principalPass, d.updatedAt, 5);
-          }
-        }
-
-        if (credCandidates.length > 0) {
-          credCandidates.sort((a, b) => {
-            if (b.tsMs !== a.tsMs) return b.tsMs - a.tsMs;
-            return b.priority - a.priority;
+          [madrasaRes, underscoreRes, genRes, cfgRes, dataRes, authRes, nestedGenRes, tchRes, stdRes].forEach((r) => {
+            if (r && r.snap) resolvedCount++;
+            else if (r && r.error) fetchErrors.push(r.error);
           });
-          result.principalCreds = {
-            username: credCandidates[0].username,
-            password: credCandidates[0].password
-          };
-        }
 
-        // Also query Firestore teachers & students collections strictly scoped to mId (server-first)
-        if (window.fGetDocs && window.fCollection && window.fQuery && window.fWhere) {
-          const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
-          const tchRes = await safeGetDocsServerFirst(window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter));
+          let madrasaSnap = madrasaRes && madrasaRes.snap;
+          const underscoreSnap = underscoreRes && underscoreRes.snap;
+          const genSnap = genRes && genRes.snap;
+          const cfgSnap = cfgRes && cfgRes.snap;
+          const dataSnap = dataRes && dataRes.snap;
+          const authSnap = authRes && authRes.snap;
+          const nestedGenSnap = nestedGenRes && nestedGenRes.snap;
+
+          // Only run collection query fallback if neither madrasas/{mId} nor settings/_{mId} existed
+          if (
+            (!madrasaSnap || !madrasaSnap.exists()) &&
+            (!underscoreSnap || !underscoreSnap.exists()) &&
+            window.fCollection &&
+            window.fQuery &&
+            window.fWhere
+          ) {
+            const fallbackRes = await safeGetDocsServerFirst(
+              window.fQuery(window.fCollection(window.fDb, "madrasas"), window.fWhere("madrasaId", "==", mId)),
+              3000
+            );
+            if (fallbackRes && fallbackRes.snap) {
+              resolvedCount++;
+              if (!fallbackRes.snap.empty) {
+                madrasaSnap = fallbackRes.snap.docs[0];
+              }
+            } else if (fallbackRes && fallbackRes.error) {
+              fetchErrors.push(fallbackRes.error);
+            }
+          }
+
+          if (madrasaSnap && madrasaSnap.exists()) {
+            applyRemoteMadrasaData(madrasaSnap.data() || {});
+          }
+          if (underscoreSnap && underscoreSnap.exists()) {
+            applyRemoteUnderscoreData(underscoreSnap.data() || {});
+          }
+          if (genSnap && genSnap.exists()) {
+            const d = genSnap.data() || {};
+            if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+              result.genDoc = d;
+              result.exists = true;
+              recordCredCandidate(d.principalUsername || d.principalUser, d.principalPassword || d.principalPass, d.updatedAt, 2);
+            }
+          }
+          if (nestedGenSnap && nestedGenSnap.exists()) {
+            const d = nestedGenSnap.data() || {};
+            if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+              result.nestedGenDoc = d;
+              result.exists = true;
+              recordCredCandidate(d.principalUsername || d.principalUser, d.principalPassword || d.principalPass, d.updatedAt, 1);
+            }
+          }
+          if (cfgSnap && cfgSnap.exists()) {
+            const d = cfgSnap.data() || {};
+            if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+              result.cfgDoc = d;
+              result.exists = true;
+            }
+          }
+          if (dataSnap && dataSnap.exists()) {
+            const d = dataSnap.data() || {};
+            if (!d.madrasaId || normalizeMadrasaCode(d.madrasaId) === mId) {
+              result.dataDoc = d;
+              result.exists = true;
+              addUniqueTeachers(d.teachers);
+              addUniqueStudents(d.students);
+            }
+          }
+          if (authSnap && authSnap.exists()) {
+            applyRemoteAuthData(authSnap.data() || {});
+          }
+
           if (tchRes && tchRes.snap) {
-            resolvedCount++;
             tchRes.snap.forEach((docSnap) => {
               const tData = docSnap.data() || {};
               if (!belongsToMadrasa(docSnap.id, tData, mId)) return;
@@ -12736,13 +12902,9 @@
               result.exists = true;
               addUniqueTeachers([{ ...tData, teacherId: cleanTchId }]);
             });
-          } else if (tchRes && tchRes.error) {
-            fetchErrors.push(tchRes.error);
           }
 
-          const stdRes = await safeGetDocsServerFirst(window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter));
           if (stdRes && stdRes.snap) {
-            resolvedCount++;
             stdRes.snap.forEach((docSnap) => {
               const sData = docSnap.data() || {};
               if (!belongsToMadrasa(docSnap.id, sData, mId)) return;
@@ -12751,20 +12913,61 @@
               result.exists = true;
               addUniqueStudents([{ ...sData, studentId: cleanStdId }]);
             });
-          } else if (stdRes && stdRes.error) {
-            fetchErrors.push(stdRes.error);
           }
+        } else {
+          fetchErrors.push(new Error("Firebase SDK unavailable"));
+        }
+
+        // 1B. Direct REST fallback if SDK timed out / failed to reach backend (bypasses slow WebChannel)
+        if (resolvedCount === 0 && (typeof navigator === "undefined" || navigator.onLine !== false)) {
+          result.firestoreChecked = true;
+          const [restMadrasa, restUnderscore, restAuth] = await Promise.all([
+            fetchFirestoreDocViaRest(["madrasas", mId], 3000),
+            fetchFirestoreDocViaRest(["settings", `_${mId}`], 3000),
+            fetchFirestoreDocViaRest(["settings", `principal_auth_${mId}`], 3000)
+          ]);
+          [restMadrasa, restUnderscore, restAuth].forEach((rr) => {
+            if (rr && rr.ok) resolvedCount++;
+            else if (rr && rr.error) fetchErrors.push(rr.error);
+          });
+          if (restMadrasa && restMadrasa.exists && restMadrasa.data) applyRemoteMadrasaData(restMadrasa.data);
+          if (restUnderscore && restUnderscore.exists && restUnderscore.data) applyRemoteUnderscoreData(restUnderscore.data);
+          if (restAuth && restAuth.exists && restAuth.data) applyRemoteAuthData(restAuth.data);
         }
 
         result.firestoreOnline = resolvedCount > 0;
         if (!result.firestoreOnline && fetchErrors.length > 0) {
           result.firestoreError = fetchErrors[0];
         }
-      } else {
-        result.firestoreError = new Error("Firebase SDK unavailable");
+      };
+
+      // Robust try...catch with hard master timeout fallback so sign-in can never hang indefinitely
+      try {
+        await withPromiseTimeout(
+          runRemoteWorkspaceLookup(),
+          7500,
+          "Firestore workspace verification timed out"
+        );
+      } catch (remoteErr) {
+        result.firestoreChecked = true;
+        result.firestoreOnline = false;
+        if (!result.firestoreError) {
+          result.firestoreError = remoteErr;
+        }
       }
 
-      // 2. If workspace exists in Firestore (or Firestore is offline), allow strictly mId-scoped local cache fallback.
+      if (credCandidates.length > 0) {
+        credCandidates.sort((a, b) => {
+          if (b.tsMs !== a.tsMs) return b.tsMs - a.tsMs;
+          return b.priority - a.priority;
+        });
+        result.principalCreds = {
+          username: credCandidates[0].username,
+          password: credCandidates[0].password
+        };
+      }
+
+      // 2. Graceful fallback to strictly mId-scoped local cache whenever workspace exists remotely OR remote fetch failed/timed out.
       //    NEVER fall back to local cache if Firestore is online and confirmed no workspace exists for mId!
       const canUseScopedLocalFallback = result.exists || !result.firestoreOnline;
       if (canUseScopedLocalFallback) {
@@ -12839,12 +13042,15 @@
       }
 
       try {
-        await ensureFirebaseReady(8000);
+        await ensureFirebaseReady(3000);
 
-        // Sync latest Master Super Admin credentials from Firestore if attempting master login or logging in without Madrasa Code
+        // Sync latest Master Super Admin credentials from Firestore with strict timeout if attempting master login
         if ((isMasterAttempt || (!rawMadrasaCode && u)) && window.fDb && window.fGetDoc && window.fDoc) {
           try {
-            const masterRes = await safeGetDocServerFirst(window.fDoc(window.fDb, "settings", "master_system_auth"));
+            const masterRes = await safeGetDocServerFirst(
+              window.fDoc(window.fDb, "settings", "master_system_auth"),
+              2500
+            );
             const masterSnap = masterRes && masterRes.snap;
             if (masterSnap && masterSnap.exists()) {
               const md = masterSnap.data() || {};
@@ -12896,13 +13102,37 @@
 
         let isolatedWorkspace = null;
         if (!isMasterAttempt && u.toLowerCase() !== "demo") {
-          isolatedWorkspace = await fetchIsolatedMadrasaAuthFromFirestore(rawMadrasaCode);
+          try {
+            isolatedWorkspace = await withPromiseTimeout(
+              fetchIsolatedMadrasaAuthFromFirestore(rawMadrasaCode),
+              8500,
+              "Workspace verification timed out"
+            );
+          } catch (workspaceFetchErr) {
+            console.warn("Workspace verification fallback:", workspaceFetchErr);
+            // Fall back to local cache check via loginWithAutoRole(u, p, rawMadrasaCode, null)
+            isolatedWorkspace = null;
+          }
         }
 
         const res = window.loginWithAutoRole(u, p, rawMadrasaCode, isolatedWorkspace);
-        if (!res.success) {
-          showAuthAlert(res.message);
+        if (!res || !res.success) {
+          showAuthAlert(
+            (res && res.message) ||
+              t(
+                "Invalid Madrasa Code or Connection Error. Please check your details and try again.",
+                "തെറ്റായ മദ്രസ കോഡ് അല്ലെങ്കിൽ കണക്ഷൻ പിശക് (Invalid Madrasa Code or Connection Error)."
+              )
+          );
         }
+      } catch (authErr) {
+        console.error("Sign-in verification error:", authErr);
+        showAuthAlert(
+          t(
+            "Invalid Madrasa Code or Connection Error. Please try again.",
+            "തെറ്റായ മദ്രസ കോഡ് അല്ലെങ്കിൽ കണക്ഷൻ പിശക് (Invalid Madrasa Code or Connection Error). ദയവായി വീണ്ടും ശ്രമിക്കുക."
+          )
+        );
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -13180,7 +13410,7 @@
             return {
               success: false,
               message: t(
-                `Cloud permission error while verifying Madrasa Code "${mCode}". (${errMsg})`,
+                `Invalid Madrasa Code or Permission Error while verifying "${mCode}". (${errMsg})`,
                 `"${mCode}" മദ്രസ കോഡ് പരിശോധിക്കുന്നതിൽ ക്ലൗഡ് പെർമിഷൻ പിശക്.`
               )
             };
@@ -13188,15 +13418,15 @@
           return {
             success: false,
             message: t(
-              `Unable to connect to Cloud database to verify Madrasa Code "${mCode}". Please check your internet connection and retry.`,
-              `"${mCode}" മദ്രസ കോഡ് പരിശോധിക്കാൻ ഇന്റർനെറ്റ്/ക്ലൗഡ് കണക്ഷൻ ലഭ്യമായില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.`
+              `Invalid Madrasa Code or Connection Error: Unable to verify "${mCode}" right now. Please check your Madrasa Code or internet connection and retry.`,
+              `തെറ്റായ മദ്രസ കോഡ് അല്ലെങ്കിൽ കണക്ഷൻ പിശക് (Invalid Madrasa Code or Connection Error): "${mCode}" പരിശോധിക്കാൻ കഴിഞ്ഞില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.`
             )
           };
         }
         return {
           success: false,
           message: t(
-            `Madrasa Code "${mCode}" not found in Firestore. Please verify your Madrasa Code.`,
+            `Invalid Madrasa Code or Connection Error: Madrasa Code "${mCode}" not found.`,
             `"${mCode}" എന്ന മദ്രസ കോഡ് കണ്ടെത്തിയില്ല! ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക.`
           )
         };

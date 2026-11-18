@@ -87,26 +87,46 @@ export function handleFirestoreError(
   throw new Error(JSON.stringify(errInfo));
 }
 
+async function checkFirestoreRestHealth(): Promise<boolean | null> {
+  try {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), 3500) : null;
+    const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(firebaseConfig.projectId)}/databases/${encodeURIComponent(firebaseConfig.firestoreDatabaseId)}/documents/test/connection?key=${encodeURIComponent(firebaseConfig.apiKey)}`;
+    const resp = await fetch(url, {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller ? controller.signal : undefined,
+    });
+    if (timer) clearTimeout(timer);
+    return resp.status === 200 || resp.status === 403 || resp.status === 404;
+  } catch {
+    return null;
+  }
+}
+
 // Validate connection to Firestore on boot
 async function testConnection() {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     return;
   }
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    await Promise.race([
+      getDocFromServer(doc(db, 'test', 'connection')),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('the client is offline (timeout)')), 8000)),
+    ]);
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
+      const restOk = await checkFirestoreRestHealth();
+      if (restOk === true) {
+        return;
+      }
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
-      } catch (retryError) {
-        if (
-          retryError instanceof Error &&
-          retryError.message.includes('the client is offline') &&
-          (typeof navigator === 'undefined' || navigator.onLine !== false)
-        ) {
-          console.error('Please check your Firebase configuration.');
-        }
+      const restRetryOk = await checkFirestoreRestHealth();
+      if (restRetryOk === true) {
+        return;
+      }
+      if (typeof navigator === 'undefined' || navigator.onLine !== false) {
+        console.error('Please check your Firebase configuration.');
       }
     }
   }
