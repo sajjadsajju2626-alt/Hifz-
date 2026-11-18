@@ -28,6 +28,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import {
       getFirestore,
+      initializeFirestore,
       collection,
       doc,
       setDoc,
@@ -55,7 +56,20 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+    let db;
+    try {
+      db = initializeFirestore(
+        app,
+        {
+          experimentalForceLongPolling: true,
+          useFetchStreams: false,
+          ignoreUndefinedProperties: true
+        },
+        firebaseConfig.firestoreDatabaseId
+      );
+    } catch (initErr) {
+      db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+    }
 
     function handleFirestoreError(error, operationType, path) {
       const errInfo = {
@@ -77,11 +91,26 @@
     window.handleFirestoreError = handleFirestoreError;
 
     async function testConnection() {
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        return;
+      }
       try {
         await getDocFromServer(doc(db, "test", "connection"));
       } catch (error) {
         if (error instanceof Error && error.message && error.message.includes("the client is offline")) {
-          console.error("Please check your Firebase configuration.");
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          try {
+            await getDocFromServer(doc(db, "test", "connection"));
+          } catch (retryError) {
+            if (
+              retryError instanceof Error &&
+              retryError.message &&
+              retryError.message.includes("the client is offline") &&
+              (typeof navigator === "undefined" || navigator.onLine !== false)
+            ) {
+              console.error("Please check your Firebase configuration.");
+            }
+          }
         }
       }
     }
