@@ -1748,7 +1748,7 @@
             <span id="auth-alert-text"></span>
           </div>
 
-          <form id="auth-portal-form" onsubmit="handleAuthSubmit(event)" autocomplete="off">
+          <form id="auth-portal-form" onsubmit="handleAuthSubmit(event)" autocomplete="off" novalidate>
             <div class="form-group">
               <label for="auth-madrasa-code" id="auth-madrasa-code-label">Madrasa Code (മദ്രസ കോഡ്)</label>
               <input
@@ -1757,6 +1757,8 @@
                 name="portal_madrasa_code_field"
                 value=""
                 placeholder="Enter Madrasa Code (മദ്രസ കോഡ് നൽകുക)"
+                required
+                aria-required="true"
                 autocomplete="off"
                 style="font-family: monospace; font-weight: 700; text-transform: uppercase;"
               />
@@ -8394,6 +8396,19 @@
             updatedAt: nowTs
           };
           await window.fSetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`), payload, { merge: true });
+          if (principalAuth && principalAuth.username && principalAuth.password) {
+            window.fSetDoc(
+              window.fDoc(window.fDb, "settings", `principal_auth_${mId}`),
+              {
+                madrasaId: mId,
+                username: String(principalAuth.username).trim(),
+                password: String(principalAuth.password).trim(),
+                ownerId: "portal-session",
+                updatedAt: nowTs
+              },
+              { merge: true }
+            ).catch(() => {});
+          }
           window.fSetDoc(window.fDoc(window.fDb, "madrasas", mId), {
             madrasaId: mId,
             name,
@@ -10741,6 +10756,18 @@
           },
           { merge: true }
         ).catch(() => {});
+
+        window.fSetDoc(
+          window.fDoc(window.fDb, "settings", `principal_auth_${newId}`),
+          {
+            madrasaId: newId,
+            username: updatedEntry.principalUser || "admin",
+            password: updatedEntry.principalPass || "admin786",
+            ownerId: "master-admin",
+            updatedAt: nowIso
+          },
+          { merge: true }
+        ).catch(() => {});
       }
 
       updateCampusIdentityUI();
@@ -10899,6 +10926,195 @@
       }
     };
 
+    async function fetchIsolatedMadrasaAuthFromFirestore(madrasaCode) {
+      const mId = String(madrasaCode || "").trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+      const result = {
+        madrasaId: mId,
+        exists: false,
+        firestoreChecked: false,
+        firestoreOnline: false,
+        principalCreds: null,
+        teachers: [],
+        students: [],
+        genDoc: null,
+        cfgDoc: null,
+        dataDoc: null,
+        authDoc: null
+      };
+      if (!mId || mId === "MDR-01") return result;
+
+      const addUniqueTeachers = (list) => {
+        if (!Array.isArray(list)) return;
+        list.forEach((tr) => {
+          if (!tr || isSampleTeacher(tr)) return;
+          const tUser = String(tr.username || tr.teacherId || "").trim().toLowerCase();
+          if (!tUser) return;
+          if (!result.teachers.some((x) => String(x.username || x.teacherId || "").trim().toLowerCase() === tUser)) {
+            result.teachers.push(tr);
+          }
+        });
+      };
+
+      const addUniqueStudents = (list) => {
+        if (!Array.isArray(list)) return;
+        list.forEach((s) => {
+          if (!s || isSampleStudent(s)) return;
+          const sid = String(s.studentId || s.id || "").trim().toUpperCase();
+          if (!sid) return;
+          if (!result.students.some((x) => String(x.studentId || x.id || "").trim().toUpperCase() === sid)) {
+            result.students.push({ ...s, studentId: sid });
+          }
+        });
+      };
+
+      // 1. Authenticate directly against Firestore workspace for this exact Madrasa Code
+      if (window.fDb && window.fGetDoc && window.fDoc) {
+        result.firestoreChecked = true;
+        let resolvedCount = 0;
+        const safeGetDoc = async (docRef) => {
+          try {
+            const snap = await window.fGetDoc(docRef);
+            resolvedCount++;
+            return snap;
+          } catch (err) {
+            return null;
+          }
+        };
+
+        const [genSnap, cfgSnap, dataSnap, authSnap] = await Promise.all([
+          safeGetDoc(window.fDoc(window.fDb, "settings", `general_${mId}`)),
+          safeGetDoc(window.fDoc(window.fDb, "settings", `campus_config_${mId}`)),
+          safeGetDoc(window.fDoc(window.fDb, "settings", `campus_data_${mId}`)),
+          safeGetDoc(window.fDoc(window.fDb, "settings", `principal_auth_${mId}`))
+        ]);
+
+        if (genSnap && genSnap.exists()) {
+          const d = genSnap.data();
+          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+            result.genDoc = d;
+            result.exists = true;
+          }
+        }
+        if (cfgSnap && cfgSnap.exists()) {
+          const d = cfgSnap.data();
+          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+            result.cfgDoc = d;
+            result.exists = true;
+          }
+        }
+        if (dataSnap && dataSnap.exists()) {
+          const d = dataSnap.data();
+          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+            result.dataDoc = d;
+            result.exists = true;
+            addUniqueTeachers(d.teachers);
+            addUniqueStudents(d.students);
+          }
+        }
+        if (authSnap && authSnap.exists()) {
+          const d = authSnap.data();
+          if (!d.madrasaId || String(d.madrasaId).trim().toUpperCase() === mId) {
+            result.authDoc = d;
+            result.exists = true;
+            if (d.username && d.password) {
+              result.principalCreds = {
+                username: String(d.username).trim(),
+                password: String(d.password).trim()
+              };
+            }
+          }
+        }
+
+        if (!result.principalCreds && result.genDoc && result.genDoc.principalUsername && result.genDoc.principalPassword) {
+          result.principalCreds = {
+            username: String(result.genDoc.principalUsername).trim(),
+            password: String(result.genDoc.principalPassword).trim()
+          };
+        }
+
+        // Also query Firestore teachers & students collections strictly scoped to mId
+        if (window.fGetDocs && window.fCollection && window.fQuery && window.fWhere) {
+          const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
+          try {
+            const tchSnap = await window.fGetDocs(window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter));
+            resolvedCount++;
+            tchSnap.forEach((docSnap) => {
+              const tData = docSnap.data() || {};
+              if (!belongsToMadrasa(docSnap.id, tData, mId)) return;
+              const cleanTchId = tData.teacherId || stripScopedDocIdPrefix(docSnap.id, mId);
+              if (SAMPLE_TEACHER_IDS.has(String(cleanTchId).toLowerCase()) || isSampleTeacher(tData)) return;
+              result.exists = true;
+              addUniqueTeachers([{ ...tData, teacherId: cleanTchId }]);
+            });
+          } catch (e) {}
+
+          try {
+            const stdSnap = await window.fGetDocs(window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter));
+            resolvedCount++;
+            stdSnap.forEach((docSnap) => {
+              const sData = docSnap.data() || {};
+              if (!belongsToMadrasa(docSnap.id, sData, mId)) return;
+              const cleanStdId = sData.studentId || stripScopedDocIdPrefix(docSnap.id, mId);
+              if (SAMPLE_STUDENT_IDS.has(String(cleanStdId).toUpperCase()) || isSampleStudent(sData)) return;
+              result.exists = true;
+              addUniqueStudents([{ ...sData, studentId: cleanStdId }]);
+            });
+          } catch (e) {}
+        }
+
+        result.firestoreOnline = resolvedCount > 0;
+      }
+
+      // 2. If workspace exists in Firestore (or Firestore is offline), allow strictly mId-scoped local cache fallback
+      //    NEVER fall back to global defaults when Firestore is online and reports no workspace for mId!
+      const canUseScopedLocalFallback = result.exists || !result.firestoreOnline;
+      if (canUseScopedLocalFallback) {
+        try {
+          const reg = getLocalMadrasaRegistry();
+          const regEntry = reg && reg[mId] ? reg[mId] : null;
+          if (!result.firestoreOnline && regEntry) {
+            result.exists = true;
+          }
+          if (!result.principalCreds) {
+            const localAuthRaw = localStorage.getItem(`hifz_principal_auth_${mId}`);
+            if (localAuthRaw) {
+              const parsed = JSON.parse(localAuthRaw);
+              if (parsed && parsed.username && parsed.password) {
+                if (!result.firestoreOnline) result.exists = true;
+                result.principalCreds = {
+                  username: String(parsed.username).trim(),
+                  password: String(parsed.password).trim()
+                };
+              }
+            } else if (!result.firestoreOnline && regEntry && regEntry.principalUser && regEntry.principalPass) {
+              result.principalCreds = {
+                username: String(regEntry.principalUser).trim(),
+                password: String(regEntry.principalPass).trim()
+              };
+            }
+          }
+          const localTeachersRaw = localStorage.getItem(`live_ustadhs_${mId}`);
+          if (localTeachersRaw) {
+            const parsedT = JSON.parse(localTeachersRaw);
+            if (Array.isArray(parsedT) && parsedT.length > 0 && !result.firestoreOnline) {
+              result.exists = true;
+            }
+            addUniqueTeachers(parsedT);
+          }
+          const localStudentsRaw = localStorage.getItem(`live_students_${mId}`);
+          if (localStudentsRaw) {
+            const parsedS = JSON.parse(localStudentsRaw);
+            if (Array.isArray(parsedS) && parsedS.length > 0 && !result.firestoreOnline) {
+              result.exists = true;
+            }
+            addUniqueStudents(parsedS);
+          }
+        } catch (e) {}
+      }
+
+      return result;
+    }
+
     window.handleAuthSubmit = async function(e) {
       if (e && typeof e.preventDefault === "function") {
         e.preventDefault();
@@ -10906,37 +11122,75 @@
       const banner = document.getElementById("auth-alert-banner");
       if (banner) banner.classList.add("hidden");
 
-      const rawMadrasaCode = (document.getElementById("auth-madrasa-code")?.value || "")
-        .trim()
-        .toUpperCase()
-        .replace(/[^A-Z0-9_-]/g, "");
+      const rawInputCode = (document.getElementById("auth-madrasa-code")?.value || "").trim();
+      const rawMadrasaCode = rawInputCode.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
       const u = (document.getElementById("auth-username")?.value || "").trim();
       const p = (document.getElementById("auth-password")?.value || "").trim();
 
-      const masterCreds = getMasterAuth();
-      const isMasterAttempt =
-        u.toLowerCase() === masterCreds.username.toLowerCase() || u.toLowerCase() === "master";
-
-      if (!isMasterAttempt && u.toLowerCase() !== "demo" && rawMadrasaCode && rawMadrasaCode !== "MDR-01") {
-        currentMadrasaId = rawMadrasaCode;
-        try {
-          localStorage.setItem("hifz_custom_madrasa_id", currentMadrasaId);
-        } catch (err) {}
-        loadLiveCollectionsFromLocal(currentMadrasaId);
-        if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
-          try {
-            await window.fetchMadrasaWorkspaceFromFirestore(currentMadrasaId);
-          } catch (err) {}
-        }
-      } else if (!isMasterAttempt && u.toLowerCase() !== "demo" && typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
-        try {
-          await window.fetchMadrasaWorkspaceFromFirestore(currentMadrasaId);
-        } catch (err) {}
+      // 1. Mandatory Madrasa Code Check
+      if (!rawMadrasaCode) {
+        showAuthAlert("ദയവായി മദ്രസ കോഡ് നൽകുക / Please enter Madrasa Code");
+        const mInp = document.getElementById("auth-madrasa-code");
+        if (mInp) mInp.focus();
+        return;
+      }
+      if (rawMadrasaCode === "MDR-01") {
+        showAuthAlert("ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക / Please enter a valid unique Madrasa Code.");
+        const mInp = document.getElementById("auth-madrasa-code");
+        if (mInp) mInp.focus();
+        return;
+      }
+      if (!u || !p) {
+        showAuthAlert(
+          t(
+            "Please enter both your Login ID / Admission No. and Password / PIN.",
+            "ദയവായി ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക."
+          )
+        );
+        return;
       }
 
-      const res = window.loginWithAutoRole(u, p, rawMadrasaCode);
-      if (!res.success) {
-        showAuthAlert(res.message);
+      const submitBtn = document.getElementById("btn-auth-submit");
+      const origBtnText = submitBtn ? submitBtn.innerText : "";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = t("Verifying Workspace...", "വർക്ക്സ്പേസ് പരിശോധിക്കുന്നു...");
+      }
+
+      try {
+        const masterCreds = getMasterAuth();
+        const isMasterAttempt =
+          u.toLowerCase() === masterCreds.username.toLowerCase() || u.toLowerCase() === "master";
+
+        if (isMasterAttempt && window.fDb && window.fGetDoc && window.fDoc) {
+          try {
+            const masterSnap = await window.fGetDoc(window.fDoc(window.fDb, "settings", "master_system_auth"));
+            if (masterSnap && masterSnap.exists()) {
+              const md = masterSnap.data() || {};
+              if (md.username && md.password) {
+                localStorage.setItem(
+                  "hifz_master_auth",
+                  JSON.stringify({ username: String(md.username).trim(), password: String(md.password).trim() })
+                );
+              }
+            }
+          } catch (err) {}
+        }
+
+        let isolatedWorkspace = null;
+        if (!isMasterAttempt && u.toLowerCase() !== "demo") {
+          isolatedWorkspace = await fetchIsolatedMadrasaAuthFromFirestore(rawMadrasaCode);
+        }
+
+        const res = window.loginWithAutoRole(u, p, rawMadrasaCode, isolatedWorkspace);
+        if (!res.success) {
+          showAuthAlert(res.message);
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = origBtnText || t("Sign In to Portal (പോർട്ടലിൽ പ്രവേശിക്കുക)", "പോർട്ടലിലേക്ക് പ്രവേശിക്കുക");
+        }
       }
     };
 
@@ -11051,22 +11305,34 @@
       }
     };
 
-    // Automatic Role-Detection Authentication & Session Management
-    window.loginWithAutoRole = function(username, password, madrasaCode) {
+    // Automatic Role-Detection Authentication & Strict Per-Madrasa Session Management
+    window.loginWithAutoRole = function(username, password, madrasaCode, isolatedWorkspace) {
       const u = (username || "").trim();
       const p = (password || "").trim();
-      const mCode = (madrasaCode || document.getElementById("auth-madrasa-code")?.value || "")
+      const mCode = (madrasaCode !== undefined ? String(madrasaCode) : (document.getElementById("auth-madrasa-code")?.value || ""))
         .trim()
         .toUpperCase()
         .replace(/[^A-Z0-9_-]/g, "");
+
+      if (!mCode) {
+        return {
+          success: false,
+          message: "ദയവായി മദ്രസ കോഡ് നൽകുക / Please enter Madrasa Code"
+        };
+      }
+      if (mCode === "MDR-01") {
+        return {
+          success: false,
+          message: "ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക / Please enter a valid unique Madrasa Code."
+        };
+      }
 
       if (!u || !p) {
         return {
           success: false,
           message: t(
             "Please enter both your Login ID / Admission No. and Password / PIN.",
-            "ദയവായി ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക.",
-            "Please enter both Login ID and Password / PIN (ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക)"
+            "ദയവായി ലോഗിൻ ഐഡിയും പാസ്‌വേഡും നൽകുക."
           )
         };
       }
@@ -11129,89 +11395,182 @@
         return { success: true, role: "principal", isDemoSandbox: true };
       }
 
-      if (mCode && mCode !== "MDR-01" && mCode !== currentMadrasaId) {
+      // Build strictly mCode-isolated workspace snapshot if called directly without pre-fetched Firestore snapshot
+      let workspace = isolatedWorkspace;
+      if (!workspace) {
+        workspace = {
+          madrasaId: mCode,
+          exists: false,
+          principalCreds: null,
+          teachers: [],
+          students: []
+        };
+        try {
+          const reg = getLocalMadrasaRegistry();
+          const regEntry = reg && reg[mCode] ? reg[mCode] : null;
+          if (regEntry) workspace.exists = true;
+          const pRaw = localStorage.getItem(`hifz_principal_auth_${mCode}`);
+          if (pRaw) {
+            const pParsed = JSON.parse(pRaw);
+            if (pParsed && pParsed.username && pParsed.password) {
+              workspace.exists = true;
+              workspace.principalCreds = {
+                username: String(pParsed.username).trim(),
+                password: String(pParsed.password).trim()
+              };
+            }
+          } else if (regEntry && regEntry.principalUser && regEntry.principalPass) {
+            workspace.principalCreds = {
+              username: String(regEntry.principalUser).trim(),
+              password: String(regEntry.principalPass).trim()
+            };
+          }
+          const tRaw = localStorage.getItem(`live_ustadhs_${mCode}`);
+          if (tRaw) {
+            const tArr = JSON.parse(tRaw);
+            if (Array.isArray(tArr) && tArr.length > 0) {
+              workspace.exists = true;
+              workspace.teachers = tArr.filter((tr) => !isSampleTeacher(tr));
+            }
+          }
+          const sRaw = localStorage.getItem(`live_students_${mCode}`);
+          if (sRaw) {
+            const sArr = JSON.parse(sRaw);
+            if (Array.isArray(sArr) && sArr.length > 0) {
+              workspace.exists = true;
+              workspace.students = sArr.filter((s) => !isSampleStudent(s));
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (!workspace || !workspace.exists) {
+        return {
+          success: false,
+          message: t(
+            `Madrasa Code "${mCode}" not found in Firestore. Please check your Madrasa Code.`,
+            `"${mCode}" എന്ന മദ്രസ കോഡ് കണ്ടെത്തിയില്ല! ദയവായി ശരിയായ മദ്രസ കോഡ് നൽകുക.`
+          )
+        };
+      }
+
+      const commitIsolatedSession = (userObj, targetRole) => {
+        if (isDemoSandbox) {
+          isDemoSandbox = false;
+          window.demoMode = false;
+          try {
+            localStorage.setItem("demoMode", "false");
+            localStorage.removeItem("hifz_demo_sandbox_active");
+          } catch (err) {}
+          const bar = document.getElementById("demo-preview-switcher-bar");
+          if (bar) bar.classList.add("hidden");
+        }
+
         currentMadrasaId = mCode;
         try {
           localStorage.setItem("hifz_custom_madrasa_id", currentMadrasaId);
         } catch (err) {}
         loadLiveCollectionsFromLocal(currentMadrasaId);
-      }
 
-      // Ensure any real login exits Demo Sandbox and loads real Live Data
-      if (isDemoSandbox) {
-        isDemoSandbox = false;
-        window.demoMode = false;
-        try {
-          localStorage.setItem("demoMode", "false");
-          localStorage.removeItem("hifz_demo_sandbox_active");
-        } catch (err) {}
-        const bar = document.getElementById("demo-preview-switcher-bar");
-        if (bar) bar.classList.add("hidden");
-        loadLiveCollectionsFromLocal(currentMadrasaId);
-      }
+        if (workspace.genDoc) applyGeneralSettingsDocToMadrasa(workspace.genDoc, mCode);
+        if (workspace.cfgDoc) applyCampusConfigDocToMadrasa(workspace.cfgDoc, mCode);
+        if (workspace.dataDoc) applyCampusDataDocToMadrasa(workspace.dataDoc, mCode);
+        if (workspace.authDoc) applyPrincipalAuthDocToMadrasa(workspace.authDoc, mCode);
+        if (workspace.principalCreds) {
+          principalAuth = { ...workspace.principalCreds };
+          try {
+            localStorage.setItem(`hifz_principal_auth_${mCode}`, JSON.stringify(principalAuth));
+          } catch (err) {}
+        }
+        if (Array.isArray(workspace.teachers) && workspace.teachers.length > 0) {
+          const existingU = new Set(globalTeachers.map((tr) => String(tr.username || tr.teacherId || "").toLowerCase()));
+          workspace.teachers.forEach((tr) => {
+            const key = String(tr.username || tr.teacherId || "").toLowerCase();
+            if (key && !existingU.has(key) && !isSampleTeacher(tr)) {
+              globalTeachers.push(tr);
+              existingU.add(key);
+            }
+          });
+        }
+        if (Array.isArray(workspace.students) && workspace.students.length > 0) {
+          const existingS = new Set(globalStudents.map((s) => String(s.studentId || "").toUpperCase()));
+          workspace.students.forEach((s) => {
+            const sid = String(s.studentId || "").toUpperCase();
+            if (sid && !existingS.has(sid) && !isSampleStudent(s)) {
+              globalStudents.push(s);
+              existingS.add(sid);
+            }
+          });
+        }
+        saveLiveCollectionsToLocal();
 
-      const expectedAdminUser = (principalAuth && principalAuth.username ? principalAuth.username : "admin").trim();
-      const expectedAdminPass = (principalAuth && principalAuth.password ? principalAuth.password : "admin786").trim();
-
-      // 1. Check Principal Credentials (default admin / admin786 or custom Principal account)
-      if (u.toLowerCase() === expectedAdminUser.toLowerCase() && p === expectedAdminPass) {
         currentUser = {
-          role: "principal",
-          username: expectedAdminUser,
-          name: "Principal Admin",
-          madrasaId: currentMadrasaId,
+          ...userObj,
+          madrasaId: mCode,
           loginTime: new Date().toISOString()
         };
+        if (targetRole === "parent") {
+          currentParentStudentId = userObj.studentId;
+        }
         try {
           localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
         } catch (err) {}
         if (typeof window.subscribeToMadrasaWorkspace === "function") {
-          window.subscribeToMadrasaWorkspace(currentMadrasaId);
+          window.subscribeToMadrasaWorkspace(mCode);
         }
-        applyAuthenticatedState("principal");
-        return { success: true, role: "principal" };
+        populateStudentSelectors();
+        renderPrincipalTeachersDirectory();
+        applyCampusModeUI();
+        applyAuthenticatedState(targetRole);
+      };
+
+      // 1. Check Principal Credentials strictly against mCode's workspace (NO global fallback)
+      if (workspace.principalCreds && workspace.principalCreds.username && workspace.principalCreds.password) {
+        const expectedAdminUser = String(workspace.principalCreds.username).trim();
+        const expectedAdminPass = String(workspace.principalCreds.password).trim();
+        if (u.toLowerCase() === expectedAdminUser.toLowerCase() && p === expectedAdminPass) {
+          commitIsolatedSession(
+            {
+              role: "principal",
+              username: expectedAdminUser,
+              name: "Principal Admin"
+            },
+            "principal"
+          );
+          return { success: true, role: "principal" };
+        }
       }
 
-      // 2. Check Ustadh / Teacher Credentials
+      // 2. Check Ustadh / Teacher Credentials strictly within mCode's workspace
       const lowerU = u.toLowerCase();
-      const matchedTeacher = globalTeachers.find((tr) => {
-        if ((demoCleared || cleanDatabaseMode) && isSampleTeacher(tr)) return false;
-        const tUser = (tr.username || tr.teacherId || "").toLowerCase();
-        if (tUser && tUser === lowerU) return true;
-        if (!demoCleared && !cleanDatabaseMode && (lowerU === "ustadh" || lowerU === "ustadh1") && (tUser === "ustadh" || tUser === "ustadh1")) {
-          return true;
-        }
-        return false;
+      const matchedTeacher = (workspace.teachers || []).find((tr) => {
+        if (isSampleTeacher(tr)) return false;
+        const tUser = String(tr.username || tr.teacherId || "").trim().toLowerCase();
+        return Boolean(tUser && tUser === lowerU);
       });
 
       if (matchedTeacher) {
         const teacherPass = String(matchedTeacher.pin || matchedTeacher.password || "").trim();
         if (p === teacherPass) {
-          currentUser = {
-            role: "teacher",
-            username: matchedTeacher.username || matchedTeacher.teacherId,
-            teacherId: matchedTeacher.teacherId || matchedTeacher.id,
-            name: matchedTeacher.name,
-            madrasaId: currentMadrasaId,
-            loginTime: new Date().toISOString()
-          };
-          try {
-            localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
-          } catch (err) {}
-          if (typeof window.subscribeToMadrasaWorkspace === "function") {
-            window.subscribeToMadrasaWorkspace(currentMadrasaId);
-          }
-          applyAuthenticatedState("teacher");
+          commitIsolatedSession(
+            {
+              role: "teacher",
+              username: matchedTeacher.username || matchedTeacher.teacherId,
+              teacherId: matchedTeacher.teacherId || matchedTeacher.id,
+              name: matchedTeacher.name
+            },
+            "teacher"
+          );
           return { success: true, role: "teacher" };
         }
       }
 
-      // 3. Check Parent / Student Credentials (Student Admission ID or Guardian Phone)
+      // 3. Check Parent / Student Credentials strictly within mCode's workspace
       const cleanInputPhone = u.replace(/[^0-9]/g, "");
-      const matchedStudent = globalStudents.find((s) => {
-        if ((demoCleared || cleanDatabaseMode) && isSampleStudent(s)) return false;
-        const idMatch = (s.studentId || "").toUpperCase() === u.toUpperCase();
-        const sPhone = (s.guardianPhone || "").replace(/[^0-9]/g, "");
+      const matchedStudent = (workspace.students || []).find((s) => {
+        if (isSampleStudent(s)) return false;
+        const idMatch = String(s.studentId || "").toUpperCase() === u.toUpperCase();
+        const sPhone = String(s.guardianPhone || "").replace(/[^0-9]/g, "");
         const phoneMatch =
           cleanInputPhone.length >= 6 &&
           (sPhone.endsWith(cleanInputPhone) || cleanInputPhone.endsWith(sPhone) || sPhone === cleanInputPhone);
@@ -11221,33 +11580,25 @@
       if (matchedStudent) {
         const studentPin = String(matchedStudent.pin || "").trim();
         if (p === studentPin) {
-          currentUser = {
-            role: "parent",
-            username: matchedStudent.studentId,
-            studentId: matchedStudent.studentId,
-            name: "Parent of " + matchedStudent.name,
-            madrasaId: currentMadrasaId,
-            loginTime: new Date().toISOString()
-          };
-          currentParentStudentId = matchedStudent.studentId;
-          try {
-            localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
-          } catch (err) {}
-          if (typeof window.subscribeToMadrasaWorkspace === "function") {
-            window.subscribeToMadrasaWorkspace(currentMadrasaId);
-          }
-          applyAuthenticatedState("parent");
+          commitIsolatedSession(
+            {
+              role: "parent",
+              username: matchedStudent.studentId,
+              studentId: matchedStudent.studentId,
+              name: "Parent of " + matchedStudent.name
+            },
+            "parent"
+          );
           return { success: true, role: "parent" };
         }
       }
 
-      // 4. Invalid Credentials (None match)
+      // 4. Invalid Credentials for this specific Madrasa workspace
       return {
         success: false,
         message: t(
-          "Invalid Login ID or Password.",
-          "തെറ്റായ ഐഡി അല്ലെങ്കിൽ പാസ്വേഡ്",
-          "തെറ്റായ ഐഡി അല്ലെങ്കിൽ പാസ്വേഡ് / Invalid Login ID or Password"
+          `Invalid Login ID or Password for Madrasa Code "${mCode}".`,
+          `തെറ്റായ ഐഡി അല്ലെങ്കിൽ പാസ്‌വേഡ് (മദ്രസ കോഡ്: ${mCode}).`
         )
       };
     };
@@ -14857,241 +15208,242 @@
             () => {}
           )
         );
+
+        if (window.fCollection && window.fQuery && window.fWhere) {
+          const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
+          let isInitialFirestoreSyncDone = false;
+
+          // Listen to Hifz Logs (Strictly filtered by belongsToMadrasa for mId)
+          activeWorkspaceUnsubscribers.push(
+            window.fOnSnapshot(
+              window.fQuery(window.fCollection(window.fDb, "hifz_logs"), ownerFilter),
+              (snap) => {
+                if (isClearingDatabase || isDemoSandbox || currentMadrasaId !== mId) return;
+                if (isInitialFirestoreSyncDone && snap.docChanges) {
+                  snap.docChanges().forEach((change) => {
+                    if (change.type === "added" || change.type === "modified") {
+                      const logData = change.doc.data();
+                      if (!belongsToMadrasa(change.doc.id, logData, mId)) return;
+                      if ((demoCleared || cleanDatabaseMode) && isSampleLog(logData)) return;
+                      const sName = logData.studentName || t("Student", "വിദ്യാർത്ഥി");
+                      if (currentUser && window.showLiveEventToast) {
+                        if (change.type === "modified" && logData.departureStatus === "Departed" && currentUser.role === "parent") {
+                          window.showLiveEventToast(
+                            t("🚐 Campus Departure Alert", "🚐 കുട്ടി ക്യാമ്പസിൽ നിന്ന് പുറപ്പെട്ടു"),
+                            `${sName}: ${logData.departureTimeDisplay || t("Departed", "പുറപ്പെട്ടു")} · ${logData.commuteMode || ""}`,
+                            "🚐"
+                          );
+                        } else if (change.type === "modified" && logData.parentHomeVerified && currentUser.role === "teacher") {
+                          window.showLiveEventToast(
+                            t("🏡 Parent Verified Home Revision", "🏡 വീട്ടിൽ വെച്ച് രക്ഷിതാവ് കേട്ടു"),
+                            `${sName}: ${logData.sabaqTarget || "Home Revision"}`,
+                            "🏡"
+                          );
+                        } else if (change.type === "added") {
+                          window.showLiveEventToast(
+                            t("📖 New Verification Recorded", "📖 പുതിയ ഹിഫ്ള് പരിശോധന രേഖപ്പെടുത്തി"),
+                            `${sName}: ${logData.sabaqTarget || "Sabaq"} (${logData.sabaqGrade || "Grade"})`,
+                            "📖",
+                            () => {
+                              if (currentUser && currentUser.role === "teacher" && logData.studentId) {
+                                window.selectStudentForVerification(logData.studentId);
+                              }
+                            }
+                          );
+                        }
+                      }
+                    }
+                  });
+                }
+
+                const remoteLogs = [];
+                snap.forEach((d) => {
+                  if (!belongsToMadrasa(d.id, d.data(), mId)) return;
+                  const cleanLogId = stripScopedDocIdPrefix(d.id, mId);
+                  const norm = normalizeLog(d.data(), cleanLogId);
+                  if ((demoCleared || cleanDatabaseMode) && isSampleLog(norm)) return;
+                  const over = localLogOverrides[norm.id];
+                  if (over) Object.assign(norm, over);
+                  remoteLogs.push(norm);
+                });
+                const remoteIds = new Set(remoteLogs.map((l) => l.id));
+                const existingLocalLogs = globalLogs.filter((l) => !remoteIds.has(l.id) && !((demoCleared || cleanDatabaseMode) && isSampleLog(l)));
+                const merged = [...remoteLogs, ...existingLocalLogs];
+                globalLogs = sortLogsChronologicallyDesc(merged);
+                saveLiveCollectionsToLocal();
+                renderAllViews();
+                if (window.updateNotificationsUI) window.updateNotificationsUI();
+                if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
+              },
+              () => {}
+            )
+          );
+
+          // Listen to Students (Strictly filtered by belongsToMadrasa for mId)
+          activeWorkspaceUnsubscribers.push(
+            window.fOnSnapshot(
+              window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter),
+              (snap) => {
+                if (isClearingDatabase || isDemoSandbox || currentMadrasaId !== mId) return;
+                const remoteStudents = [];
+                snap.forEach((d) => {
+                  const sData = d.data();
+                  if (!belongsToMadrasa(d.id, sData, mId)) return;
+                  const cleanStdId = sData.studentId || stripScopedDocIdPrefix(d.id, mId);
+                  if ((demoCleared || cleanDatabaseMode) && (SAMPLE_STUDENT_IDS.has(String(cleanStdId).toUpperCase()) || isSampleStudent(sData))) {
+                    return;
+                  }
+                  remoteStudents.push({ ...sData, studentId: cleanStdId });
+                });
+                if (remoteStudents.length > 0 || demoCleared || cleanDatabaseMode) {
+                  const remoteIds = new Set(remoteStudents.map((s) => s.studentId));
+                  const localNonSample = globalStudents.filter((s) => !remoteIds.has(s.studentId) && !((demoCleared || cleanDatabaseMode) && isSampleStudent(s)));
+                  globalStudents = [...remoteStudents, ...localNonSample];
+                  saveLiveCollectionsToLocal();
+                  populateStudentSelectors();
+                  renderAllViews();
+                  if (window.updateNotificationsUI) window.updateNotificationsUI();
+                }
+              },
+              () => {}
+            )
+          );
+
+          // Listen to Teachers (Strictly filtered by belongsToMadrasa for mId)
+          activeWorkspaceUnsubscribers.push(
+            window.fOnSnapshot(
+              window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter),
+              (snap) => {
+                if (isClearingDatabase || isDemoSandbox || currentMadrasaId !== mId) return;
+                const remoteTeachers = [];
+                snap.forEach((d) => {
+                  const tData = d.data();
+                  if (!belongsToMadrasa(d.id, tData, mId)) return;
+                  const cleanTchId = tData.teacherId || stripScopedDocIdPrefix(d.id, mId);
+                  if ((demoCleared || cleanDatabaseMode) && (SAMPLE_TEACHER_IDS.has(String(cleanTchId).toLowerCase()) || isSampleTeacher(tData))) {
+                    return;
+                  }
+                  remoteTeachers.push({ ...tData, teacherId: cleanTchId });
+                });
+                if (remoteTeachers.length > 0 || demoCleared || cleanDatabaseMode) {
+                  const remoteIds = new Set(remoteTeachers.map((t) => (t.username || t.teacherId || "").toLowerCase()));
+                  const localNonSample = globalTeachers.filter(
+                    (t) => !remoteIds.has((t.username || t.teacherId || "").toLowerCase()) && !((demoCleared || cleanDatabaseMode) && isSampleTeacher(t))
+                  );
+                  globalTeachers = [...remoteTeachers, ...localNonSample];
+                  saveLiveCollectionsToLocal();
+                  populateStudentSelectors();
+                  renderPrincipalTeachersDirectory();
+                  updateDbResetStatusBanner();
+                }
+              },
+              () => {}
+            )
+          );
+
+          // Listen to Alerts / Parent Notices (Strictly filtered by belongsToMadrasa for mId)
+          activeWorkspaceUnsubscribers.push(
+            window.fOnSnapshot(
+              window.fQuery(window.fCollection(window.fDb, "alerts"), ownerFilter),
+              (snap) => {
+                if (isClearingDatabase || isDemoSandbox || currentMadrasaId !== mId) return;
+                if (isInitialFirestoreSyncDone && snap.docChanges) {
+                  snap.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                      const alertData = change.doc.data();
+                      if (!belongsToMadrasa(change.doc.id, alertData, mId)) return;
+                      if ((demoCleared || cleanDatabaseMode) && isSampleAlert({ id: change.doc.id, ...alertData })) return;
+                      const sName = alertData.studentName || t("Student", "വിദ്യാർത്ഥി");
+                      if (currentUser && window.showLiveEventToast) {
+                        window.showLiveEventToast(
+                          t("📢 New Parent Notice / Leave", "📢 പുതിയ രക്ഷിതാവ് അറിയിപ്പ്"),
+                          `${sName}: ${alertData.noticeType || alertData.title || "Notice"}`,
+                          "📢",
+                          () => {
+                            if (currentUser && currentUser.role === "teacher" && alertData.studentId) {
+                              window.selectStudentForVerification(alertData.studentId);
+                            }
+                          }
+                        );
+                      }
+                    }
+                  });
+                }
+
+                const remoteAlerts = [];
+                snap.forEach((d) => {
+                  if (!belongsToMadrasa(d.id, d.data(), mId)) return;
+                  const cleanAlertId = stripScopedDocIdPrefix(d.id, mId);
+                  const item = { id: cleanAlertId, ...d.data() };
+                  if ((demoCleared || cleanDatabaseMode) && isSampleAlert(item)) return;
+                  remoteAlerts.push(item);
+                });
+                const remoteIds = new Set(remoteAlerts.map((a) => a.id));
+                const localFiltered = globalParentAlerts.filter((a) => !remoteIds.has(a.id) && !((demoCleared || cleanDatabaseMode) && isSampleAlert(a)));
+                globalParentAlerts = [...remoteAlerts, ...localFiltered];
+                renderSelectedStudentSnapshot();
+                if (window.updateNotificationsUI) window.updateNotificationsUI();
+                if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
+              },
+              () => {}
+            )
+          );
+
+          // Listen to Official Campus Notices (Strictly filtered by belongsToMadrasa for mId)
+          activeWorkspaceUnsubscribers.push(
+            window.fOnSnapshot(
+              window.fQuery(window.fCollection(window.fDb, "notices"), ownerFilter),
+              (snap) => {
+                if (isClearingDatabase || isDemoSandbox || currentMadrasaId !== mId) return;
+                if (isInitialFirestoreSyncDone && snap.docChanges) {
+                  snap.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                      const noticeData = change.doc.data();
+                      if (!belongsToMadrasa(change.doc.id, noticeData, mId)) return;
+                      if ((demoCleared || cleanDatabaseMode) && isSampleNotice({ id: change.doc.id, ...noticeData })) return;
+                      if (currentUser && window.showLiveEventToast) {
+                        window.showLiveEventToast(
+                          t("📢 New Campus Circular", "📢 പുതിയ ക്യാമ്പസ് അറിയിപ്പ്"),
+                          noticeData.title || t("Official Announcement", "ഔദ്യോഗിക അറിയിപ്പ്"),
+                          "📢"
+                        );
+                      }
+                    }
+                  });
+                }
+
+                const remoteNotices = [];
+                snap.forEach((d) => {
+                  if (!belongsToMadrasa(d.id, d.data(), mId)) return;
+                  const cleanNoticeId = stripScopedDocIdPrefix(d.id, mId);
+                  const item = { id: cleanNoticeId, ...d.data() };
+                  if ((demoCleared || cleanDatabaseMode) && isSampleNotice(item)) return;
+                  remoteNotices.push(item);
+                });
+                const remoteIds = new Set(remoteNotices.map((n) => n.id));
+                const localFiltered = globalNotices.filter((n) => !remoteIds.has(n.id) && !((demoCleared || cleanDatabaseMode) && isSampleNotice(n)));
+                globalNotices = [...remoteNotices, ...localFiltered];
+                saveLiveCollectionsToLocal();
+                renderAllViews();
+                if (window.updateNotificationsUI) window.updateNotificationsUI();
+                if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
+              },
+              () => {}
+            )
+          );
+
+          setTimeout(() => {
+            isInitialFirestoreSyncDone = true;
+          }, 2000);
+        }
       } catch (e) {}
     };
 
     window.addEventListener("firebase-ready", () => {
       if (!window.fDb || !window.fOnSnapshot || !window.fQuery || !window.fWhere) return;
-
-      const ownerFilter = window.fWhere("ownerId", "in", ["portal-session", "local-seed"]);
-      let isInitialFirestoreSyncDone = false;
-
-      // Subscribe strictly to this device/madrasa's isolated workspace settings (never global settings/general or settings/campus_config)
-      window.subscribeToMadrasaWorkspace(currentMadrasaId);
-
-      // Listen to Hifz Logs (Strictly filtered by belongsToMadrasa)
-      try {
-        window.fOnSnapshot(
-          window.fQuery(window.fCollection(window.fDb, "hifz_logs"), ownerFilter),
-          (snap) => {
-            if (isClearingDatabase || isDemoSandbox) return;
-            if (isInitialFirestoreSyncDone && snap.docChanges) {
-              snap.docChanges().forEach((change) => {
-                if (change.type === "added" || change.type === "modified") {
-                  const logData = change.doc.data();
-                  if (!belongsToMadrasa(change.doc.id, logData, currentMadrasaId)) return;
-                  if ((demoCleared || cleanDatabaseMode) && isSampleLog(logData)) return;
-                  const sName = logData.studentName || t("Student", "വിദ്യാർത്ഥി");
-                  if (currentUser && window.showLiveEventToast) {
-                    if (change.type === "modified" && logData.departureStatus === "Departed" && currentUser.role === "parent") {
-                      window.showLiveEventToast(
-                        t("🚐 Campus Departure Alert", "🚐 കുട്ടി ക്യാമ്പസിൽ നിന്ന് പുറപ്പെട്ടു"),
-                        `${sName}: ${logData.departureTimeDisplay || t("Departed", "പുറപ്പെട്ടു")} · ${logData.commuteMode || ""}`,
-                        "🚐"
-                      );
-                    } else if (change.type === "modified" && logData.parentHomeVerified && currentUser.role === "teacher") {
-                      window.showLiveEventToast(
-                        t("🏡 Parent Verified Home Revision", "🏡 വീട്ടിൽ വെച്ച് രക്ഷിതാവ് കേട്ടു"),
-                        `${sName}: ${logData.sabaqTarget || "Home Revision"}`,
-                        "🏡"
-                      );
-                    } else if (change.type === "added") {
-                      window.showLiveEventToast(
-                        t("📖 New Verification Recorded", "📖 പുതിയ ഹിഫ്ള് പരിശോധന രേഖപ്പെടുത്തി"),
-                        `${sName}: ${logData.sabaqTarget || "Sabaq"} (${logData.sabaqGrade || "Grade"})`,
-                        "📖",
-                        () => {
-                          if (currentUser && currentUser.role === "teacher" && logData.studentId) {
-                            window.selectStudentForVerification(logData.studentId);
-                          }
-                        }
-                      );
-                    }
-                  }
-                }
-              });
-            }
-
-            const remoteLogs = [];
-            snap.forEach((d) => {
-              if (!belongsToMadrasa(d.id, d.data(), currentMadrasaId)) return;
-              const cleanLogId = stripScopedDocIdPrefix(d.id, currentMadrasaId);
-              const norm = normalizeLog(d.data(), cleanLogId);
-              if ((demoCleared || cleanDatabaseMode) && isSampleLog(norm)) return;
-              const over = localLogOverrides[norm.id];
-              if (over) Object.assign(norm, over);
-              remoteLogs.push(norm);
-            });
-            const remoteIds = new Set(remoteLogs.map((l) => l.id));
-            const existingLocalLogs = globalLogs.filter((l) => !remoteIds.has(l.id) && !((demoCleared || cleanDatabaseMode) && isSampleLog(l)));
-            const merged = [...remoteLogs, ...existingLocalLogs];
-            globalLogs = sortLogsChronologicallyDesc(merged);
-            saveLiveCollectionsToLocal();
-            renderAllViews();
-            if (window.updateNotificationsUI) window.updateNotificationsUI();
-            if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
-          },
-          () => {}
-        );
-      } catch (e) {}
-
-      // Listen to Students (Strictly filtered by belongsToMadrasa)
-      try {
-        window.fOnSnapshot(
-          window.fQuery(window.fCollection(window.fDb, "students"), ownerFilter),
-          (snap) => {
-            if (isClearingDatabase || isDemoSandbox) return;
-            const remoteStudents = [];
-            snap.forEach((d) => {
-              const sData = d.data();
-              if (!belongsToMadrasa(d.id, sData, currentMadrasaId)) return;
-              const cleanStdId = sData.studentId || stripScopedDocIdPrefix(d.id, currentMadrasaId);
-              if ((demoCleared || cleanDatabaseMode) && (SAMPLE_STUDENT_IDS.has(String(cleanStdId).toUpperCase()) || isSampleStudent(sData))) {
-                return;
-              }
-              remoteStudents.push({ ...sData, studentId: cleanStdId });
-            });
-            if (remoteStudents.length > 0 || demoCleared || cleanDatabaseMode) {
-              const remoteIds = new Set(remoteStudents.map((s) => s.studentId));
-              const localNonSample = globalStudents.filter((s) => !remoteIds.has(s.studentId) && !((demoCleared || cleanDatabaseMode) && isSampleStudent(s)));
-              globalStudents = [...remoteStudents, ...localNonSample];
-              saveLiveCollectionsToLocal();
-              populateStudentSelectors();
-              renderAllViews();
-              if (window.updateNotificationsUI) window.updateNotificationsUI();
-            }
-          },
-          () => {}
-        );
-      } catch (e) {}
-
-      // Listen to Teachers (Strictly filtered by belongsToMadrasa)
-      try {
-        window.fOnSnapshot(
-          window.fQuery(window.fCollection(window.fDb, "teachers"), ownerFilter),
-          (snap) => {
-            if (isClearingDatabase || isDemoSandbox) return;
-            const remoteTeachers = [];
-            snap.forEach((d) => {
-              const tData = d.data();
-              if (!belongsToMadrasa(d.id, tData, currentMadrasaId)) return;
-              const cleanTchId = tData.teacherId || stripScopedDocIdPrefix(d.id, currentMadrasaId);
-              if ((demoCleared || cleanDatabaseMode) && (SAMPLE_TEACHER_IDS.has(String(cleanTchId).toLowerCase()) || isSampleTeacher(tData))) {
-                return;
-              }
-              remoteTeachers.push({ ...tData, teacherId: cleanTchId });
-            });
-            if (remoteTeachers.length > 0 || demoCleared || cleanDatabaseMode) {
-              const remoteIds = new Set(remoteTeachers.map((t) => (t.username || t.teacherId || "").toLowerCase()));
-              const localNonSample = globalTeachers.filter(
-                (t) => !remoteIds.has((t.username || t.teacherId || "").toLowerCase()) && !((demoCleared || cleanDatabaseMode) && isSampleTeacher(t))
-              );
-              globalTeachers = [...remoteTeachers, ...localNonSample];
-              saveLiveCollectionsToLocal();
-              populateStudentSelectors();
-              renderPrincipalTeachersDirectory();
-              updateDbResetStatusBanner();
-            }
-          },
-          () => {}
-        );
-      } catch (e) {}
-
-      // Listen to Alerts / Parent Notices (Strictly filtered by belongsToMadrasa)
-      try {
-        window.fOnSnapshot(
-          window.fQuery(window.fCollection(window.fDb, "alerts"), ownerFilter),
-          (snap) => {
-            if (isClearingDatabase || isDemoSandbox) return;
-            if (isInitialFirestoreSyncDone && snap.docChanges) {
-              snap.docChanges().forEach((change) => {
-                if (change.type === "added") {
-                  const alertData = change.doc.data();
-                  if (!belongsToMadrasa(change.doc.id, alertData, currentMadrasaId)) return;
-                  if ((demoCleared || cleanDatabaseMode) && isSampleAlert({ id: change.doc.id, ...alertData })) return;
-                  const sName = alertData.studentName || t("Student", "വിദ്യാർത്ഥി");
-                  if (currentUser && window.showLiveEventToast) {
-                    window.showLiveEventToast(
-                      t("📢 New Parent Notice / Leave", "📢 പുതിയ രക്ഷിതാവ് അറിയിപ്പ്"),
-                      `${sName}: ${alertData.noticeType || alertData.title || "Notice"}`,
-                      "📢",
-                      () => {
-                        if (currentUser && currentUser.role === "teacher" && alertData.studentId) {
-                          window.selectStudentForVerification(alertData.studentId);
-                        }
-                      }
-                    );
-                  }
-                }
-              });
-            }
-
-            const remoteAlerts = [];
-            snap.forEach((d) => {
-              if (!belongsToMadrasa(d.id, d.data(), currentMadrasaId)) return;
-              const cleanAlertId = stripScopedDocIdPrefix(d.id, currentMadrasaId);
-              const item = { id: cleanAlertId, ...d.data() };
-              if ((demoCleared || cleanDatabaseMode) && isSampleAlert(item)) return;
-              remoteAlerts.push(item);
-            });
-            const remoteIds = new Set(remoteAlerts.map((a) => a.id));
-            const localFiltered = globalParentAlerts.filter((a) => !remoteIds.has(a.id) && !((demoCleared || cleanDatabaseMode) && isSampleAlert(a)));
-            globalParentAlerts = [...remoteAlerts, ...localFiltered];
-            renderSelectedStudentSnapshot();
-            if (window.updateNotificationsUI) window.updateNotificationsUI();
-            if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
-          },
-          () => {}
-        );
-      } catch (e) {}
-
-      // Listen to Official Campus Notices (Strictly filtered by belongsToMadrasa)
-      try {
-        window.fOnSnapshot(
-          window.fQuery(window.fCollection(window.fDb, "notices"), ownerFilter),
-          (snap) => {
-            if (isClearingDatabase || isDemoSandbox) return;
-            if (isInitialFirestoreSyncDone && snap.docChanges) {
-              snap.docChanges().forEach((change) => {
-                if (change.type === "added") {
-                  const noticeData = change.doc.data();
-                  if (!belongsToMadrasa(change.doc.id, noticeData, currentMadrasaId)) return;
-                  if ((demoCleared || cleanDatabaseMode) && isSampleNotice({ id: change.doc.id, ...noticeData })) return;
-                  if (currentUser && window.showLiveEventToast) {
-                    window.showLiveEventToast(
-                      t("📢 New Campus Circular", "📢 പുതിയ ക്യാമ്പസ് അറിയിപ്പ്"),
-                      noticeData.title || t("Official Announcement", "ഔദ്യോഗിക അറിയിപ്പ്"),
-                      "📢"
-                    );
-                  }
-                }
-              });
-            }
-
-            const remoteNotices = [];
-            snap.forEach((d) => {
-              if (!belongsToMadrasa(d.id, d.data(), currentMadrasaId)) return;
-              const cleanNoticeId = stripScopedDocIdPrefix(d.id, currentMadrasaId);
-              const item = { id: cleanNoticeId, ...d.data() };
-              if ((demoCleared || cleanDatabaseMode) && isSampleNotice(item)) return;
-              remoteNotices.push(item);
-            });
-            const remoteIds = new Set(remoteNotices.map((n) => n.id));
-            const localFiltered = globalNotices.filter((n) => !remoteIds.has(n.id) && !((demoCleared || cleanDatabaseMode) && isSampleNotice(n)));
-            globalNotices = [...remoteNotices, ...localFiltered];
-            saveLiveCollectionsToLocal();
-            renderAllViews();
-            if (window.updateNotificationsUI) window.updateNotificationsUI();
-            if (window.checkOfflineCatchUpAlerts) window.checkOfflineCatchUpAlerts();
-          },
-          () => {}
-        );
-      } catch (e) {}
-
-      // Arm live notifications after initial sync
-      setTimeout(() => {
-        isInitialFirestoreSyncDone = true;
-      }, 2000);
+      if (currentUser && currentUser.role !== "master" && !isDemoSandbox) {
+        window.subscribeToMadrasaWorkspace(currentMadrasaId);
+      }
     });
 
 
@@ -15155,6 +15507,9 @@
           currentParentStudentId = currentUser.studentId || (globalStudents[0] ? globalStudents[0].studentId : "");
         }
         applyAuthenticatedState(currentUser.role);
+        if (window.fDb && currentUser.role !== "master" && !isDemoSandbox && typeof window.subscribeToMadrasaWorkspace === "function") {
+          window.subscribeToMadrasaWorkspace(currentMadrasaId);
+        }
       } else {
         // ALWAYS defaults to the neutral Portal Sign In page when first opened if no session
         showAuthView();
