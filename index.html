@@ -12829,8 +12829,9 @@
           const authSnap = authRes && authRes.snap;
           const nestedGenSnap = nestedGenRes && nestedGenRes.snap;
 
-          // Only run collection query fallback if neither madrasas/{mId} nor settings/_{mId} existed
+          // Only run collection query fallback if SDK actually reached Firestore and neither madrasas/{mId} nor settings/_{mId} existed
           if (
+            resolvedCount > 0 &&
             (!madrasaSnap || !madrasaSnap.exists()) &&
             (!underscoreSnap || !underscoreSnap.exists()) &&
             window.fCollection &&
@@ -12839,7 +12840,7 @@
           ) {
             const fallbackRes = await safeGetDocsServerFirst(
               window.fQuery(window.fCollection(window.fDb, "madrasas"), window.fWhere("madrasaId", "==", mId)),
-              3000
+              2500
             );
             if (fallbackRes && fallbackRes.snap) {
               resolvedCount++;
@@ -12945,7 +12946,7 @@
       try {
         await withPromiseTimeout(
           runRemoteWorkspaceLookup(),
-          7500,
+          5500,
           "Firestore workspace verification timed out"
         );
       } catch (remoteErr) {
@@ -13105,7 +13106,7 @@
           try {
             isolatedWorkspace = await withPromiseTimeout(
               fetchIsolatedMadrasaAuthFromFirestore(rawMadrasaCode),
-              8500,
+              6500,
               "Workspace verification timed out"
             );
           } catch (workspaceFetchErr) {
