@@ -5290,6 +5290,10 @@
       return "1448 AH · Rabi Al-Thani Term";
     }
 
+    function getWorkspaceCampusTerm(madrasaId) {
+      return getWorkspaceAcademicTerm(madrasaId);
+    }
+
     function setWorkspaceCampusIdentity(madrasaId, name, sub, academicTerm) {
       const mId = (madrasaId || currentMadrasaId || deviceMadrasaId).trim().toUpperCase();
       if (!mId || mId === "MDR-01") return;
@@ -11442,7 +11446,7 @@
             mId,
             cleanName || getWorkspaceCampusName(mId),
             cleanSub || getWorkspaceCampusLocation(mId),
-            d.academicTerm ? String(d.academicTerm).trim() : getWorkspaceCampusTerm(mId)
+            d.academicTerm ? String(d.academicTerm).trim() : getWorkspaceAcademicTerm(mId)
           );
         }
         if (pUser && pPass) {
@@ -17221,7 +17225,7 @@
           mId,
           cleanName || getWorkspaceCampusName(mId),
           cleanSub || getWorkspaceCampusLocation(mId),
-          d.academicTerm ? String(d.academicTerm).trim() : getWorkspaceCampusTerm(mId)
+          d.academicTerm ? String(d.academicTerm).trim() : getWorkspaceAcademicTerm(mId)
         );
         updateCampusIdentityUI();
         applyCampusModeUI();
