@@ -1949,6 +1949,433 @@
       margin-bottom: 0;
     }
 
+    .admin-header-controls {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn-quick-tour {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 40px;
+      min-height: 40px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid #a7f3d0;
+      background: #ffffff;
+      color: #064e3b;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(6, 78, 59, 0.08);
+      transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.16s ease;
+    }
+
+    .btn-quick-tour:hover {
+      background: #ecfdf5;
+      border-color: #059669;
+      box-shadow: 0 4px 12px rgba(6, 78, 59, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .btn-quick-tour:active {
+      transform: translateY(0);
+    }
+
+    .btn-quick-tour:focus-visible {
+      outline: 2px solid #064e3b;
+      outline-offset: 2px;
+    }
+
+    .btn-quick-tour-master {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      border: 1px solid rgba(253, 230, 138, 0.5);
+      box-shadow: none;
+    }
+
+    .btn-quick-tour-master:hover {
+      background: rgba(255, 255, 255, 0.24);
+      border-color: #fde68a;
+      color: #ffffff;
+    }
+
+    /* Interactive Spotlight Quick Tour Overlay */
+    .hifz-tour-root {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      pointer-events: none;
+    }
+
+    .hifz-tour-backdrop-catcher {
+      position: fixed;
+      inset: 0;
+      pointer-events: auto;
+      background: transparent;
+    }
+
+    @keyframes hifzTourPulseRing {
+      0%, 100% {
+        box-shadow: 0 0 0 9999px rgba(2, 44, 34, 0.62), 0 0 0 3px #fbbf24, 0 0 0 8px rgba(251, 191, 36, 0.22);
+      }
+      50% {
+        box-shadow: 0 0 0 9999px rgba(2, 44, 34, 0.62), 0 0 0 3px #fbbf24, 0 0 0 12px rgba(16, 185, 129, 0.28);
+      }
+    }
+
+    .hifz-tour-spotlight {
+      position: fixed;
+      border-radius: 14px;
+      pointer-events: none;
+      box-shadow: 0 0 0 9999px rgba(2, 44, 34, 0.62), 0 0 0 3px #fbbf24, 0 0 0 8px rgba(251, 191, 36, 0.22);
+      transition: top 0.28s cubic-bezier(0.16, 1, 0.3, 1), left 0.28s cubic-bezier(0.16, 1, 0.3, 1), width 0.28s cubic-bezier(0.16, 1, 0.3, 1), height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: hifzTourPulseRing 2.4s ease-in-out infinite;
+      z-index: 1;
+    }
+
+    .hifz-tour-spotlight.is-centered-fallback {
+      box-shadow: 0 0 0 9999px rgba(2, 44, 34, 0.65);
+      animation: none;
+    }
+
+    @keyframes hifzTourCardPop {
+      0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .hifz-tour-card {
+      position: fixed;
+      z-index: 2;
+      pointer-events: auto;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 22px 50px -10px rgba(2, 44, 34, 0.34), 0 6px 16px rgba(15, 23, 42, 0.1);
+      overflow: visible;
+      box-sizing: border-box;
+      transition: top 0.28s cubic-bezier(0.16, 1, 0.3, 1), left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: hifzTourCardPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: var(--font-sans);
+    }
+
+    .hifz-tour-accent-bar {
+      height: 4px;
+      width: 100%;
+      border-radius: 15px 15px 0 0;
+      background: #064e3b;
+    }
+
+    .hifz-tour-arrow {
+      display: none;
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      transform: translateX(-50%) rotate(45deg);
+      z-index: -1;
+    }
+
+    .hifz-tour-card[data-placement="bottom"] .hifz-tour-arrow {
+      top: -6px;
+      border-right: none;
+      border-bottom: none;
+      background: #064e3b;
+      border-color: #064e3b;
+    }
+
+    .hifz-tour-card[data-placement="top"] .hifz-tour-arrow {
+      bottom: -6px;
+      border-left: none;
+      border-top: none;
+    }
+
+    .hifz-tour-card-body {
+      padding: 16px 18px 16px;
+    }
+
+    .hifz-tour-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hifz-tour-step-meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hifz-tour-mascot {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #ecfdf5 0%, #fef3c7 100%);
+      border: 1px solid #a7f3d0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      flex-shrink: 0;
+    }
+
+    .hifz-tour-step-count {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #475569;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .hifz-tour-lang-toggle {
+      display: inline-flex;
+      align-items: center;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 9px;
+      padding: 2px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .hifz-tour-lang-btn {
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+      white-space: nowrap;
+      line-height: 1.2;
+      transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .hifz-tour-lang-btn:hover {
+      color: #064e3b;
+    }
+
+    .hifz-tour-lang-btn.is-active {
+      background: #064e3b;
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(6, 78, 59, 0.25);
+    }
+
+    .hifz-tour-lang-btn:focus-visible {
+      outline: 2px solid #064e3b;
+      outline-offset: 1px;
+    }
+
+    .hifz-tour-title {
+      font-size: 1.04rem;
+      font-weight: 700;
+      color: #064e3b;
+      line-height: 1.35;
+      margin: 0 0 8px;
+      text-wrap: balance;
+    }
+
+    .hifz-tour-desc {
+      font-size: 0.87rem;
+      color: #334155;
+      line-height: 1.6;
+      margin: 0 0 12px;
+    }
+
+    .hifz-tour-tip {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 0.78rem;
+      line-height: 1.48;
+      color: #065f46;
+      margin-bottom: 13px;
+    }
+
+    .hifz-tour-tip-icon {
+      flex-shrink: 0;
+      font-size: 0.9rem;
+      line-height: 1.3;
+    }
+
+    .hifz-tour-progress-track {
+      width: 100%;
+      height: 4px;
+      border-radius: 99px;
+      background: #e2e8f0;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .hifz-tour-progress-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #064e3b 0%, #10b981 100%);
+      transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .hifz-tour-dots-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .hifz-tour-dot {
+      width: 8px;
+      height: 8px;
+      padding: 0;
+      border-radius: 99px;
+      border: none;
+      background: #cbd5e1;
+      cursor: pointer;
+      transition: width 0.18s ease, background-color 0.18s ease;
+    }
+
+    .hifz-tour-dot.is-done {
+      background: #6ee7b7;
+    }
+
+    .hifz-tour-dot.is-active {
+      width: 22px;
+      background: #064e3b;
+    }
+
+    .hifz-tour-dot:focus-visible {
+      outline: 2px solid #064e3b;
+      outline-offset: 2px;
+    }
+
+    .hifz-tour-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .hifz-tour-nav-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hifz-tour-btn-skip {
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 8px 10px;
+      min-height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .hifz-tour-btn-skip:hover {
+      color: #0f172a;
+      background: #f1f5f9;
+    }
+
+    .hifz-tour-btn-back {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 8px 13px;
+      min-height: 40px;
+      border-radius: 9px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .hifz-tour-btn-back:hover:not(:disabled) {
+      border-color: #064e3b;
+      color: #064e3b;
+      background: #f8fafc;
+    }
+
+    .hifz-tour-btn-back:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .hifz-tour-btn-next {
+      border: none;
+      background: #064e3b;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 8px 16px;
+      min-height: 40px;
+      border-radius: 9px;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(6, 78, 59, 0.24);
+      transition: background-color 0.15s ease, transform 0.14s ease;
+    }
+
+    .hifz-tour-btn-next:hover {
+      background: #047857;
+      transform: translateY(-1px);
+    }
+
+    .hifz-tour-btn-next.is-finish {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+      box-shadow: 0 3px 10px rgba(4, 120, 87, 0.3);
+    }
+
+    .hifz-tour-btn-skip:focus-visible,
+    .hifz-tour-btn-back:focus-visible,
+    .hifz-tour-btn-next:focus-visible {
+      outline: 2px solid #064e3b;
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hifz-tour-spotlight,
+      .hifz-tour-card,
+      .hifz-tour-progress-fill,
+      .btn-quick-tour {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
     .demo-mode-switch-card {
       display: inline-flex;
       align-items: center;
@@ -2190,6 +2617,25 @@
       }
       .principal-header-bar {
         align-items: stretch;
+      }
+      .admin-header-controls {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .btn-quick-tour {
+        width: 100%;
+        min-height: 44px;
+      }
+      .hifz-tour-card-body {
+        padding: 14px 14px 14px;
+      }
+      .hifz-tour-btn-skip,
+      .hifz-tour-btn-back,
+      .hifz-tour-btn-next {
+        min-height: 44px;
       }
       .demo-mode-switch-card {
         width: 100%;
@@ -3206,22 +3652,35 @@
           </button>
         </div>
 
-        <div id="principal-demo-mode-wrap" class="demo-mode-switch-card no-print">
-          <label for="principal-demo-mode-toggle" class="demo-mode-switch-label">
-            <span id="lbl-principal-demo-toggle" class="demo-mode-switch-title">🔄 Demo Mode / ഡെമോ മോഡ്</span>
-            <span id="principal-demo-status-pill" class="demo-mode-status-pill">OFF · Live</span>
-            <span class="hifz-toggle-switch">
-              <input
-                type="checkbox"
-                id="principal-demo-mode-toggle"
-                role="switch"
-                aria-checked="false"
-                aria-label="Toggle Demo Mode"
-                onchange="handlePrincipalDemoModeToggle(this.checked)"
-              />
-              <span class="hifz-toggle-slider"></span>
-            </span>
-          </label>
+        <div class="admin-header-controls no-print" id="admin-controls-header">
+          <button
+            type="button"
+            id="btn-admin-quick-tour"
+            class="btn-quick-tour"
+            onclick="window.startQuickTour && window.startQuickTour('principal')"
+            title="Start Interactive Quick Tour (മലയാളം / English)"
+            aria-label="🎯 Quick Tour"
+          >
+            🎯 Quick Tour
+          </button>
+
+          <div id="principal-demo-mode-wrap" class="demo-mode-switch-card no-print">
+            <label for="principal-demo-mode-toggle" class="demo-mode-switch-label">
+              <span id="lbl-principal-demo-toggle" class="demo-mode-switch-title">🔄 Demo Mode / ഡെമോ മോഡ്</span>
+              <span id="principal-demo-status-pill" class="demo-mode-status-pill">OFF · Live</span>
+              <span class="hifz-toggle-switch">
+                <input
+                  type="checkbox"
+                  id="principal-demo-mode-toggle"
+                  role="switch"
+                  aria-checked="false"
+                  aria-label="Toggle Demo Mode"
+                  onchange="handlePrincipalDemoModeToggle(this.checked)"
+                />
+                <span class="hifz-toggle-slider"></span>
+              </span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -3276,7 +3735,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" id="principal-students-card">
           <div class="card-header-row">
             <div>
               <h2 class="card-title">Student Portfolios &amp; Automatic Monthly Akhlaq Grading</h2>
@@ -4064,6 +4523,16 @@
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <button
             type="button"
+            class="btn-quick-tour btn-quick-tour-master"
+            id="btn-master-quick-tour"
+            onclick="window.startQuickTour && window.startQuickTour('master')"
+            title="Start Interactive Quick Tour (മലയാളം / English)"
+            aria-label="🎯 Quick Tour"
+          >
+            🎯 Quick Tour
+          </button>
+          <button
+            type="button"
             class="btn-secondary"
             id="btn-master-refresh"
             onclick="fetchAllMadrasasForMasterAdmin(true)"
@@ -4075,7 +4544,7 @@
       </div>
 
       <!-- Global Multi-Campus KPI Summary Strip -->
-      <div class="kpi-strip" style="margin-bottom:18px;">
+      <div class="kpi-strip" id="master-kpi-strip" style="margin-bottom:18px;">
         <div class="kpi-card" style="border-left:4px solid #047857; background:#f0fdf4;">
           <div class="kpi-label" id="master-kpi-lbl-madrasas" style="color:#065f46; font-weight:700;">ആകെ രജിസ്റ്റർ ചെയ്ത മദ്രസകൾ</div>
           <div class="kpi-value" id="master-kpi-madrasas" style="color:#064e3b;">0</div>
@@ -4101,7 +4570,7 @@
       <!-- 2-Column Management Grid: Create New Madrasa + Global Announcements & System Config -->
       <div class="grid-2" style="margin-bottom:20px; align-items:start;">
         <!-- LEFT CARD: CREATE NEW MADRASA WORKSPACE -->
-        <div class="card" style="border:2px solid #a7f3d0; background:linear-gradient(135deg,#ffffff 0%,#f0fdf4 100%);">
+        <div class="card" id="master-create-card" style="border:2px solid #a7f3d0; background:linear-gradient(135deg,#ffffff 0%,#f0fdf4 100%);">
           <div class="card-header-row">
             <div>
               <h3 class="card-title" id="master-create-card-title" style="color:#064e3b;">
@@ -4202,7 +4671,7 @@
         </div>
 
         <!-- RIGHT CARD: GLOBAL ANNOUNCEMENTS, SYSTEM STATUS & MASTER CREDENTIALS -->
-        <div class="card" style="border:2px solid #fde68a; background:linear-gradient(135deg,#ffffff 0%,#fffbeb 100%);">
+        <div class="card" id="master-global-card" style="border:2px solid #fde68a; background:linear-gradient(135deg,#ffffff 0%,#fffbeb 100%);">
           <div class="card-header-row">
             <div>
               <h3 class="card-title" id="master-global-card-title" style="color:#78350f;">
@@ -4275,7 +4744,7 @@
       </div>
 
       <!-- FULL-WIDTH REGISTERED MADRASA WORKSPACES DIRECTORY & PASSWORD RESET TABLE -->
-      <div class="card" style="border:2px solid #cbd5e1;">
+      <div class="card" id="master-directory-card" style="border:2px solid #cbd5e1;">
         <div class="card-header-row" style="flex-wrap:wrap; gap:12px;">
           <div>
             <h3 class="card-title" id="master-directory-title">
@@ -18055,5 +18524,6 @@
       if (window.lucide) window.lucide.createIcons();
     });
   </script>
+  <script type="module" src="/src/utils/quickTourController.ts"></script>
 </body>
 </html>
