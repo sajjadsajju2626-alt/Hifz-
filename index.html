@@ -6386,6 +6386,9 @@
         updatePrincipalDemoToggleUI();
         populateStudentSelectors();
         renderAllViews();
+        if (typeof persistActiveNavigationState === "function") {
+          persistActiveNavigationState();
+        }
 
         if (!silent && window.showToast) {
           window.showToast(
@@ -6422,8 +6425,7 @@
           currentUser.role === "principal" &&
           (currentActiveView === "teacher" || currentActiveView === "schedules" || currentActiveView === "parent")
         ) {
-          switchWorkspace("principal");
-          switchPrincipalTab("portfolios");
+          switchWorkspace("principal", { subTab: "portfolios" });
         }
 
         updateDemoPreviewBarButtons(currentUser ? currentUser.role : "principal");
@@ -6433,6 +6435,9 @@
         updatePrincipalDemoToggleUI();
         populateStudentSelectors();
         renderAllViews();
+        if (typeof persistActiveNavigationState === "function") {
+          persistActiveNavigationState();
+        }
 
         if (window.fDb && currentMadrasaId && currentMadrasaId !== "MDR-01") {
           if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
@@ -10446,31 +10451,165 @@
     };
 
     // ============================================================================
-    // ANDROID HARDWARE / GESTURE BACK BUTTON & HISTORY STACK SYNCHRONIZATION
+    // SESSION/VIEW PERSISTENCE & ANDROID HARDWARE / GESTURE BACK BUTTON SYNC
     // ============================================================================
+    const SESSION_STORAGE_KEY = "hifz_portal_session";
+    const NAV_STATE_STORAGE_KEY = "hifz_active_nav_state";
+
     let currentActiveView = "auth";
     let currentActivePrincipalTab = "portfolios";
     let isHandlingPopState = false;
+    let isAppHydrating = true;
+    let hasCompletedInitialRestore = false;
+    const appHistorySessionId = "hifz_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+    let currentHistoryIndex = 0;
+
+    function persistActiveSession(userObj) {
+      if (!userObj || !userObj.role) return;
+      const serialized = JSON.stringify(userObj);
+      try {
+        sessionStorage.setItem(SESSION_STORAGE_KEY, serialized);
+      } catch (e) {}
+      try {
+        localStorage.setItem(SESSION_STORAGE_KEY, serialized);
+      } catch (e) {}
+    }
+
+    function loadSavedSession() {
+      let raw = null;
+      try {
+        raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      } catch (e) {}
+      if (!raw) {
+        try {
+          raw = localStorage.getItem(SESSION_STORAGE_KEY);
+        } catch (e) {}
+      }
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.role && (parsed.name || parsed.username)) {
+          try {
+            sessionStorage.setItem(SESSION_STORAGE_KEY, raw);
+          } catch (e) {}
+          return parsed;
+        }
+      } catch (err) {
+        console.warn("Error reading stored session:", err);
+        clearPersistedSessionAndNav();
+      }
+      return null;
+    }
+
+    function persistActiveNavigationState(override) {
+      if (!currentUser || !currentUser.role) return;
+      const resolvedView = (override && override.view) || currentActiveView;
+      if (!resolvedView || resolvedView === "auth") return;
+      const payload = {
+        view: resolvedView,
+        subTab: (override && override.subTab) || currentActivePrincipalTab || "portfolios",
+        role: currentUser.role,
+        username: currentUser.username || "",
+        madrasaId: currentMadrasaId || currentUser.madrasaId || "",
+        isDemoSandbox: Boolean(isDemoSandbox),
+        isStandaloneDemo: Boolean(currentUser.isDemoSandbox),
+        demoDeskRole: isDemoSandbox ? getActiveDemoDeskRole() : null,
+        masterInspectingMadrasaId: masterInspectingMadrasaId || null,
+        parentStudentId: currentParentStudentId || null,
+        savedAt: Date.now()
+      };
+      const serialized = JSON.stringify(payload);
+      try {
+        sessionStorage.setItem(NAV_STATE_STORAGE_KEY, serialized);
+      } catch (e) {}
+      try {
+        localStorage.setItem(NAV_STATE_STORAGE_KEY, serialized);
+      } catch (e) {}
+    }
+
+    function loadSavedNavigationState() {
+      let raw = null;
+      try {
+        raw = sessionStorage.getItem(NAV_STATE_STORAGE_KEY);
+      } catch (e) {}
+      if (!raw) {
+        try {
+          raw = localStorage.getItem(NAV_STATE_STORAGE_KEY);
+        } catch (e) {}
+      }
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object" && parsed.view && parsed.view !== "auth") {
+          try {
+            sessionStorage.setItem(NAV_STATE_STORAGE_KEY, raw);
+          } catch (e) {}
+          return parsed;
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function clearPersistedSessionAndNav() {
+      try {
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        sessionStorage.removeItem(NAV_STATE_STORAGE_KEY);
+        sessionStorage.removeItem("hifz_demo_sandbox_active");
+      } catch (e) {}
+      try {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        localStorage.removeItem(NAV_STATE_STORAGE_KEY);
+        localStorage.removeItem("hifz_demo_sandbox_active");
+      } catch (e) {}
+    }
+
+    function buildHistoryStateSnapshot(partialState, historyIdx, isBase) {
+      return {
+        app: "hifz-portal",
+        navSessionId: appHistorySessionId,
+        historyIndex: typeof historyIdx === "number" ? historyIdx : currentHistoryIndex,
+        isBaseEntry: Boolean(isBase),
+        view: partialState && partialState.view !== undefined ? partialState.view : currentActiveView,
+        subTab: partialState && partialState.subTab !== undefined ? partialState.subTab : currentActivePrincipalTab,
+        modal: partialState && partialState.modal !== undefined ? partialState.modal : null,
+        dossierId: partialState && partialState.dossierId !== undefined ? partialState.dossierId : null,
+        demoRole: partialState && partialState.demoRole !== undefined ? partialState.demoRole : (isDemoSandbox && currentUser ? getActiveDemoDeskRole() : null),
+        inspectingMadrasa: partialState && partialState.inspectingMadrasa !== undefined ? partialState.inspectingMadrasa : (masterInspectingMadrasaId || null),
+        ts: Date.now()
+      };
+    }
+
+    function initializeAppHistoryBaseState() {
+      currentHistoryIndex = 0;
+      try {
+        if (window.history && typeof window.history.replaceState === "function") {
+          const baseState = buildHistoryStateSnapshot(
+            {
+              view: currentActiveView,
+              subTab: currentActivePrincipalTab,
+              modal: null,
+              dossierId: null
+            },
+            0,
+            true
+          );
+          window.history.replaceState(baseState, "");
+        }
+      } catch (e) {}
+    }
 
     window.pushAppHistoryState = function(partialState, replaceOnly) {
-      if (isHandlingPopState) return;
+      if (isHandlingPopState || isAppHydrating) return;
       try {
         const prev = (window.history && window.history.state) || {};
-        const nextState = {
-          app: "hifz-portal",
-          view: partialState && partialState.view !== undefined ? partialState.view : currentActiveView,
-          subTab: partialState && partialState.subTab !== undefined ? partialState.subTab : currentActivePrincipalTab,
-          modal: partialState && partialState.modal !== undefined ? partialState.modal : null,
-          dossierId: partialState && partialState.dossierId !== undefined ? partialState.dossierId : null,
-          demoRole: partialState && partialState.demoRole !== undefined ? partialState.demoRole : (isDemoSandbox && currentUser ? getActiveDemoDeskRole() : null),
-          inspectingMadrasa: masterInspectingMadrasaId || null,
-          ts: Date.now()
-        };
+        const isPrevOwnSession = Boolean(prev && prev.app === "hifz-portal" && prev.navSessionId === appHistorySessionId);
+        const nextIndex = replaceOnly ? currentHistoryIndex : currentHistoryIndex + 1;
+        const nextState = buildHistoryStateSnapshot(partialState, nextIndex, replaceOnly && currentHistoryIndex === 0);
 
         // Avoid pushing duplicate identical states back-to-back
         if (
           !replaceOnly &&
-          prev &&
+          isPrevOwnSession &&
           prev.view === nextState.view &&
           prev.subTab === nextState.subTab &&
           prev.modal === nextState.modal &&
@@ -10484,19 +10623,21 @@
         if (replaceOnly && window.history && typeof window.history.replaceState === "function") {
           window.history.replaceState(nextState, "");
         } else if (window.history && typeof window.history.pushState === "function") {
+          currentHistoryIndex = nextIndex;
           window.history.pushState(nextState, "");
         }
       } catch (e) {}
     };
 
     window.syncHistoryModalClosed = function(closedModalName) {
-      if (isHandlingPopState) return;
+      if (isHandlingPopState || isAppHydrating) return;
       try {
         const cur = (window.history && window.history.state) || {};
         if (cur && cur.modal === closedModalName && typeof window.history.replaceState === "function") {
           window.history.replaceState(
             {
               ...cur,
+              navSessionId: appHistorySessionId,
               modal: null,
               ts: Date.now()
             },
@@ -10531,22 +10672,45 @@
       return { view: "teacher", subTab: "portfolios" };
     }
 
-    // Initialize base history entry so pressing hardware back never immediately exits the app
-    try {
-      if (window.history && typeof window.history.replaceState === "function") {
-        window.history.replaceState({ app: "hifz-portal", view: "auth", subTab: "portfolios", modal: null }, "");
-      }
-    } catch (e) {}
+    function syncCurrentViewHistoryState() {
+      try {
+        if (window.history && typeof window.history.replaceState === "function") {
+          const curState = buildHistoryStateSnapshot(
+            {
+              view: currentActiveView,
+              subTab: currentActivePrincipalTab,
+              modal: null,
+              dossierId: null
+            },
+            currentHistoryIndex,
+            currentHistoryIndex === 0
+          );
+          window.history.replaceState(curState, "");
+        }
+      } catch (e) {}
+    }
 
     window.addEventListener("popstate", function(event) {
+      // Never react to spurious popstate events fired during initial page load or refresh hydration
+      if (isAppHydrating || !hasCompletedInitialRestore) {
+        return;
+      }
+
       isHandlingPopState = true;
       try {
+        // 0. Close Quick Tour overlay if open
+        const tourRoot = document.getElementById("hifz-quick-tour-root");
+        if (tourRoot && typeof window.closeQuickTour === "function") {
+          window.closeQuickTour(false);
+          syncCurrentViewHistoryState();
+          return;
+        }
+
         // 1. Close Report Card Modal if open
         const reportModal = document.getElementById("report-card-modal");
         if (reportModal && !reportModal.classList.contains("hidden")) {
           window.closeReportCardModal(true);
-          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, true);
-          isHandlingPopState = false;
+          syncCurrentViewHistoryState();
           return;
         }
 
@@ -10554,8 +10718,7 @@
         const photoModal = document.getElementById("student-photo-modal");
         if (photoModal && !photoModal.classList.contains("hidden")) {
           window.closeStudentPhotoModal(true);
-          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, true);
-          isHandlingPopState = false;
+          syncCurrentViewHistoryState();
           return;
         }
 
@@ -10563,8 +10726,7 @@
         const masterDelModal = document.getElementById("master-delete-madrasa-modal");
         if (masterDelModal && !masterDelModal.classList.contains("hidden")) {
           window.closeMasterDeleteMadrasaModal(true);
-          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, true);
-          isHandlingPopState = false;
+          syncCurrentViewHistoryState();
           return;
         }
 
@@ -10572,93 +10734,75 @@
         const notifDrop = document.getElementById("notification-dropdown");
         if (notifDrop && !notifDrop.classList.contains("hidden")) {
           notifDrop.classList.add("hidden");
-          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, true);
-          isHandlingPopState = false;
+          syncCurrentViewHistoryState();
           return;
         }
+
+        const poppedState = event.state;
+        const isOwnSessionEntry = Boolean(
+          poppedState &&
+          poppedState.app === "hifz-portal" &&
+          poppedState.navSessionId === appHistorySessionId &&
+          typeof poppedState.historyIndex === "number"
+        );
 
         // 4. Close any open Student Dossier card if expanded
         const openDossiers = document.querySelectorAll(".student-body.active");
-        const poppedState = event.state || {};
-        if (openDossiers.length > 0 && !poppedState.dossierId) {
+        if (openDossiers.length > 0 && (!poppedState || !poppedState.dossierId)) {
           openDossiers.forEach((dEl) => dEl.classList.remove("active"));
-          window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, dossierId: null, modal: null }, true);
-          isHandlingPopState = false;
+          syncCurrentViewHistoryState();
           return;
         }
 
-        // 5. If not signed in, keep on Auth View
+        // 5. If not signed in, keep cleanly on Auth View
         if (!currentUser) {
-          window.showAuthView();
-          isHandlingPopState = false;
+          if (currentActiveView !== "auth") {
+            window.showAuthView();
+          }
+          syncCurrentViewHistoryState();
           return;
         }
 
-        const role = currentUser.role;
+        // 6. Only step backward when popstate carries a real in-app history entry from this session.
+        //    Ignore null / stale / pre-refresh states so refresh or boundary back-press never kicks
+        //    the user to a previous screen or sign-in page.
+        if (!isOwnSessionEntry) {
+          currentHistoryIndex = 0;
+          syncCurrentViewHistoryState();
+          return;
+        }
 
-        // 6. If Demo Sandbox role changed in history state, restore that Demo Portal
+        // Never kick an authenticated user back to the sign-in screen via history navigation
+        if (!poppedState.view || poppedState.view === "auth") {
+          syncCurrentViewHistoryState();
+          return;
+        }
+
+        currentHistoryIndex = Math.max(0, poppedState.historyIndex);
+
+        // 7. If Demo Sandbox role changed in this real in-app history entry, restore that Demo Portal
         if (isDemoSandbox && poppedState.demoRole && poppedState.demoRole !== getActiveDemoDeskRole()) {
           window.switchDemoPreviewPortal(poppedState.demoRole);
-          isHandlingPopState = false;
+          persistActiveNavigationState();
           return;
         }
 
-        // 7. Navigate to previous view / sub-tab if present in popped state
-        if (poppedState && poppedState.view && poppedState.view !== "auth") {
-          const targetView = poppedState.view;
-          const targetSubTab = poppedState.subTab || "portfolios";
-          if (targetView !== currentActiveView || (targetView === "principal" && targetSubTab !== currentActivePrincipalTab)) {
-            window.switchWorkspace(targetView);
-            if (targetView === "principal") {
-              window.switchPrincipalTab(targetSubTab);
-            }
-            isHandlingPopState = false;
-            return;
+        // 8. Sync Master Admin inspected madrasa state if stepping back between Master Dashboard and an inspected campus
+        if (currentUser.role === "master" && poppedState.inspectingMadrasa !== (masterInspectingMadrasaId || null)) {
+          masterInspectingMadrasaId = poppedState.inspectingMadrasa || null;
+          if (masterInspectingMadrasaId) {
+            currentMadrasaId = masterInspectingMadrasaId;
           }
+          updateNavVisibilityForRole("master");
+          updateSessionHeader();
         }
 
-        // 8. Fallback hierarchical back navigation (Sub-tab -> Main Dashboard -> Guard against accidental exit)
-        if (role === "master" && currentActiveView !== "master") {
-          window.switchWorkspace("master");
-          if (window.history && typeof window.history.pushState === "function") {
-            window.history.pushState({ app: "hifz-portal", view: "master", subTab: "portfolios", modal: null }, "");
-          }
-          isHandlingPopState = false;
-          return;
-        }
-
-        if ((role === "principal" || role === "master") && currentActiveView === "principal" && currentActivePrincipalTab !== "portfolios") {
-          window.switchPrincipalTab("portfolios");
-          if (window.history && typeof window.history.pushState === "function") {
-            window.history.pushState({ app: "hifz-portal", view: "principal", subTab: "portfolios", modal: null }, "");
-          }
-          isHandlingPopState = false;
-          return;
-        }
-
-        if ((role === "principal" || role === "master") && currentActiveView === "analytics") {
-          window.switchWorkspace("principal");
-          window.switchPrincipalTab("portfolios");
-          if (window.history && typeof window.history.pushState === "function") {
-            window.history.pushState({ app: "hifz-portal", view: "principal", subTab: "portfolios", modal: null }, "");
-          }
-          isHandlingPopState = false;
-          return;
-        }
-
-        if (role === "teacher" && currentActiveView === "schedules") {
-          window.switchWorkspace("teacher");
-          if (window.history && typeof window.history.pushState === "function") {
-            window.history.pushState({ app: "hifz-portal", view: "teacher", subTab: "portfolios", modal: null }, "");
-          }
-          isHandlingPopState = false;
-          return;
-        }
-
-        // 9. Already on the role's primary dashboard: re-push guard state so hardware back doesn't exit the app unexpectedly
-        const home = getRoleDefaultHomeView(role);
-        if (window.history && typeof window.history.pushState === "function") {
-          window.history.pushState({ app: "hifz-portal", view: home.view, subTab: home.subTab, modal: null }, "");
+        // 9. Navigate cleanly to the popped in-app view / sub-tab
+        const targetView = poppedState.view;
+        const targetSubTab = poppedState.subTab || "portfolios";
+        if (targetView !== currentActiveView || (targetView === "principal" && targetSubTab !== currentActivePrincipalTab)) {
+          window.switchWorkspace(targetView, targetView === "principal" ? { subTab: targetSubTab } : undefined);
+          persistActiveNavigationState();
         }
       } finally {
         isHandlingPopState = false;
@@ -10666,12 +10810,13 @@
     });
 
     // Workspace & Tab Navigation with Active View Lock & Permission Enforcement
-    window.switchWorkspace = function(view) {
+    window.switchWorkspace = function(view, options) {
       if (!currentUser) {
         showAuthView();
         return;
       }
 
+      const opts = options && typeof options === "object" ? options : {};
       const role = currentUser.role;
 
       const roleAllowedViews = {
@@ -10697,7 +10842,7 @@
         }
       }
 
-      let activePrincipalSubTab = null;
+      let activePrincipalSubTab = opts.subTab || null;
       if (role === "master" && targetView === "master") {
         if (isDemoSandbox && currentUser && !currentUser.isDemoSandbox && typeof window.handlePrincipalDemoModeToggle === "function") {
           window.handlePrincipalDemoModeToggle(false, true);
@@ -10712,7 +10857,7 @@
         } else if (targetView === "settings") {
           targetView = "principal";
           activePrincipalSubTab = "settings";
-        } else if (targetView === "principal") {
+        } else if (targetView === "principal" && !activePrincipalSubTab) {
           const currentSubActive = document.querySelector(".sub-tab-btn.active");
           if (!currentSubActive || currentSubActive.id === "ptab-btn-notices" || currentSubActive.id === "ptab-btn-settings") {
             activePrincipalSubTab = "portfolios";
@@ -10751,9 +10896,9 @@
       }
 
       if (activePrincipalSubTab) {
-        switchPrincipalTab(activePrincipalSubTab);
-      } else {
-        window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null });
+        switchPrincipalTab(activePrincipalSubTab, { skipHistory: opts.skipHistory, replaceHistory: opts.replaceHistory });
+      } else if (!opts.skipHistory) {
+        window.pushAppHistoryState({ view: currentActiveView, subTab: currentActivePrincipalTab, modal: null }, Boolean(opts.replaceHistory));
       }
 
       const navTabs = [
@@ -10772,21 +10917,23 @@
         if (el) el.classList.toggle("active", tab.active);
       });
 
+      persistActiveNavigationState();
       renderAllViews();
       if (window.lucide) window.lucide.createIcons();
     };
 
-    window.switchPrincipalTab = function(tab) {
+    window.switchPrincipalTab = function(tab, options) {
+      const opts = options && typeof options === "object" ? options : {};
       currentActivePrincipalTab = tab || "portfolios";
       const subTabsBar = document.getElementById("principal-sub-tabs");
       if (subTabsBar) {
-        subTabsBar.classList.toggle("hidden", tab === "notices");
+        subTabsBar.classList.toggle("hidden", currentActivePrincipalTab === "notices");
       }
       ["portfolios", "enroll", "notices", "settings"].forEach((tKey) => {
         const el = document.getElementById("p-tab-" + tKey);
         const btn = document.getElementById("ptab-btn-" + tKey);
         if (el) {
-          if (tKey === tab) {
+          if (tKey === currentActivePrincipalTab) {
             el.classList.remove("hidden");
             el.style.animation = "none";
             void el.offsetHeight;
@@ -10795,29 +10942,32 @@
             el.classList.add("hidden");
           }
         }
-        if (btn) btn.classList.toggle("active", tKey === tab);
+        if (btn) btn.classList.toggle("active", tKey === currentActivePrincipalTab);
       });
 
       if (currentUser && (currentUser.role === "principal" || currentUser.role === "master")) {
         const navPrincipal = document.getElementById("nav-principal");
         const navNotices = document.getElementById("nav-notices");
         const navSettings = document.getElementById("nav-settings");
-        if (navPrincipal && (tab === "portfolios" || tab === "enroll")) {
+        if (navPrincipal && (currentActivePrincipalTab === "portfolios" || currentActivePrincipalTab === "enroll")) {
           navPrincipal.classList.add("active");
           if (navNotices) navNotices.classList.remove("active");
           if (navSettings) navSettings.classList.remove("active");
-        } else if (navNotices && tab === "notices") {
+        } else if (navNotices && currentActivePrincipalTab === "notices") {
           if (navPrincipal) navPrincipal.classList.remove("active");
           navNotices.classList.add("active");
           if (navSettings) navSettings.classList.remove("active");
-        } else if (navSettings && tab === "settings") {
+        } else if (navSettings && currentActivePrincipalTab === "settings") {
           if (navPrincipal) navPrincipal.classList.remove("active");
           if (navNotices) navNotices.classList.remove("active");
           navSettings.classList.add("active");
         }
       }
-      window.pushAppHistoryState({ view: "principal", subTab: currentActivePrincipalTab, modal: null });
-      if (tab === "portfolios" && typeof window.renderPrincipalPortfolioD3Chart === "function") {
+      if (!opts.skipHistory) {
+        window.pushAppHistoryState({ view: "principal", subTab: currentActivePrincipalTab, modal: null }, Boolean(opts.replaceHistory));
+      }
+      persistActiveNavigationState({ view: "principal", subTab: currentActivePrincipalTab });
+      if (currentActivePrincipalTab === "portfolios" && typeof window.renderPrincipalPortfolioD3Chart === "function") {
         setTimeout(() => {
           window.renderPrincipalPortfolioD3Chart();
         }, 40);
@@ -13435,9 +13585,7 @@
 
       if (currentUser && currentUser.role === "master") {
         currentUser.username = u;
-        try {
-          localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
-        } catch (err) {}
+        persistActiveSession(currentUser);
       }
 
       if (window.showToast) {
@@ -14031,14 +14179,14 @@
           }
           switchWorkspace("parent");
         } else {
-          switchWorkspace("principal");
-          switchPrincipalTab("portfolios");
+          switchWorkspace("principal", { subTab: "portfolios" });
         }
 
         updateDemoPreviewBarButtons(role);
         updateSessionHeader();
         updatePrincipalDemoToggleUI();
         renderAllViews();
+        persistActiveNavigationState();
 
         if (window.showToast) {
           const deskToast =
@@ -14077,6 +14225,7 @@
         currentUser = {
           role: "principal",
           isDemoSandbox: true,
+          madrasaId: currentMadrasaId || "DEMO",
           username: "demo",
           name: "Principal Demo (പ്രിൻസിപ്പൽ ഡെമോ)",
           loginTime: new Date().toISOString()
@@ -14085,6 +14234,7 @@
         currentUser = {
           role: "teacher",
           isDemoSandbox: true,
+          madrasaId: currentMadrasaId || "DEMO",
           username: activeSampleTeacher.username || "demo",
           teacherId: activeSampleTeacher.teacherId || "TCH-1",
           name: activeSampleTeacher.name || "Ustadh Ahmad",
@@ -14094,6 +14244,7 @@
         currentUser = {
           role: "parent",
           isDemoSandbox: true,
+          madrasaId: currentMadrasaId || "DEMO",
           username: activeSampleStd.studentId,
           studentId: activeSampleStd.studentId,
           name: "Parent of " + activeSampleStd.name,
@@ -14101,9 +14252,12 @@
         };
       }
 
+      activeDemoPreviewDesk = role;
+      persistActiveSession(currentUser);
       updateDemoPreviewBarButtons(role);
       populateStudentSelectors();
       applyAuthenticatedState(role);
+      persistActiveNavigationState();
       renderAllViews();
     };
 
@@ -14113,8 +14267,8 @@
       activeDemoPreviewDesk = "principal";
       try {
         localStorage.setItem("demoMode", "false");
-        localStorage.removeItem("hifz_demo_sandbox_active");
       } catch (e) {}
+      clearPersistedSessionAndNav();
       currentUser = null;
       const bar = document.getElementById("demo-preview-switcher-bar");
       if (bar) bar.classList.add("hidden");
@@ -14190,10 +14344,9 @@
           name: "Master Super Admin",
           loginTime: new Date().toISOString()
         };
-        try {
-          localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
-        } catch (err) {}
+        persistActiveSession(currentUser);
         applyAuthenticatedState("master");
+        initializeAppHistoryBaseState();
         if (window.showToast) {
           window.showToast(
             t(
@@ -14239,6 +14392,7 @@
         } catch (err) {}
         loadDemoSandboxDataInMemory();
         window.switchDemoPreviewPortal("principal");
+        initializeAppHistoryBaseState();
         updateCampusIdentityUI();
         if (window.showToast) {
           window.showToast(
@@ -14407,9 +14561,7 @@
         if (targetRole === "parent") {
           currentParentStudentId = userObj.studentId;
         }
-        try {
-          localStorage.setItem("hifz_portal_session", JSON.stringify(currentUser));
-        } catch (err) {}
+        persistActiveSession(currentUser);
         if (typeof window.subscribeToMadrasaWorkspace === "function") {
           window.subscribeToMadrasaWorkspace(mCode);
         }
@@ -14418,6 +14570,7 @@
         updateCampusIdentityUI();
         applyCampusModeUI();
         applyAuthenticatedState(targetRole);
+        initializeAppHistoryBaseState();
       };
 
       // 1. Check Principal Credentials strictly against mCode's workspace (NO global fallback)
@@ -14523,11 +14676,7 @@
         loadLiveCollectionsFromLocal(currentMadrasaId);
         if (typeof updatePrincipalDemoToggleUI === "function") updatePrincipalDemoToggleUI();
       }
-      try {
-        localStorage.removeItem("hifz_portal_session");
-      } catch (err) {
-        console.warn("localStorage removal notice:", err);
-      }
+      clearPersistedSessionAndNav();
       currentUser = null;
       masterInspectingMadrasaId = null;
       const mInp = document.getElementById("auth-madrasa-code");
@@ -14609,6 +14758,8 @@
     // Show ONLY Portal Sign In View (Initial View Lock)
     window.showAuthView = function() {
       currentUser = null;
+      currentActiveView = "auth";
+      currentActivePrincipalTab = "portfolios";
       masterInspectingMadrasaId = null;
       if (typeof window.unsubscribeRegisteredMadrasas === "function") {
         window.unsubscribeRegisteredMadrasas();
@@ -14677,8 +14828,8 @@
       if (window.lucide) window.lucide.createIcons();
     };
 
-    // Apply Authenticated View State
-    window.applyAuthenticatedState = function(role) {
+    // Apply Authenticated View State (supports restoring exact active view & sub-tab on refresh)
+    window.applyAuthenticatedState = function(role, restoreNav) {
       const topHeader = document.getElementById("main-app-header");
       if (topHeader) topHeader.classList.remove("hidden");
       const subBar = document.getElementById("main-sub-context-bar");
@@ -14697,27 +14848,46 @@
         window.updateHeaderAuthButton();
       }
 
-      updateDemoPreviewBarButtons(role);
+      updateDemoPreviewBarButtons(isDemoSandbox ? getActiveDemoDeskRole() : role);
       updateCampusIdentityUI();
       updateSessionHeader();
       if (typeof updatePrincipalDemoToggleUI === "function") updatePrincipalDemoToggleUI();
       updateNavVisibilityForRole(currentUser ? currentUser.role : role);
 
+      const hasValidRestore = Boolean(restoreNav && restoreNav.view && restoreNav.view !== "auth");
+      const navOpts = hasValidRestore ? { skipHistory: true } : {};
+
       if (role === "master") {
-        switchWorkspace("master");
+        const targetMasterView = hasValidRestore ? restoreNav.view : "master";
+        const targetMasterSub = hasValidRestore && restoreNav.subTab ? restoreNav.subTab : "portfolios";
+        switchWorkspace(
+          targetMasterView,
+          targetMasterView === "principal" ? { ...navOpts, subTab: targetMasterSub } : navOpts
+        );
         if (typeof window.subscribeToRegisteredMadrasas === "function") {
           window.subscribeToRegisteredMadrasas();
         }
       } else if (role === "parent") {
-        currentParentStudentId = (currentUser && currentUser.studentId) || "STD-101";
+        const restoredStudentId = (hasValidRestore && restoreNav.parentStudentId) || (currentUser && currentUser.studentId) || "STD-101";
+        currentParentStudentId = restoredStudentId;
         const switcher = document.getElementById("parent-student-switcher");
         if (switcher) switcher.value = currentParentStudentId;
-        switchWorkspace("parent");
+        switchWorkspace("parent", navOpts);
       } else if (role === "principal") {
-        switchWorkspace("principal");
-        switchPrincipalTab("portfolios");
+        const targetView = hasValidRestore ? restoreNav.view : "principal";
+        const targetSubTab = hasValidRestore && restoreNav.subTab ? restoreNav.subTab : "portfolios";
+        if (targetView === "parent" && hasValidRestore && restoreNav.parentStudentId) {
+          currentParentStudentId = restoreNav.parentStudentId;
+          const switcher = document.getElementById("parent-student-switcher");
+          if (switcher) switcher.value = currentParentStudentId;
+        }
+        switchWorkspace(
+          targetView,
+          targetView === "principal" ? { ...navOpts, subTab: targetSubTab } : navOpts
+        );
       } else {
-        switchWorkspace("teacher");
+        const targetTeacherView = hasValidRestore && restoreNav.view === "schedules" ? "schedules" : "teacher";
+        switchWorkspace(targetTeacherView, navOpts);
       }
     };
 
@@ -15053,6 +15223,7 @@
       const pSel = document.getElementById("parent-student-switcher");
       if (pSel && pSel.value) {
         currentParentStudentId = pSel.value;
+        persistActiveNavigationState();
         renderParentPortal();
       }
     };
@@ -18424,12 +18595,23 @@
     };
 
     window.addEventListener("firebase-ready", () => {
-      if (!window.fDb || !currentUser || isDemoSandbox) return;
+      if (!hasCompletedInitialRestore || !window.fDb || !currentUser || isDemoSandbox) return;
       if (currentUser.role === "master") {
         if (typeof window.subscribeToRegisteredMadrasas === "function") {
           window.subscribeToRegisteredMadrasas();
         }
+        if (masterInspectingMadrasaId) {
+          if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
+            window.fetchMadrasaWorkspaceFromFirestore(masterInspectingMadrasaId);
+          }
+          if (typeof window.subscribeToMadrasaWorkspace === "function") {
+            window.subscribeToMadrasaWorkspace(masterInspectingMadrasaId);
+          }
+        }
       } else {
+        if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
+          window.fetchMadrasaWorkspaceFromFirestore(currentMadrasaId);
+        }
         window.subscribeToMadrasaWorkspace(currentMadrasaId);
       }
     });
@@ -18437,6 +18619,8 @@
 
     // Initialize UI on DOM Ready
     window.addEventListener("DOMContentLoaded", () => {
+      isAppHydrating = true;
+
       // Always start Madrasa Code, Login ID, and Password inputs 100% empty
       const mInp = document.getElementById("auth-madrasa-code");
       const uInp = document.getElementById("auth-username");
@@ -18454,36 +18638,52 @@
         pInp.defaultValue = "";
       }
 
-      // Session Handling & Initial View Lock:
+      // 1. Restore saved authenticated session & active navigation state BEFORE evaluating history state
       currentUser = null;
-      let savedSession = null;
-      try {
-        const stored = localStorage.getItem("hifz_portal_session");
-        if (stored) {
-          savedSession = JSON.parse(stored);
-        }
-      } catch (err) {
-        console.warn("Error reading stored session:", err);
-        localStorage.removeItem("hifz_portal_session");
-      }
+      let savedSession = loadSavedSession();
+      let savedNavState = loadSavedNavigationState();
 
-      if (savedSession && savedSession.madrasaId && savedSession.madrasaId !== "MDR-01") {
+      if (savedSession && savedSession.role === "master" && savedNavState && savedNavState.masterInspectingMadrasaId) {
+        masterInspectingMadrasaId = String(savedNavState.masterInspectingMadrasaId).trim().toUpperCase();
+        currentMadrasaId = masterInspectingMadrasaId;
+      } else if (savedSession && savedSession.madrasaId && savedSession.madrasaId !== "MDR-01") {
         currentMadrasaId = String(savedSession.madrasaId).trim().toUpperCase();
       }
-      loadLiveCollectionsFromLocal(currentMadrasaId);
 
-      // If demo data was cleared, invalidate any old session belonging to a sample teacher or sample student
+      const isRestoringStandaloneDemo = Boolean(savedSession && savedSession.isDemoSandbox === true);
+      if (isRestoringStandaloneDemo) {
+        isDemoSandbox = true;
+        window.demoMode = true;
+        loadDemoSandboxDataInMemory();
+        activeDemoPreviewDesk =
+          (savedNavState && savedNavState.demoDeskRole) ||
+          (savedSession.role === "teacher" || savedSession.role === "parent" ? savedSession.role : "principal");
+      } else {
+        loadLiveCollectionsFromLocal(currentMadrasaId);
+      }
+
+      // If demo data was cleared, invalidate any old live session belonging to a sample teacher or sample student
       if (
         savedSession &&
+        !isRestoringStandaloneDemo &&
         (demoCleared || cleanDatabaseMode) &&
         ((savedSession.role === "teacher" && isSampleTeacher(savedSession)) ||
           (savedSession.role === "parent" && isSampleStudent(savedSession)))
       ) {
         savedSession = null;
-        try {
-          localStorage.removeItem("hifz_portal_session");
-        } catch (e) {}
+        savedNavState = null;
+        clearPersistedSessionAndNav();
       }
+
+      // Only apply saved navigation state if it matches the restored session role
+      const effectiveNavState =
+        savedSession &&
+        savedNavState &&
+        savedNavState.view &&
+        savedNavState.view !== "auth" &&
+        (!savedNavState.role || savedNavState.role === savedSession.role)
+          ? savedNavState
+          : null;
 
       populateStudentSelectors();
       renderPrincipalTeachersDirectory();
@@ -18491,14 +18691,39 @@
 
       if (savedSession && savedSession.role && (savedSession.name || savedSession.username)) {
         currentUser = savedSession;
-        if (currentUser.role === "parent") {
+
+        // If an authenticated Principal/Master had toggled Demo Mode ON before refreshing, restore Demo Mode cleanly
+        if (!isRestoringStandaloneDemo && effectiveNavState && effectiveNavState.isDemoSandbox) {
+          if (typeof window.handlePrincipalDemoModeToggle === "function") {
+            window.handlePrincipalDemoModeToggle(true, true);
+          }
+          if (effectiveNavState.demoDeskRole) {
+            activeDemoPreviewDesk = effectiveNavState.demoDeskRole;
+          }
+        }
+
+        if (effectiveNavState && effectiveNavState.parentStudentId && globalStudents.some((s) => s.studentId === effectiveNavState.parentStudentId)) {
+          currentParentStudentId = effectiveNavState.parentStudentId;
+        } else if (currentUser.role === "parent") {
           currentParentStudentId = currentUser.studentId || (globalStudents[0] ? globalStudents[0].studentId : "");
         }
-        applyAuthenticatedState(currentUser.role);
+
+        applyAuthenticatedState(currentUser.role, effectiveNavState);
+        persistActiveSession(currentUser);
+        persistActiveNavigationState();
+
         if (window.fDb && !isDemoSandbox) {
           if (currentUser.role === "master") {
             if (typeof window.subscribeToRegisteredMadrasas === "function") {
               window.subscribeToRegisteredMadrasas();
+            }
+            if (masterInspectingMadrasaId) {
+              if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
+                window.fetchMadrasaWorkspaceFromFirestore(masterInspectingMadrasaId);
+              }
+              if (typeof window.subscribeToMadrasaWorkspace === "function") {
+                window.subscribeToMadrasaWorkspace(masterInspectingMadrasaId);
+              }
             }
           } else {
             if (typeof window.fetchMadrasaWorkspaceFromFirestore === "function") {
@@ -18513,6 +18738,11 @@
         // ALWAYS defaults to the neutral Portal Sign In page when first opened if no session (no unauthenticated global Firestore reads)
         showAuthView();
       }
+
+      // 2. Establish a clean base history entry for the restored view BEFORE enabling popstate handling
+      initializeAppHistoryBaseState();
+      hasCompletedInitialRestore = true;
+      isAppHydrating = false;
 
       updateCampusIdentityUI();
 
